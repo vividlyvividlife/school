@@ -35,7 +35,7 @@ npm run preview
 4. После завершения деплоя сайт будет доступен по адресу:
    `https://vividlyvividlife.github.io/school/`
 
-Для project pages базовый путь `/school/` подставляется автоматически через `actions/configure-pages`.
+Для project pages базовый путь `/school` подставляется автоматически в workflow.
 
 Репозиторий должен быть публичным. Для приватного репозитория GitHub Pages требует платный план (Pro/Team/Enterprise).
 

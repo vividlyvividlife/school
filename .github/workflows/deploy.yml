@@ -23,15 +23,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - id: pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - run: npm ci
       - name: Build
         env:
-          BASE_PATH: ${{ steps.pages.outputs.base_path }}
-          SITE_URL: ${{ steps.pages.outputs.origin }}
+          BASE_PATH: ${{ endsWith(github.event.repository.name, '.github.io') && '/' || format('/{0}', github.event.repository.name) }}
+          SITE_URL: https://${{ github.repository_owner }}.github.io
         run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
