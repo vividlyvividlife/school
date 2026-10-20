@@ -2,4 +2,11 @@ node_modules/
 dist/
 .astro/
 .env
+.env.*
+!.env.example
 .DS_Store
+Thumbs.db
+*.log
+/index.html
+/math-examples-20.html
+/math-trainer.html
