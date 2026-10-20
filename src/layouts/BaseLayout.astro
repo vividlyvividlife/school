@@ -1,0 +1,132 @@
+---
+import '../styles/site.css';
+import NavTree from '../components/NavTree.astro';
+import { findTrail, navigation, normalizePath } from '../data/navigation';
+
+interface Props {
+  title: string;
+  page?: string;
+  crumbs?: string[];
+}
+
+const { title, page, crumbs } = Astro.props;
+const B = import.meta.env.BASE_URL;
+const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+
+const basePath = B.replace(/\/+$/, '');
+let route = Astro.url.pathname;
+if (basePath && (route === basePath || route.startsWith(basePath + '/'))) {
+  route = route.slice(basePath.length);
+}
+const current = normalizePath(route);
+const trail = findTrail(navigation, current) ?? [];
+const active = trail[trail.length - 1];
+const crumbLabels = crumbs ?? (
+  trail.length
+    ? trail.map((item) => item.label)
+    : current === '/'
+      ? []
+      : [title.split(' — ')[0]]
+);
+const pageKind = page ?? active?.page ?? 'home';
+---
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="color-scheme" content="light" />
+  <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+  <title>{title}</title>
+</head>
+<body data-page={pageKind}>
+  <div class="site-shell">
+    <aside id="siteNav" class="site-nav" aria-label="Боковое меню">
+      <div class="site-navhead">
+        <a class="site-brand" href={url('')}>
+          <span class="logo" aria-hidden="true">∑</span>
+          <span>Учебные материалы</span>
+        </a>
+        <button class="site-close" id="navClose" type="button" aria-label="Закрыть меню">×</button>
+      </div>
+
+      <nav aria-label="Меню разделов">
+        <NavTree items={navigation} current={current} />
+      </nav>
+    </aside>
+
+    <div class="site-main">
+      <div class="site-top">
+        <button
+          class="site-navbtn"
+          id="navToggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="siteNav"
+          aria-label="Открыть меню"
+        >
+          <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Меню</span>
+        </button>
+
+        <nav class="site-crumbs" aria-label="Хлебные крошки">
+          {crumbLabels.length === 0 ? (
+            <span aria-current="page">Главная</span>
+          ) : (
+            <>
+              <a href={url('')}>Главная</a>
+              {crumbLabels.map((crumb, i) => (
+                <>
+                  <span class="sep" aria-hidden="true">/</span>
+                  {i === crumbLabels.length - 1 ? <span aria-current="page">{crumb}</span> : <span>{crumb}</span>}
+                </>
+              ))}
+            </>
+          )}
+        </nav>
+      </div>
+
+      <div class="site-content">
+        <slot />
+      </div>
+    </div>
+  </div>
+
+  <div id="navScrim" class="site-scrim"></div>
+
+  <script>
+    (function () {
+      var body = document.body;
+      var btn = document.getElementById('navToggle');
+      var close = document.getElementById('navClose');
+      var scrim = document.getElementById('navScrim');
+      var nav = document.getElementById('siteNav');
+      if (!btn) return;
+
+      function set(open) {
+        body.classList.toggle('site-nav-open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+        if (open && close) close.focus();
+        else btn.focus();
+      }
+
+      btn.addEventListener('click', function () {
+        set(!body.classList.contains('site-nav-open'));
+      });
+      if (close) close.addEventListener('click', function () { set(false); });
+      if (scrim) scrim.addEventListener('click', function () { set(false); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && body.classList.contains('site-nav-open')) set(false);
+      });
+      if (nav) {
+        nav.addEventListener('click', function (e) {
+          if (e.target.closest && e.target.closest('a')) set(false);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

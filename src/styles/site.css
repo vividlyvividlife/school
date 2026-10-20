@@ -1,0 +1,135 @@
+/* Общий каркас сайта: меню-«гамбургер» слева + хлебные крошки */
+:root{
+  --site-nav-w:19rem;
+  --site-ink:#16202c;
+  --site-muted:#64748b;
+  --site-line:#d7dee8;
+  --site-blue:#2563eb;
+  --site-blue-d:#1d4ed8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Segoe UI",Roboto,Arial,sans-serif;
+  color:var(--site-ink);
+  -webkit-text-size-adjust:100%;
+}
+.site-shell{min-height:100vh;min-height:100dvh}
+
+/* выезжающее меню: по умолчанию свёрнуто */
+.site-nav{
+  position:fixed;inset:0 auto 0 0;
+  width:min(86vw,var(--site-nav-w));height:100vh;height:100dvh;
+  overflow-y:auto;
+  display:flex;flex-direction:column;gap:1rem;
+  padding:1.05rem .9rem 1.5rem;
+  background:#fff;border-right:1px solid var(--site-line);
+  transform:translateX(-102%);
+  transition:transform .22s ease;
+  box-shadow:0 20px 60px -20px rgba(15,23,42,.5);
+  z-index:50;
+}
+body.site-nav-open .site-nav{transform:none}
+.site-navhead{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.site-close{
+  flex:0 0 auto;width:2.2rem;height:2.2rem;border-radius:.6rem;
+  border:1px solid var(--site-line);background:#fff;color:#334155;
+  font:inherit;font-size:1.25rem;line-height:1;cursor:pointer;
+}
+.site-close:hover{background:#f1f5f9}
+.site-close:focus-visible{outline:3px solid #bfdbfe;outline-offset:2px}
+
+.site-brand{
+  display:flex;align-items:center;gap:.6rem;min-width:0;
+  color:var(--site-ink);text-decoration:none;
+  font-weight:800;font-size:1rem;letter-spacing:-.01em;
+}
+.site-brand .logo{
+  width:2rem;height:2rem;border-radius:.6rem;flex:0 0 auto;
+  display:grid;place-items:center;color:#fff;font-size:1rem;
+  background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+}
+.site-brand span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.site-menu,.site-menu ul{list-style:none;margin:0;padding:0}
+.site-menu{display:flex;flex-direction:column;gap:.9rem}
+.site-menu ul ul{margin:.1rem 0 0 .55rem;padding-left:.35rem;border-left:2px solid #eef2f7}
+.site-grade{
+  display:block;padding:.3rem .5rem;
+  font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--site-muted);
+}
+.site-subject{
+  display:block;padding:.3rem .5rem .2rem;
+  font-size:.82rem;font-weight:700;color:var(--site-ink);
+}
+.site-menu a{
+  display:block;padding:.52rem .6rem .52rem .85rem;
+  border:1px solid transparent;border-radius:.55rem;
+  color:#334155;text-decoration:none;font-size:.92rem;line-height:1.3;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.site-menu a:hover{background:#eff6ff;color:var(--site-blue-d)}
+.site-menu a:focus-visible{outline:3px solid #bfdbfe;outline-offset:1px}
+.site-menu a[aria-current="page"]{
+  background:#eff6ff;border-color:#bfdbfe;color:var(--site-blue-d);font-weight:700;
+}
+.site-soon{
+  display:block;padding:.5rem .6rem .5rem .85rem;
+  color:#94a3b8;font-size:.88rem;font-style:italic;
+}
+
+.site-main{
+  min-height:100vh;min-height:100dvh;
+  display:flex;flex-direction:column;
+  height:100vh;height:100dvh;
+}
+.site-top{
+  flex:0 0 auto;display:flex;align-items:center;gap:.7rem;
+  padding:.45rem clamp(.7rem,2.5vw,1.2rem);
+  background:rgba(255,255,255,.9);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--site-line);
+  position:relative;z-index:20;
+}
+.site-crumbs{
+  display:flex;align-items:center;flex-wrap:wrap;gap:.35rem;
+  font-size:.86rem;color:var(--site-muted);min-width:0;
+}
+.site-crumbs a{color:var(--site-blue);text-decoration:none}
+.site-crumbs a:hover{text-decoration:underline}
+.site-crumbs .sep{color:#cbd5e1}
+.site-crumbs [aria-current="page"]{color:var(--site-ink);font-weight:600}
+
+.site-content{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:auto}
+
+/* кнопка-гамбургер */
+.site-navbtn{
+  display:inline-flex;align-items:center;gap:.5rem;flex:0 0 auto;
+  padding:.45rem .65rem;border:1px solid var(--site-line);border-radius:.6rem;
+  background:#fff;color:var(--site-ink);font:inherit;font-size:.9rem;font-weight:600;
+  cursor:pointer;
+}
+.site-navbtn:hover{background:#f1f5f9}
+.site-navbtn:focus-visible{outline:3px solid #bfdbfe;outline-offset:2px}
+.site-navbtn .bars{display:inline-flex;flex-direction:column;justify-content:center;gap:3px;width:1.15rem}
+.site-navbtn .bars i{display:block;height:2px;border-radius:2px;background:currentColor}
+
+.site-scrim{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40}
+body.site-nav-open .site-scrim{display:block}
+body.site-nav-open{overflow:hidden}
+
+/* Тренажёр: экраны занимают оставшуюся высоту */
+body[data-page="trainer"] .site-content{overflow:hidden}
+body[data-page="trainer"] .site-content>.screen{flex:1 1 auto;min-height:0}
+body[data-page="trainer"] #game,
+body[data-page="trainer"] #results{height:auto}
+
+@media (prefers-reduced-motion:reduce){
+  .site-nav{transition:none}
+}
+@media print{
+  .site-nav,.site-top,.site-scrim{display:none!important}
+  .site-main{display:block;height:auto;min-height:0}
+  .site-content{display:block;height:auto;overflow:visible}
+}

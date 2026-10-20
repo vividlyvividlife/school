@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/examples.css';
+
+const B = import.meta.env.BASE_URL;
+const asset = (p: string) => B.replace(/\/+$/, '') + '/' + p.replace(/^\/+/, '');
+---
+
+<BaseLayout title="Раздаточный материал — примеры для печати">
+<div class="toolbar">
+  <label class="fld">Рядов
+    <input id="rows" type="number" min="2" max="20" value="8">
+  </label>
+  <label class="fld">Столбцов
+    <input id="cols" type="number" min="2" max="6" value="3">
+  </label>
+  <label class="fld">Страниц с примерами
+    <input id="pages" type="number" min="1" max="12" value="1">
+  </label>
+  <label class="fld">Тип примеров
+    <select id="type">
+      <option value="mix">Сложение и вычитание</option>
+      <option value="add">Только сложение +</option>
+      <option value="sub">Только вычитание −</option>
+    </select>
+  </label>
+  <label class="fld">Что пропущено
+    <select id="miss">
+      <option value="r">1. Ответ (8 + 5 = ___)</option>
+      <option value="a">2. Первое число (___ + 5 = 13)</option>
+      <option value="b">3. Второе число (8 + ___ = 13)</option>
+      <option value="ra">1 + 2: ответ и первое</option>
+      <option value="rb">1 + 3: ответ и второе</option>
+      <option value="ab">2 + 3: первое и второе</option>
+      <option value="all">Все три вида</option>
+    </select>
+  </label>
+  <label class="fld">Ответы
+    <select id="ans">
+      <option value="none">Без ответов</option>
+      <option value="faint">Ответы серым (для проверки)</option>
+      <option value="key">Отдельный лист-ключ</option>
+    </select>
+  </label>
+  <label class="fld">Ключ варианта
+    <input id="seed" type="number" min="1" value="1234">
+  </label>
+  <button id="again" class="btn" type="button">Другой вариант</button>
+  <button id="print" class="btn primary" type="button">Печать</button>
+  <div class="hint">Печатайте на A4, масштаб 100 %, поля по умолчанию. Каждый лист — отдельный вариант, примеры на листах не повторяются. Разных примеров одного типа всего 36, поэтому в очень больших вариантах повторы начнутся.</div>
+</div>
+
+<div id="sheets"></div>
+<script is:inline src={asset('js/examples-logic.js')}></script>
+<script is:inline src={asset('js/examples-ui.js')}></script>
+</BaseLayout>

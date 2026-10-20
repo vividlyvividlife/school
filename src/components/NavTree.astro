@@ -1,0 +1,36 @@
+---
+import type { NavItem } from '../data/navigation';
+import { normalizePath } from '../data/navigation';
+
+interface Props {
+  items: NavItem[];
+  current: string;
+  depth?: number;
+}
+
+const { items, current, depth = 0 } = Astro.props;
+const B = import.meta.env.BASE_URL;
+const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+---
+
+<ul class={depth === 0 ? 'site-menu' : undefined}>
+  {items.map((item) => (
+    <li>
+      {item.children ? (
+        <>
+          <span class={depth === 0 ? 'site-grade' : 'site-subject'}>{item.label}</span>
+          <Astro.self items={item.children} current={current} depth={depth + 1} />
+        </>
+      ) : item.soon ? (
+        <span class="site-soon">{item.label}</span>
+      ) : (
+        <a
+          href={url(item.path ?? '')}
+          aria-current={item.path && normalizePath(item.path) === current ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      )}
+    </li>
+  ))}
+</ul>

@@ -1,0 +1,213 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/trainer.css';
+
+const B = import.meta.env.BASE_URL;
+const asset = (p: string) => B.replace(/\/+$/, '') + '/' + p.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+---
+
+<BaseLayout title="Примеры — тренажёр счёта">
+<section id="setup" class="screen active">
+  <div class="wrap">
+    <h1>Примеры: счёт и таблица умножения</h1>
+    <p class="sub">Сложение и вычитание, умножение и деление — с проверкой, таймером и статистикой.</p>
+
+    <div class="card">
+      <div class="row">
+        <span class="lbl">Считать</span>
+        <span class="ctrlrow fromto">
+          <span class="numitem"><span class="dim">от</span><input id="from" class="num" type="number" inputmode="numeric" min="0" max="100" step="1" value="0"></span>
+          <span class="numitem"><span class="dim">до</span><input id="limit" class="num" type="number" inputmode="numeric" min="1" max="100" step="1" value="18"></span>
+        </span>
+        <div class="chips" id="limitChips">
+          <button type="button" data-v="20">20</button>
+          <button type="button" data-v="30">30</button>
+          <button type="button" data-v="50">50</button>
+          <button type="button" data-v="100">100</button>
+        </div>
+        <div class="hint wide" id="rangeHint" hidden>Для «×» и «÷» границы «от» и «до» относятся к произведению или делимому; множители и делители — от 1 до 10.</div>
+      </div>
+
+      <div class="row">
+        <span class="lbl">Действия</span>
+        <div class="seg multi" data-key="ops" data-multi="1">
+          <button type="button" data-v="add" title="Сложение">+</button>
+          <button type="button" data-v="sub" title="Вычитание">−</button>
+          <button type="button" data-v="mul" title="Умножение">×</button>
+          <button type="button" data-v="div" title="Деление">÷</button>
+        </div>
+        <div class="hint wide">Можно включить несколько действий сразу.</div>
+      </div>
+
+      <div class="row">
+        <span class="lbl">Подвох</span>
+        <label class="switch">
+          <input id="trickZero" type="checkbox">
+          <span class="track"></span>
+          <span>Деление на 0</span>
+        </label>
+        <div class="hint wide" id="trickHint">Изредка будет пример «число ÷ 0 = ?» — правильный ответ «нельзя».</div>
+      </div>
+
+      <div class="row">
+        <span class="lbl">Переход</span>
+        <label class="switch">
+          <input id="carry" type="checkbox" checked>
+          <span class="track"></span>
+          <span>Только с переходом через десяток</span>
+        </label>
+        <div class="hint wide" id="carryHint" hidden>Переход через десяток действует только на «+» и «−».</div>
+      </div>
+
+      <div class="row">
+        <span class="lbl">Пропущено</span>
+        <div class="seg" data-key="miss">
+          <button type="button" data-v="r">Ответ</button>
+          <button type="button" data-v="a">Первое число</button>
+          <button type="button" data-v="b">Второе число</button>
+          <button type="button" data-v="ab">Первое или второе</button>
+          <button type="button" data-v="rab">Вперемешку</button>
+          <button type="button" data-v="all">X + X = 10</button>
+        </div>
+        <div class="hint wide" id="missHint" hidden></div>
+      </div>
+
+      <div class="row">
+        <span class="lbl">Как отвечать</span>
+        <div class="seg" data-key="answer">
+          <button type="button" data-v="type">Цифрами</button>
+          <button type="button" data-v="tiles6">Из 6 плиток</button>
+          <button type="button" data-v="tiles9">Из 9 плиток</button>
+          <button type="button" data-v="tiles12">Из 12 плиток</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <span class="lbl">Режим</span>
+        <div class="seg" data-key="mode">
+          <button type="button" data-v="free">Тренировка</button>
+          <button type="button" data-v="timed">На время</button>
+        </div>
+      </div>
+
+      <div class="row" id="timeRow">
+        <span class="lbl">Длительность</span>
+        <span class="ctrlrow">
+          <span class="numitem"><input id="min" class="num" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">мин</span></span>
+          <span class="numitem"><input id="sec" class="num" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">сек</span></span>
+        </span>
+      </div>
+
+      <div class="row">
+        <span class="lbl">Звук</span>
+        <span class="ctrlrow">
+          <label class="switch">
+            <input id="sound" type="checkbox" checked>
+            <span class="track"></span>
+            <span>Звук на верный и неверный ответ</span>
+          </label>
+          <button id="soundTest" class="btn small" type="button">Проверить звук</button>
+        </span>
+        <div class="hint wide">Включите звук и громкость на самом устройстве — иначе сигналы не слышны.</div>
+      </div>
+
+      <div class="row startrow">
+        <div class="hint" id="poolInfo">В наборе: 36 примеров</div>
+        <button id="startBtn" class="btn primary big" type="button">Начать</button>
+      </div>
+
+      <div class="row startrow">
+        <div class="hint" id="hardInfo">Трудных примеров пока нет</div>
+        <div id="hardList" class="exlist" hidden></div>
+        <button id="hardBtn" class="btn big" type="button" disabled>Проработка трудных примеров</button>
+        <button id="clearHard" class="btn small" type="button" hidden>Сбросить список трудных</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="histhead">
+        <span class="lbl">История тренировок</span>
+        <button id="clearHist" class="btn small" type="button">Очистить</button>
+      </div>
+      <div id="histList" class="hist"></div>
+    </div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="gbar">
+    <button id="stopBtn" class="btn" type="button">Стоп</button>
+    <div class="gmeta" id="gInfo"></div>
+    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+  </div>
+  <div class="timewrap" id="timeWrap">
+    <div class="tbar"><div class="tfill" id="tfill"></div></div>
+    <div class="tclock" id="tclock">2:00</div>
+  </div>
+  <div class="playarea">
+    <div class="playgroup">
+      <div class="eqwrap" id="eqw">
+        <div class="eq" id="eq"></div>
+        <div class="cap" id="cap"></div>
+        <div class="pairinfo" id="pairInfo" hidden></div>
+      </div>
+      <div class="padwrap">
+        <div class="trickanswer" id="trickAnswer" hidden>
+          <button id="trickBtn" class="btn primary big" type="button">Нельзя</button>
+        </div>
+        <div class="pad tiles" id="tiles" hidden></div>
+        <div class="pad" id="pad">
+          <button type="button" data-k="1">1</button>
+          <button type="button" data-k="2">2</button>
+          <button type="button" data-k="3">3</button>
+          <button type="button" data-k="4">4</button>
+          <button type="button" data-k="5">5</button>
+          <button type="button" data-k="6">6</button>
+          <button type="button" data-k="7">7</button>
+          <button type="button" data-k="8">8</button>
+          <button type="button" data-k="9">9</button>
+          <button type="button" data-k="del" class="del">⌫</button>
+          <button type="button" data-k="0">0</button>
+          <button type="button" data-k="ok" class="ok">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="results" class="screen">
+  <div class="wrap">
+    <h2 id="resTitle">Готово</h2>
+    <div class="verdict" id="verdict"></div>
+    <div class="verdict" id="advice" hidden></div>
+    <div class="stats">
+      <div class="stat good"><b id="rOk">0</b><span>верных ответов</span></div>
+      <div class="stat bad"><b id="rBad">0</b><span>ошибок</span></div>
+      <div class="stat"><b id="rAcc">—</b><span>точность</span></div>
+      <div class="stat"><b id="rAvg">—</b><span>средний ответ</span></div>
+      <div class="stat"><b id="rFast">—</b><span>самый быстрый</span></div>
+      <div class="stat"><b id="rSlow">—</b><span>самый медленный</span></div>
+      <div class="stat"><b id="rDur">0:00</b><span>длительность</span></div>
+    </div>
+    <div class="card">
+      <div class="lbl" id="misTitle">Ошибки</div>
+      <div id="misList" class="mis"></div>
+    </div>
+    <div class="card" id="pairsCard" hidden>
+      <div class="lbl">Пары чисел</div>
+      <div id="pairsList" class="pairs"></div>
+    </div>
+    <div class="card" id="retryCard" hidden>
+      <div class="lbl">Не успел решить — выбери ответ</div>
+      <div class="retryeq" id="retryEq"></div>
+      <div class="retrybtns" id="retryBtns"></div>
+    </div>
+    <div class="actions">
+      <button id="againBtn" class="btn primary" type="button">Ещё раз</button>
+      <button id="toSetupBtn" class="btn" type="button">Настройки</button>
+    </div>
+  </div>
+</section>
+<script is:inline src={asset('js/trainer.js') + '?v=' + jsVersion}></script>
+</BaseLayout>
