@@ -1,0 +1,225 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteCopy, type Lang } from '../../i18n/site';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = siteCopy[lang];
+const p = c.home;
+const B = import.meta.env.BASE_URL;
+const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const worksheetHref = lang === 'en' ? 'en/grade-2/math/worksheets/' : '2-class/matematika/razdatochnyy-material/';
+const practiceHref = lang === 'en' ? 'en/grade-2/math/practice/' : '2-class/matematika/primery/';
+const readingHref = lang === 'en' ? 'en/grade-2/belarusian/extracurricular-reading/' : '2-class/belaruskaya-mova/pazaklasnae-chytanne/';
+---
+
+<BaseLayout title={c.homePage.title} lang={lang}>
+  <div class="home">
+    <header class="hero">
+      <div class="kicker">{p.kicker}</div>
+      <h1>{p.h1}</h1>
+      <p class="sub">{p.sub}</p>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2 class="grade">{p.grade2}</h2>
+        <div class="subject">
+          <div class="subject-name">{p.math}</div>
+          <div class="links">
+            <a class="item" href={url(worksheetHref)}>
+              <span class="txt">
+                <span class="title">{p.worksheets}</span>
+                <span class="desc">{p.worksheetsDesc}</span>
+              </span>
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="item" href={url(practiceHref)}>
+              <span class="txt">
+                <span class="title">{p.practice}</span>
+                <span class="desc">{p.practiceDesc}</span>
+              </span>
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+        <div class="subject">
+          <div class="subject-name">{p.belarusian}</div>
+          <div class="links">
+            <a class="item" href={url(readingHref)}>
+              <span class="txt">
+                <span class="title">{p.reading}</span>
+                <span class="desc">{p.readingDesc}</span>
+              </span>
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+        <div class="soon">{p.soon}</div>
+      </section>
+
+      <section class="card">
+        <h2 class="grade">{p.grade3}</h2>
+        <div class="soon">{p.soon}</div>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .home {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: clamp(1.2rem, 4vw, 3rem) clamp(0.9rem, 4vw, 2rem) 4rem;
+  }
+  .hero {
+    text-align: center;
+    margin: 0 0 clamp(1.4rem, 4vw, 2.6rem);
+  }
+  .kicker {
+    display: inline-block;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--site-teal);
+    background: var(--site-surface);
+    border: 1px solid var(--site-line);
+    border-radius: 999px;
+    padding: 0.35rem 0.8rem;
+    margin-bottom: 1rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.7rem, 5vw, 2.7rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .sub {
+    margin: 0.7rem 0 0;
+    color: var(--site-muted);
+    font-size: clamp(0.95rem, 2.4vw, 1.08rem);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    gap: clamp(1rem, 2.6vw, 1.4rem);
+    align-items: start;
+  }
+  .card {
+    background: var(--site-surface);
+    border: 1px solid var(--site-line);
+    border-radius: 18px;
+    padding: clamp(1rem, 2.8vw, 1.5rem);
+    box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.35);
+  }
+  .grade {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1rem;
+    font-size: clamp(1.2rem, 3vw, 1.45rem);
+    letter-spacing: -0.01em;
+  }
+  .grade::before {
+    content: "";
+    width: 0.28rem;
+    height: 1.4em;
+    border-radius: 99px;
+    background: var(--site-teal);
+    flex: 0 0 auto;
+  }
+  .subject + .subject {
+    margin-top: 1.1rem;
+  }
+  .subject-name {
+    margin: 0 0 0.55rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--site-muted);
+  }
+  .links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.9rem;
+    padding: clamp(0.75rem, 2.2vw, 1rem) clamp(0.85rem, 2.4vw, 1.1rem);
+    border: 1px solid var(--site-line);
+    border-radius: 0.9rem;
+    background: var(--site-surface-2);
+    color: inherit;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  }
+  .txt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+  .title {
+    font-weight: 700;
+    font-size: clamp(1rem, 2.4vw, 1.06rem);
+  }
+  .desc {
+    color: var(--site-muted);
+    font-size: 0.86rem;
+    line-height: 1.25;
+  }
+  .arrow {
+    flex: 0 0 auto;
+    font-size: 1.1rem;
+    color: var(--site-teal);
+    transition: transform 0.15s;
+  }
+  .item:active {
+    transform: translateY(0);
+  }
+  .item:focus-visible {
+    outline: 3px solid var(--site-teal-line);
+    outline-offset: 2px;
+    border-color: var(--site-teal);
+  }
+  @media (hover: hover) {
+    .item:hover {
+      border-color: var(--site-teal);
+      background: var(--site-teal-soft);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px -16px rgba(15, 118, 110, 0.5);
+    }
+    .item:hover .arrow {
+      transform: translateX(3px);
+    }
+  }
+  .soon {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.9rem;
+    padding: clamp(0.7rem, 2vw, 0.95rem) clamp(0.85rem, 2.4vw, 1.1rem);
+    border: 1px dashed var(--site-line);
+    border-radius: 0.9rem;
+    color: var(--site-muted);
+    font-size: 0.92rem;
+    background: repeating-linear-gradient(135deg, var(--site-surface-3), var(--site-surface-3) 10px, var(--site-surface-4) 10px, var(--site-surface-4) 20px);
+  }
+  .soon::before {
+    content: "";
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--site-line-strong);
+    flex: 0 0 auto;
+  }
+</style>

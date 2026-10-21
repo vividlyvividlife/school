@@ -7,7 +7,9 @@ const base = (process.env.BASE_PATH || '/').replace(/\/+$/, '');
 
 const pages = [
   ['2-class/matematika/primery/index.html', 'offline/primery.html'],
-  ['2-class/matematika/razdatochnyy-material/index.html', 'offline/razdatochnyy-material.html']
+  ['2-class/matematika/razdatochnyy-material/index.html', 'offline/razdatochnyy-material.html'],
+  ['en/grade-2/math/practice/index.html', 'offline/en-practice.html'],
+  ['en/grade-2/math/worksheets/index.html', 'offline/en-worksheets.html']
 ];
 
 function localFile(url) {

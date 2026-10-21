@@ -4,6 +4,17 @@
 var $ = function(id){ return document.getElementById(id); };
 function each(list, fn){ Array.prototype.forEach.call(list, fn); }
 
+var LANG = (document.documentElement.lang || 'ru').toLowerCase().indexOf('en') === 0 ? 'en' : 'ru';
+function tr(ru, en){ return LANG === 'en' ? en : ru; }
+function pluralEx(n){
+  if(LANG === 'en') return n === 1 ? 'example' : 'examples';
+  return plural(n, 'пример', 'примера', 'примеров');
+}
+function pluralErr(n){
+  if(LANG === 'en') return n === 1 ? 'mistake' : 'mistakes';
+  return plural(n, 'ошибка', 'ошибки', 'ошибок');
+}
+
 var S = { limit:18, from:0, ops:['add','sub'], carry:true, miss:'r', answer:'type', mode:'free', min:2, sec:0, sound:true, trickZero:false };
 var OPS_ALL = ['add','sub','mul','div'];
 var OP_SIGN = { add:'+', sub:'−', mul:'×', div:'÷' };
@@ -186,11 +197,16 @@ function fmt(sec){
   sec = sec % 60;
   return m + ':' + (sec < 10 ? '0' : '') + sec;
 }
-function fmtSec1(ms){ return (ms / 1000).toFixed(1).replace('.', ',') + ' с'; }
+function fmtSec1(ms){
+  var s = (ms / 1000).toFixed(1);
+  if(LANG === 'ru') s = s.replace('.', ',');
+  return s + tr(' с', ' s');
+}
 function fmtDate(t){
   var d = new Date(t);
-  return d.toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit' }) + ' ' +
-         d.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+  var locale = LANG === 'en' ? 'en-US' : 'ru-RU';
+  return d.toLocaleDateString(locale, { day:'2-digit', month:'2-digit' }) + ' ' +
+         d.toLocaleTimeString(locale, { hour:'2-digit', minute:'2-digit' });
 }
 function normalizeOps(v){
   var out = [];
@@ -206,10 +222,10 @@ function normalizeOps(v){
 function opsLabel(ops){
   ops = normalizeOps(ops);
   var names = { add:'+', sub:'−', mul:'×', div:'÷' };
-  if(ops.length === 1) return 'только ' + names[ops[0]];
-  if(ops.length === 2 && ops[0] === 'add' && ops[1] === 'sub') return 'сложение и вычитание';
-  if(ops.length === 2 && ops[0] === 'mul' && ops[1] === 'div') return 'умножение и деление';
-  if(ops.length === 4) return 'все действия';
+  if(ops.length === 1) return tr('только ', 'only ') + names[ops[0]];
+  if(ops.length === 2 && ops[0] === 'add' && ops[1] === 'sub') return tr('сложение и вычитание', 'addition and subtraction');
+  if(ops.length === 2 && ops[0] === 'mul' && ops[1] === 'div') return tr('умножение и деление', 'multiplication and division');
+  if(ops.length === 4) return tr('все действия', 'all operations');
   return ops.map(function(o){ return names[o]; }).join(', ');
 }
 
@@ -279,8 +295,8 @@ function hardInfo(){
   var list = loadHard();
   var n = list.length;
   els.hardInfo.textContent = n
-    ? 'Трудные примеры: ' + n + ' ' + plural(n, 'пример', 'примера', 'примеров')
-    : 'Трудных примеров пока нет';
+    ? tr('Трудные примеры: ', 'Tricky problems: ') + n + ' ' + pluralEx(n)
+    : tr('Трудных примеров пока нет', 'No tricky problems yet');
   els.hardList.innerHTML = exChips(list.slice().sort(function(p, q){
     return p.a - q.a || p.b - q.b;
   }));
@@ -370,9 +386,9 @@ function updateHints(){
   if(muldiv){
     var lo = operandMin();
     var factors = lo === 0
-      ? 'множители — от 0 до 10, делители — от 1 до 10'
-      : 'множители и делители — от 1 до 10';
-    parts.push('Для «×» и «÷» границы «от» и «до» относятся к произведению или делимому; ' + factors + '.');
+      ? tr('множители — от 0 до 10, делители — от 1 до 10', 'factors range from 0 to 10, divisors from 1 to 10')
+      : tr('множители и делители — от 1 до 10', 'factors and divisors range from 1 to 10');
+    parts.push(tr('Для «×» и «÷» границы «от» и «до» относятся к произведению или делимому; ', 'For × and ÷, “from” and “to” refer to the product or dividend; ') + factors + '.');
   }
   els.rangeHint.hidden = !parts.length;
   els.rangeHint.textContent = parts.join(' ');
@@ -384,8 +400,8 @@ function updateHints(){
   els.missHint.hidden = !excl;
   if(excl){
     els.missHint.textContent = addsub
-      ? '«X + X = 10» — только сложение и вычитание: «×» и «÷» в этом режиме не участвуют.'
-      : 'Выберите «+» или «−»: режим «X + X = 10» работает только со сложением и вычитанием.';
+      ? tr('«X + X = 10» — только сложение и вычитание: «×» и «÷» в этом режиме не участвуют.', '“X + X = 10” uses only addition and subtraction: × and ÷ are not included in this mode.')
+      : tr('Выберите «+» или «−»: режим «X + X = 10» работает только со сложением и вычитанием.', 'Choose + or −: “X + X = 10” works only with addition and subtraction.');
   }
 }
 function poolCount(){
@@ -396,11 +412,11 @@ function poolCount(){
 function poolInfo(){
   var n = poolCount();
   if(n){
-    els.poolInfo.textContent = 'В наборе: ' + n + ' ' + plural(n, 'пример', 'примера', 'примеров');
+    els.poolInfo.textContent = tr('В наборе: ', 'In the set: ') + n + ' ' + pluralEx(n);
   } else if(S.miss === 'all' && !hasAddSub()){
-    els.poolInfo.textContent = 'Режим «X + X = 10» работает только с «+» и «−»';
+    els.poolInfo.textContent = tr('Режим «X + X = 10» работает только с «+» и «−»', '“X + X = 10” works only with + and −');
   } else {
-    els.poolInfo.textContent = 'Для этих настроек примеров нет';
+    els.poolInfo.textContent = tr('Для этих настроек примеров нет', 'No examples for these settings');
   }
   els.startBtn.disabled = !n;
 }
@@ -420,7 +436,7 @@ function syncUI(){
   hardInfo();
 }
 
-function rangeLabel(){ return (S.from > 0 ? 'от ' + S.from + ' до ' + S.limit : 'до ' + S.limit); }
+function rangeLabel(){ return (S.from > 0 ? tr('от ', 'from ') + S.from + tr(' до ', ' to ') + S.limit : tr('до ', 'up to ') + S.limit); }
 
 function start(){
   unlockAudio();
@@ -456,7 +472,7 @@ function start(){
   lastHardList = [];
 
   els.gInfo.textContent = rangeLabel() + ' · ' + opsLabel(S.ops) +
-    (S.carry && hasAddSub() ? ' · с переходом' + (hasMulDiv() ? ' (+, −)' : '') : '');
+    (S.carry && hasAddSub() ? tr(' · с переходом', ' · with carry') + (hasMulDiv() ? ' (+, −)' : '') : '');
   els.pad.hidden = isTiles();
   els.tiles.hidden = !isTiles();
   els.tiles.innerHTML = '';
@@ -497,8 +513,8 @@ function startHardList(h, track){
   lastHard = true;
   lastHardList = h;
   lastHardTrack = !!track;
-  els.gInfo.textContent = 'трудные · ' + items.length + ' ' + plural(items.length, 'пример', 'примера', 'примеров') +
-    ' · ' + (S.mode === 'timed' ? 'на время' : 'тренировка');
+  els.gInfo.textContent = tr('трудные', 'tricky') + ' · ' + items.length + ' ' + pluralEx(items.length) +
+    ' · ' + (S.mode === 'timed' ? tr('на время', 'timed') : tr('тренировка', 'practice'));
   els.pad.hidden = isTiles();
   els.tiles.hidden = !isTiles();
   els.tiles.innerHTML = '';
@@ -537,7 +553,7 @@ function tick(){
     els.tclock.textContent = fmt(left / 1000);
     if(left <= 0) finish('time');
   } else {
-    els.tclock.textContent = 'Время: ' + fmt((now - run.start) / 1000);
+    els.tclock.textContent = tr('Время: ', 'Time: ') + fmt((now - run.start) / 1000);
   }
 }
 
@@ -678,7 +694,7 @@ function buildTrickTiles(){
   opts = shuffle(opts);
   els.tiles.classList.toggle('dense', n >= 10);
   els.tiles.innerHTML = opts.map(function(v){
-    return '<button type="button" data-v="' + v + '">' + (v === 'none' ? 'Нельзя' : v) + '</button>';
+    return '<button type="button" data-v="' + v + '">' + (v === 'none' ? tr('Нельзя', 'Undefined') : v) + '</button>';
   }).join('');
 }
 
@@ -699,13 +715,13 @@ function judgeTrick(val, btn){
   var good = isTiles() ? els.tiles.querySelector('button[data-v="none"]') : els.trickBtn;
   each(els.tiles.querySelectorAll('button'), function(b){ b.disabled = true; });
   els.trickBtn.disabled = true;
-  fillSlot(correct ? 'Нельзя' : val);
+  fillSlot(correct ? tr('Нельзя', 'Undefined') : val);
   if(correct){
     run.ok++;
     playCorrect();
     if(btn) btn.classList.add('correct');
     els.eqw.classList.add('ok');
-    els.cap.textContent = 'Верно! На 0 делить нельзя.';
+    els.cap.textContent = tr('Верно! На 0 делить нельзя.', 'Correct! You cannot divide by zero.');
     els.cap.className = 'cap ok';
     setTimeout(function(){
       if(run && run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
@@ -718,7 +734,7 @@ function judgeTrick(val, btn){
     if(btn) btn.classList.add('wrong');
     if(good) good.classList.add('correct');
     els.eqw.classList.add('bad');
-    els.cap.textContent = 'Правильный ответ: Нельзя';
+    els.cap.textContent = tr('Правильный ответ: Нельзя', 'Correct answer: Undefined');
     els.cap.className = 'cap bad';
     setTimeout(function(){
       if(run && run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
@@ -746,7 +762,7 @@ function renderAll(){
   els.eq.innerHTML = slot0 + '<span class="op">' + c.op + '</span>' + slot1 +
     '<span class="op">=</span><span class="opd">' + c.r + '</span>';
   els.pairInfo.hidden = false;
-  els.cap.textContent = 'Введи два числа, между ними — OK';
+  els.cap.textContent = tr('Введи два числа, между ними — OK', 'Enter two numbers, then press OK');
   els.cap.className = 'cap';
   paintAll();
   updatePairInfo();
@@ -764,7 +780,7 @@ function paintAll(){
 }
 function updatePairInfo(){
   var c = run.cur;
-  var txt = 'Найдено <b>' + c.found.length + '</b> из ' + c.sols.length;
+  var txt = tr('Найдено <b>', 'Found <b>') + c.found.length + tr('</b> из ', '</b> of ') + c.sols.length;
   if(c.found.length){
     txt += ' · ' + c.found.map(function(p){
       return '<span class="foundpair">' + p[0] + ' ' + c.op + ' ' + p[1] + '</span>';
@@ -830,19 +846,19 @@ function submitPair(){
       run.curDone = true;
       var tok = run.tok;
       run.locked = true;
-      els.cap.textContent = 'Все пары найдены!';
+      els.cap.textContent = tr('Все пары найдены!', 'All pairs found!');
       els.cap.className = 'cap ok';
       setTimeout(function(){
         if(run && run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
       }, 700);
     } else {
-      els.cap.textContent = 'Верно!';
+      els.cap.textContent = tr('Верно!', 'Correct!');
       els.cap.className = 'cap ok';
     }
     return;
   }
   if(dup && mathOk && allowed){
-    els.cap.textContent = 'Такая пара уже есть';
+    els.cap.textContent = tr('Такая пара уже есть', 'This pair is already there');
     els.cap.className = 'cap';
     c.slots = ['', '']; c.active = 0; paintAll();
     return;
@@ -861,7 +877,7 @@ function submitPair(){
     run.mistakes.push({ q: '□ ' + c.op + ' □ = ' + c.r, ua: x + ' ' + c.op + ' ' + y, miss: 'all' });
   }
   c.slots = ['', '']; c.active = 0; paintAll(); updateScore();
-  els.cap.textContent = (mathOk && !allowed && S.carry) ? 'Нужен переход через десяток' : 'Неверно';
+  els.cap.textContent = (mathOk && !allowed && S.carry) ? tr('Нужен переход через десяток', 'A carry over ten is required') : tr('Неверно', 'Incorrect');
   els.cap.className = 'cap bad';
   run.locked = true;
   setTimeout(function(){ if(run && !run.done){ run.locked = false; run.shownAt = Date.now(); } }, 500);
@@ -960,7 +976,7 @@ function judge(val, tileBtn){
     if(tileBtn) tileBtn.classList.add('correct');
     if(isTiles()) fillSlot(val);
     els.eqw.classList.add('ok');
-    els.cap.textContent = 'Верно';
+    els.cap.textContent = tr('Верно', 'Correct');
     els.cap.className = 'cap ok';
     setTimeout(function(){
       if(run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
@@ -977,7 +993,7 @@ function judge(val, tileBtn){
       fillSlot(val);
     }
     els.eqw.classList.add('bad');
-    els.cap.textContent = 'Правильный ответ: ' + need;
+    els.cap.textContent = tr('Правильный ответ: ', 'Correct answer: ') + need;
     els.cap.className = 'cap bad';
     setTimeout(function(){
       if(run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
@@ -1108,6 +1124,58 @@ var VERDICTS = [
   ]}
 ];
 
+var EN_VERDICTS = [
+  { min:95, cls:'g5', msgs:[
+    'Incredible! Almost no mistakes — a real mathematician! 🏆',
+    'Brilliant! You solve problems like a pro! 🥇',
+    'Perfect! Carrying over ten does not scare you anymore! 💯',
+    'What a score! Keep it up! 🚀',
+    'Amazing! That is something to be proud of! 🌟',
+    'You are a math superhero today! 🦸'
+  ]},
+  { min:80, cls:'g4', msgs:[
+    'Great job! Just a little more and it will be perfect! 😀',
+    'Very good! You barely made any mistakes! 💪',
+    'Solid result! Review your mistakes and they will disappear! 📚',
+    'Well done! Your accuracy is growing every time! 📈',
+    'Nice! A few problems are worth repeating. ✏️',
+    'Good score! One more practice and you will set a record! 🚀'
+  ]},
+  { min:60, cls:'g3', msgs:[
+    'Good start! Repeat the problems you missed and you will get there. 💪',
+    'Not bad! You improve with every practice. 📈',
+    'Getting there! Let us go over the mistakes together. 🧮',
+    'Keep practicing — results will definitely come! 🚀',
+    'More than half correct — a good foundation! 🧱',
+    'Effort is what matters! Review the tricky problems. ✏️'
+  ]},
+  { min:40, cls:'g2', msgs:[
+    'Do not give up! Mistakes are normal — practice is what counts. 💪',
+    'Hard? That means you are growing! Try the mistakes again. 🌱',
+    'About half correct — not bad! Let us reinforce it. ✏️',
+    'Try solving more slowly and saying the steps out loud. 🐢',
+    'Every mistake shows what to review. Check the list! 🔍',
+    'Let us practice more — the numbers will start adding up! 🧮'
+  ]},
+  { min:20, cls:'g1', msgs:[
+    'No worries! Start with easier problems. 🐣',
+    'Take your time — understanding matters more than speed. 🐢',
+    'Try the “up to 20” level — you can do it! 💪',
+    'Quite a few mistakes, but this is just the beginning. 🌱',
+    'Break each problem into steps: first to 10, then the rest. 💡',
+    'Tip: practice with tiles and no timer. 🧩'
+  ]},
+  { min:0, cls:'g0', msgs:[
+    'Oh! Looks like today is a tricky day. Start with an easy level. 🐣',
+    'Do not worry! Ask an adult to help you figure it out. 🤝',
+    'Start with problems up to 10, and come back to bigger numbers later. 🔢',
+    'Tip: solve without a timer and say the steps out loud. 🗣️',
+    'Mistakes are steps. Step by step, you will get there! 🧗',
+    'Let us review the number bonds of 10 — they are the foundation! 👑'
+  ]}
+];
+if(LANG === 'en') VERDICTS = EN_VERDICTS;
+
 var GENERAL = {
   hi: {
     fast: [
@@ -1225,6 +1293,61 @@ var GENERAL = {
   }
 };
 
+var EN_GENERAL = {
+  hi: {
+    fast: [
+      'Accurate and fast — that is the level! A real mathematician! 🏆',
+      'Right and lightning-fast! Keep it up! ⚡',
+      'Speed plus accuracy — super counting! 🏎️'
+    ],
+    mid: [
+      'Almost no mistakes — excellent! A little more speed and it is perfect! 🚀',
+      'You solve accurately — well done! Speed will come with practice! 💪',
+      'Hardly any mistakes! Now let us work on pace! ⏱️'
+    ],
+    slow: [
+      'Almost no mistakes — that is what matters! We will work on speed! 🐢',
+      'You solve without mistakes — great! There is no rush, it will come! 🌱',
+      'Accurate and careful! Speed is the next step! 👣'
+    ]
+  },
+  mid: {
+    fast: [
+      'Great speed! Just a bit more attention and there will be no mistakes! 🎯',
+      'You answer fast — great! But do not rush! 🐢',
+      'Lightning fast! Now become a sharpshooter — check yourself! 🔍'
+    ],
+    mid: [
+      'Good pace and decent counting — that is how masters grow! 🌱',
+      'Everything is going well! Practice — accuracy and speed will improve! 📈',
+      'A solid middle — but you are growing! More practice! 💪'
+    ],
+    slow: [
+      'You solve thoughtfully — that is right! Practice will add speed! 🐢',
+      'Careful and full of potential — keep going! 🌱',
+      'Tip: practice without a timer and speed up gradually! 💡'
+    ]
+  },
+  lo: {
+    fast: [
+      'You answer lightning-fast, but you are rushing — be more careful! 🎯',
+      'Speed is there! Now the main thing is to think before answering! 🤔',
+      'Do not rush: think first, then answer! 💪'
+    ],
+    mid: [
+      'There is work to do! Start by reviewing your mistakes! 📚',
+      'No worries — we will practice and you will get there! 💪',
+      'Tip: solve step by step — first to 10, then the rest! 🔢'
+    ],
+    slow: [
+      'Take your time! Start with easier problems, without a timer! 🐣',
+      'Everything has its time: first correctly, then quickly! 🌱',
+      'Practice with tiles and no timer — it is easier! 🧩'
+    ]
+  }
+};
+if(LANG === 'en') GENERAL = EN_GENERAL;
+
 function showResults(reason, durSec){
   var md = false, ri;
   for(ri = 0; ri < run.records.length; ri++){
@@ -1235,14 +1358,20 @@ function showResults(reason, durSec){
     var arr = list;
     if(md){
       var ok = list.filter(function(s){ return !/(десят|до 10(?!\d)|до 20(?!\d)|состав числа|переход)/i.test(s); });
-      arr = ok.length ? ok : ['Продолжай тренироваться — точность и скорость придут с практикой! 💪'];
+      arr = ok.length ? ok : [tr('Продолжай тренироваться — точность и скорость придут с практикой! 💪', 'Keep practicing — accuracy and speed will come with practice! 💪')];
     }
     return arr[Math.floor(Math.random() * arr.length)];
   }
-  els.resTitle.textContent = reason === 'time' ? 'Время вышло' : reason === 'stop' ? 'Тренировка остановлена' : reason === 'done' ? 'Все трудные примеры пройдены!' : 'Готово';
+  els.resTitle.textContent = reason === 'time'
+    ? tr('Время вышло', 'Time is up')
+    : reason === 'stop'
+      ? tr('Тренировка остановлена', 'Training stopped')
+      : reason === 'done'
+        ? tr('Все трудные примеры пройдены!', 'All tricky problems completed!')
+        : tr('Готово', 'Done');
   var total = run.ok + run.bad;
   if(!total){
-    els.verdict.textContent = 'Ни одного ответа. Давай попробуем ещё раз — всё получится! 🙂';
+    els.verdict.textContent = tr('Ни одного ответа. Давай попробуем ещё раз — всё получится! 🙂', 'No answers yet. Let’s try again — you can do it! 🙂');
     els.verdict.className = 'verdict g0';
     els.advice.hidden = true;
     els.advice.textContent = '';
@@ -1274,19 +1403,19 @@ function showResults(reason, durSec){
   els.rFast.textContent = run.tN ? fmtSec1(run.minMs) : '—';
   els.rSlow.textContent = run.tN ? fmtSec1(run.maxMs) : '—';
   els.rDur.textContent = fmt(durSec);
-  els.misTitle.textContent = 'Ошибки: ' + run.bad;
+  els.misTitle.textContent = tr('Ошибки: ', 'Mistakes: ') + run.bad;
   if(!run.bad){
-    els.misList.innerHTML = '<div class="none">Ошибок нет</div>';
+    els.misList.innerHTML = '<div class="none">' + tr('Ошибок нет', 'No mistakes') + '</div>';
   } else {
     els.misList.innerHTML = run.mistakes.map(function(m){
       return '<div class="mrow">' + m.q +
-        (m.missed ? '<span class="ua missed">не успел решить</span>' : '<span class="ua">вы: ' + m.ua + '</span>') +
+        (m.missed ? '<span class="ua missed">' + tr('не успел решить', 'not solved in time') + '</span>' : '<span class="ua">' + tr('вы: ', 'you: ') + m.ua + '</span>') +
         '</div>';
     }).join('');
   }
   renderPairs(run);
   if(reason === 'done'){
-    els.verdict.textContent = 'Все трудные примеры проработаны — ошибок не осталось! 🎉';
+    els.verdict.textContent = tr('Все трудные примеры проработаны — ошибок не осталось! 🎉', 'All tricky problems are done — no mistakes left! 🎉');
     els.verdict.className = 'verdict g5';
     els.advice.hidden = true;
     els.advice.textContent = '';
@@ -1306,12 +1435,12 @@ function renderPairs(r){
   });
   function chip(p, cls){ return '<span class="' + cls + '">' + p[0] + ' ' + op + ' ' + p[1] + '</span>'; }
   els.pairsList.innerHTML =
-    '<div class="pairrow dim">Пример: □ ' + op + ' □ = ' + r.cur.r + '</div>' +
-    '<div class="pairrow"><span class="dim">Успел (' + found.length + '):</span> ' +
-      (found.length ? found.map(function(p){ return chip(p, 'foundpair'); }).join('') : '<span class="dim">ничего</span>') +
+    '<div class="pairrow dim">' + tr('Пример: ', 'Problem: ') + '□ ' + op + ' □ = ' + r.cur.r + '</div>' +
+    '<div class="pairrow"><span class="dim">' + tr('Успел (', 'Solved (') + found.length + '):</span> ' +
+      (found.length ? found.map(function(p){ return chip(p, 'foundpair'); }).join('') : '<span class="dim">' + tr('ничего', 'nothing') + '</span>') +
     '</div>' +
-    '<div class="pairrow"><span class="dim">Не успел (' + pend.length + '):</span> ' +
-      (pend.length ? pend.map(function(p){ return chip(p, 'misspair'); }).join('') : '<span class="none">всё найдено</span>') +
+    '<div class="pairrow"><span class="dim">' + tr('Не успел (', 'Not solved (') + pend.length + '):</span> ' +
+      (pend.length ? pend.map(function(p){ return chip(p, 'misspair'); }).join('') : '<span class="none">' + tr('всё найдено', 'all found') + '</span>') +
     '</div>';
   els.pairsCard.hidden = false;
 }
@@ -1366,7 +1495,7 @@ function renderHistory(){
   var h = loadJSON(K_HIST, []);
   histCache = Array.isArray(h) ? h : [];
   if(!histCache.length){
-    els.histList.innerHTML = '<div class="hrow dim">Пока пусто</div>';
+    els.histList.innerHTML = '<div class="hrow dim">' + tr('Пока пусто', 'Nothing yet') + '</div>';
     els.clearHist.style.display = 'none';
     return;
   }
@@ -1374,16 +1503,18 @@ function renderHistory(){
   els.histList.innerHTML = histCache.map(function(r, i){
     var total = r.ok + r.bad;
     var acc = total ? Math.round(r.ok / total * 100) + '%' : '—';
-    var mode = r.mode === 'timed' ? 'на время ' + fmt(r.psec || 0) : 'тренировка';
-    var desc = r.hard ? 'проработка трудных' : (r.from > 0 ? 'от ' + r.from + ' до ' + r.limit : 'до ' + r.limit) + ' · ' + opsLabel(r.ops);
+    var mode = r.mode === 'timed' ? tr('на время ', 'timed ') + fmt(r.psec || 0) : tr('тренировка', 'practice');
+    var desc = r.hard ? tr('проработка трудных', 'tricky problems practice') : (r.from > 0 ? tr('от ', 'from ') + r.from + tr(' до ', ' to ') + r.limit : tr('до ', 'up to ') + r.limit) + ' · ' + opsLabel(r.ops);
     var html = '<div class="hrow">' + fmtDate(r.t) + ' · ' + desc +
-      ' · ' + mode + ' · верно ' + r.ok + ', ' + r.bad + ' ' + plural(r.bad, 'ошибка', 'ошибки', 'ошибок') +
+      ' · ' + mode + ' · ' + tr('верно ', 'correct ') + r.ok + ', ' + r.bad + ' ' + pluralErr(r.bad) +
       ' · ' + acc;
     var hex = Array.isArray(r.hardEx) ? r.hardEx : [];
     if(hex.length){
+      var practice = hex.length === 1
+        ? tr('Проработать этот пример', 'Practice this example')
+        : tr('Проработать эти ', 'Practice these ') + hex.length + ' ' + pluralEx(hex.length);
       html += '<div class="exlist left">' + exChips(hex) + '</div>' +
-        '<button class="btn small hbtn" type="button" data-hi="' + i + '">Проработать эти ' +
-        hex.length + ' ' + plural(hex.length, 'пример', 'примера', 'примеров') + '</button>';
+        '<button class="btn small hbtn" type="button" data-hi="' + i + '">' + practice + '</button>';
     }
     return html + '</div>';
   }).join('');

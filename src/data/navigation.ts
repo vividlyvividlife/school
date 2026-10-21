@@ -1,3 +1,5 @@
+import type { Lang } from '../i18n/site';
+
 export interface NavItem {
   label: string;
   path?: string;
@@ -11,7 +13,7 @@ export function normalizePath(value: string): string {
   return path === '/' ? '/' : path + '/';
 }
 
-export const navigation: NavItem[] = [
+const navigationRu: NavItem[] = [
   {
     label: '2 класс',
     path: '/2-class/',
@@ -32,6 +34,17 @@ export const navigation: NavItem[] = [
           },
         ],
       },
+      {
+        label: 'Беларуская мова',
+        path: '/2-class/belaruskaya-mova/',
+        children: [
+          {
+            label: 'Пазакласнае чытанне',
+            path: '/2-class/belaruskaya-mova/pazaklasnae-chytanne/',
+            page: 'reading',
+          },
+        ],
+      },
       { label: 'Раздел в разработке', soon: true },
     ],
   },
@@ -41,6 +54,55 @@ export const navigation: NavItem[] = [
     children: [{ label: 'Раздел в разработке', soon: true }],
   },
 ];
+
+const navigationEn: NavItem[] = [
+  {
+    label: 'Grade 2',
+    path: '/en/grade-2/',
+    children: [
+      {
+        label: 'Math',
+        path: '/en/grade-2/math/',
+        children: [
+          {
+            label: 'Worksheets',
+            path: '/en/grade-2/math/worksheets/',
+            page: 'examples',
+          },
+          {
+            label: 'Practice',
+            path: '/en/grade-2/math/practice/',
+            page: 'trainer',
+          },
+        ],
+      },
+      {
+        label: 'Belarusian',
+        path: '/en/grade-2/belarusian/',
+        children: [
+          {
+            label: 'Extracurricular reading',
+            path: '/en/grade-2/belarusian/extracurricular-reading/',
+            page: 'reading',
+          },
+        ],
+      },
+      { label: 'Coming soon', soon: true },
+    ],
+  },
+  {
+    label: 'Grade 3',
+    path: '/en/grade-3/',
+    children: [{ label: 'Coming soon', soon: true }],
+  },
+];
+
+export const navigationByLang: Record<Lang, NavItem[]> = {
+  ru: navigationRu,
+  en: navigationEn,
+};
+
+export const navigation = navigationRu;
 
 export function findTrail(
   items: NavItem[],

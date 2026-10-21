@@ -1,5 +1,7 @@
 (function(){
 'use strict';
+var LANG = (document.documentElement.lang || 'ru').toLowerCase().indexOf('en') === 0 ? 'en' : 'ru';
+function tr(ru, en){ return LANG === 'en' ? en : ru; }
 var $ = function(s){ return document.querySelector(s); };
 var ui = {
   rows:$('#rows'), cols:$('#cols'), pages:$('#pages'), from:$('#from'), limit:$('#limit'),
@@ -12,9 +14,9 @@ function variantLabel(seed, pageIndex, pageCount){
 }
 function headHTML(pageIndex, pageCount, seed){
   return '<div class="sheet-head">' +
-      '<span class="wr">Имя<span class="line"></span></span>' +
-      '<span class="wr">Дата<span class="line short"></span></span>' +
-      '<span class="right">Вариант ' + variantLabel(seed, pageIndex, pageCount) + '</span>' +
+      '<span class="wr">' + tr('Имя', 'Name') + '<span class="line"></span></span>' +
+      '<span class="wr">' + tr('Дата', 'Date') + '<span class="line short"></span></span>' +
+      '<span class="right">' + tr('Вариант ', 'Variant ') + variantLabel(seed, pageIndex, pageCount) + '</span>' +
     '</div>';
 }
 function exHTML(item, mode){
@@ -64,7 +66,7 @@ function render(){
     miss: ui.miss.value, seed: ui.seed.value
   });
   if(!variant.sheetPages.length){
-    ui.sheets.innerHTML = '<div class="empty-note">Для выбранных границ действий нет примеров. Увеличьте «до» или выключите переход через 10.</div>';
+    ui.sheets.innerHTML = '<div class="empty-note">' + tr('Для выбранных границ действий нет примеров. Увеличьте «до» или выключите переход через 10.', 'No problems for the selected operation ranges. Increase “to” or turn off carry over 10.') + '</div>';
     return;
   }
   var maxDigits = Math.max(2, String(variant.limit).length);
@@ -89,7 +91,7 @@ function render(){
     variant.sheetPages.forEach(function(items, i){
       parts.push('<section class="sheet key" style="--keycols:' + kl.cols + ';--keyfs:' + kl.fontSizePt + 'pt">' +
         headHTML(i, variant.pages, variant.seed) +
-        '<h2>Ответы к варианту ' + variantLabel(variant.seed, i, variant.pages) + '</h2>' +
+        '<h2>' + tr('Ответы к варианту ', 'Answers for variant ') + variantLabel(variant.seed, i, variant.pages) + '</h2>' +
         '<div class="key-cols">' + items.map(keyHTML).join('') + '</div>' +
       '</section>');
     });

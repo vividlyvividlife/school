@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteCopy, type Lang } from '../../i18n/site';
+import '../../styles/examples.css';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = siteCopy[lang];
+const p = c.worksheet;
+const B = import.meta.env.BASE_URL;
+const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+const offlineFile = lang === 'en' ? 'offline/en-worksheets.html' : 'offline/razdatochnyy-material.html';
+const downloadName = lang === 'en' ? 'math-worksheets.html' : 'razdatochnyy-material.html';
+---
+
+<BaseLayout title={c.worksheetPage.title} page="examples" lang={lang}>
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="tgroups">
+      <section class="tgroup" aria-labelledby="tg-grid">
+        <div class="tgroup-title" id="tg-grid">{p.gridTitle}</div>
+        <div class="tgroup-body">
+          <label class="fld">{p.rows}<input id="rows" type="number" min="2" max="40" value="8"></label>
+          <label class="fld">{p.cols}<input id="cols" type="number" min="2" max="10" value="3"></label>
+          <label class="fld">{p.pages}<input id="pages" type="number" min="1" max="12" value="1"></label>
+        </div>
+      </section>
+
+      <section class="tgroup" aria-labelledby="tg-range">
+        <div class="tgroup-title" id="tg-range">{p.rangeTitle}</div>
+        <div class="tgroup-body">
+          <label class="fld">{p.from}<input id="from" type="number" min="0" max="100" value="0"></label>
+          <label class="fld">{p.to}<input id="limit" type="number" min="1" max="100" value="18"></label>
+        </div>
+      </section>
+
+      <section class="tgroup" aria-labelledby="tg-actions">
+        <div class="tgroup-title" id="tg-actions">{p.actions}</div>
+        <div class="tgroup-body">
+          <div class="ops" id="ops" role="group" aria-label={p.actions}>
+            <label class="op" title={p.addition}><input type="checkbox" value="add" checked aria-label={p.addition}><span aria-hidden="true">+</span></label>
+            <label class="op" title={p.subtraction}><input type="checkbox" value="sub" checked aria-label={p.subtraction}><span aria-hidden="true">−</span></label>
+            <label class="op" title={p.multiplication}><input type="checkbox" value="mul" aria-label={p.multiplication}><span aria-hidden="true">×</span></label>
+            <label class="op" title={p.division}><input type="checkbox" value="div" aria-label={p.division}><span aria-hidden="true">÷</span></label>
+          </div>
+          <label class="switch" title={p.carryTitle}>
+            <input id="carry" type="checkbox" checked>
+            <span class="track"></span>
+            <span>{p.carry}</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="tgroup" aria-labelledby="tg-missing">
+        <div class="tgroup-title" id="tg-missing">{p.missing}</div>
+        <div class="tgroup-body">
+          <label class="fld">
+            <select id="miss" aria-label={p.missing}>
+              <option value="r">{p.missR}</option>
+              <option value="a">{p.missA}</option>
+              <option value="b">{p.missB}</option>
+              <option value="ra">{p.missRA}</option>
+              <option value="rb">{p.missRB}</option>
+              <option value="ab">{p.missAB}</option>
+              <option value="all">{p.missAll}</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="tgroup" aria-labelledby="tg-answers">
+        <div class="tgroup-title" id="tg-answers">{p.answers}</div>
+        <div class="tgroup-body">
+          <label class="fld">
+            <select id="ans" aria-label={p.answers}>
+              <option value="none">{p.ansNone}</option>
+              <option value="faint">{p.ansFaint}</option>
+              <option value="key">{p.ansKey}</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="tgroup tgroup-variant" aria-labelledby="tg-variant">
+        <div class="tgroup-title" id="tg-variant">{p.variantTitle}</div>
+        <div class="tgroup-body">
+          <label class="fld">{p.variantKey}<input id="seed" type="number" min="1" value="1234"></label>
+          <button id="again" class="btn" type="button">{p.another}</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="tfoot">
+      <a class="btn" href={asset(offlineFile)} download={downloadName} title={c.trainer.offlineTitle} data-offline-hide>{c.trainer.offline}</a>
+      <div class="tfoot-main">
+        <button id="sheet-help" class="btn" type="button" aria-expanded="false" aria-controls="sheet-help-panel">{p.help}</button>
+        <button id="print" class="btn primary" type="button">{p.print}</button>
+      </div>
+      <div id="sheet-help-panel" class="help-panel" hidden>
+        <h2>{p.helpTitle}</h2>
+        <p>{p.help1}</p>
+        <p>{p.help2}</p>
+        <p>{p.help3}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="sheets"></div>
+<script is:inline src={asset('js/examples-logic.js') + '?v=' + jsVersion}></script>
+<script is:inline src={asset('js/examples-ui.js') + '?v=' + jsVersion}></script>
+</BaseLayout>

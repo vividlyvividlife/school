@@ -2,7 +2,9 @@
 import '../styles/site.css';
 import NavTree from '../components/NavTree.astro';
 import YandexMetrika from '../components/YandexMetrika.astro';
-import { findTrail, navigation, normalizePath } from '../data/navigation';
+import { findTrail, navigationByLang, normalizePath } from '../data/navigation';
+import { siteCopy, type Lang } from '../i18n/site';
+import { pagePairFor } from '../i18n/routes';
 
 interface Props {
   title: string;
@@ -11,9 +13,12 @@ interface Props {
   page?: string;
   crumbs?: string[];
   noindex?: boolean;
+  lang?: Lang;
 }
 
-const { title, description, keywords, page, crumbs, noindex = false } = Astro.props;
+const { title, description, keywords, page, crumbs, noindex = false, lang = 'ru' } = Astro.props;
+const c = siteCopy[lang];
+const otherLang: Lang = lang === 'ru' ? 'en' : 'ru';
 const B = import.meta.env.BASE_URL;
 const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
 
@@ -23,60 +28,81 @@ if (basePath && (route === basePath || route.startsWith(basePath + '/'))) {
   route = route.slice(basePath.length);
 }
 const current = normalizePath(route);
-const trail = findTrail(navigation, current) ?? [];
+const navItems = navigationByLang[lang];
+const trail = findTrail(navItems, current) ?? [];
 const active = trail[trail.length - 1];
 const crumbLabels = crumbs ?? (
   trail.length
     ? trail.map((item) => item.label)
-    : current === '/'
+    : current === '/' || current === '/en/'
       ? []
       : [title.split(' — ')[0]]
 );
 const pageKind = page ?? active?.page ?? 'home';
-
-const siteName = 'Учебные материалы';
-const defaultDescriptions: Record<string, string> = {
-  home: 'Учебные материалы для начальной школы: тренажёр по математике и раздаточные материалы для 2 класса.',
-  trainer: 'Тренажёр по математике для 2 класса: сложение, вычитание, умножение и деление. Настройте диапазон, перенос через десяток и режим тренировки.',
-  examples: 'Раздаточный материал по математике для 2 класса: примеры на сложение, вычитание, умножение и деление для печати на A4.'
-};
-const desc = description || defaultDescriptions[pageKind] || `Учебные материалы: ${title}.`;
-const keywordList = keywords || '2 класс, математика, начальная школа, тренажёр по математике, примеры по математике, раздаточный материал, сложение, вычитание, умножение, деление, печать, офлайн';
+const pageMeta = pageKind === 'trainer'
+  ? c.trainerPage
+  : pageKind === 'examples'
+    ? c.worksheetPage
+    : pageKind === 'reading'
+      ? c.readingPage
+      : c.homePage;
+const desc = description || pageMeta.description;
+const keywordList = keywords || pageMeta.keywords;
 const site = Astro.site ?? new URL('https://example.github.io');
-const rawPath = Astro.url.pathname || '/';
-const canonicalPath = basePath && !(rawPath === basePath || rawPath.startsWith(basePath + '/'))
-  ? basePath + (rawPath.startsWith('/') ? rawPath : `/${rawPath}`)
-  : rawPath;
-const canonical = new URL(canonicalPath, site).href;
+const abs = (path: string) => new URL(`${basePath}${path}`, site).href;
+const canonical = abs(current);
+const pair = pagePairFor(current);
+const ruUrl = abs(pair.ru);
+const enUrl = abs(pair.en);
+const switchTarget = lang === 'ru' ? pair.en : pair.ru;
 const robots = noindex ? 'noindex, nofollow' : 'index, follow';
 const googlebot = noindex
   ? 'noindex, nofollow'
   : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 const ogType = pageKind === 'home' ? 'website' : 'article';
+const resourceType = pageKind === 'trainer'
+  ? (lang === 'ru' ? 'Тренажёр' : 'Trainer')
+  : pageKind === 'reading'
+    ? (lang === 'ru' ? 'Материалы для чтения' : 'Reading materials')
+    : (lang === 'ru' ? 'Раздаточный материал' : 'Worksheet');
+const educationalLevel = lang === 'ru' ? '2 класс' : 'Grade 2';
+const subject = pageKind === 'reading'
+  ? (lang === 'ru' ? 'Беларуская мова' : 'Belarusian')
+  : (lang === 'ru' ? 'Математика' : 'Mathematics');
 const schema: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': pageKind === 'home' ? 'WebSite' : 'LearningResource',
   name: title,
   description: desc,
   url: canonical,
-  inLanguage: 'ru'
+  inLanguage: lang
 };
 if (pageKind !== 'home') {
   schema.isAccessibleForFree = true;
-  schema.learningResourceType = pageKind === 'trainer' ? 'Тренажёр' : 'Раздаточный материал';
-  schema.educationalLevel = '2 класс';
-  schema.about = { '@type': 'Thing', name: 'Математика' };
+  schema.learningResourceType = resourceType;
+  schema.educationalLevel = educationalLevel;
+  schema.about = { '@type': 'Thing', name: subject };
   schema.audience = { '@type': 'EducationalAudience', educationalRole: 'student' };
 }
 ---
 
 <!doctype html>
-<html lang="ru">
+<html lang={lang}>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#0f766e" />
-  <meta name="color-scheme" content="light" />
+  <meta name="color-scheme" content="light dark" />
+  <script is:inline>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem('theme'); } catch (e) {}
+      var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', dark ? '#0b1220' : '#0f766e');
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -84,17 +110,20 @@ if (pageKind !== 'home') {
   <title>{title}</title>
   <meta name="description" content={desc} />
   <meta name="keywords" content={keywordList} />
-  <meta name="author" content={siteName} />
+  <meta name="author" content={c.siteName} />
   <meta name="robots" content={robots} />
   <meta name="googlebot" content={googlebot} />
   <meta name="yandex" content={robots} />
   <meta name="bingbot" content={robots} />
   <link rel="canonical" href={canonical} />
-  <link rel="alternate" hreflang="ru" href={canonical} />
-  <link rel="alternate" hreflang="x-default" href={canonical} />
-  <meta property="og:locale" content="ru_RU" />
+  <link rel="alternate" hreflang="ru" href={ruUrl} />
+  <link rel="alternate" hreflang="en" href={enUrl} />
+  <link rel="alternate" hreflang="x-default" href={ruUrl} />
+  <link rel="sitemap" type="application/xml" href={url('sitemap.xml')} />
+  <meta property="og:locale" content={c.locale} />
+  <meta property="og:locale:alternate" content={c.localeAlternate} />
   <meta property="og:type" content={ogType} />
-  <meta property="og:site_name" content={siteName} />
+  <meta property="og:site_name" content={c.siteName} />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={desc} />
   <meta property="og:url" content={canonical} />
@@ -103,19 +132,19 @@ if (pageKind !== 'home') {
   <meta name="twitter:description" content={desc} />
   <script type="application/ld+json" set:html={JSON.stringify(schema)}></script>
 </head>
-<body data-page={pageKind}>
+<body data-page={pageKind} data-lang={lang}>
   <div class="site-shell">
-    <aside id="siteNav" class="site-nav" aria-label="Боковое меню">
+    <aside id="siteNav" class="site-nav" aria-label={c.sidebar}>
       <div class="site-navhead">
-        <a class="site-brand" href={url('')}>
+        <a class="site-brand" href={url(lang === 'en' ? 'en/' : '')}>
           <span class="logo" aria-hidden="true">∑</span>
-          <span>Учебные материалы</span>
+          <span>{c.siteName}</span>
         </a>
-        <button class="site-close" id="navClose" type="button" aria-label="Закрыть меню">×</button>
+        <button class="site-close" id="navClose" type="button" aria-label={c.closeMenu}>×</button>
       </div>
 
-      <nav aria-label="Меню разделов">
-        <NavTree items={navigation} current={current} />
+      <nav aria-label={c.sections}>
+        <NavTree items={navItems} current={current} />
       </nav>
     </aside>
 
@@ -127,18 +156,20 @@ if (pageKind !== 'home') {
           type="button"
           aria-expanded="false"
           aria-controls="siteNav"
-          aria-label="Открыть меню"
+          aria-label={c.openMenu}
+          data-label-open={c.openMenu}
+          data-label-close={c.closeMenu}
         >
           <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span>Меню</span>
+          <span>{c.menu}</span>
         </button>
 
-        <nav class="site-crumbs" aria-label="Хлебные крошки">
+        <nav class="site-crumbs" aria-label={c.breadcrumbs}>
           {crumbLabels.length === 0 ? (
-            <span aria-current="page">Главная</span>
+            <span aria-current="page">{c.homeLabel}</span>
           ) : (
             <>
-              <a href={url('')}>Главная</a>
+              <a href={url(lang === 'en' ? 'en/' : '')}>{c.homeLabel}</a>
               {crumbLabels.map((crumb, i) => (
                 <>
                   <span class="sep" aria-hidden="true">/</span>
@@ -148,6 +179,28 @@ if (pageKind !== 'home') {
             </>
           )}
         </nav>
+
+        <button
+          class="site-theme"
+          id="themeToggle"
+          type="button"
+          aria-label={c.themeDark}
+          title={c.themeDark}
+          data-label-dark={c.themeDark}
+          data-label-light={c.themeLight}
+        >
+          <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" /></svg>
+          <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
+        </button>
+
+        <a
+          class="site-lang"
+          href={url(switchTarget)}
+          hreflang={otherLang}
+          lang={otherLang}
+          aria-label={`${c.language}: ${c.switchTo}`}
+          title={c.switchTo}
+        >{c.switchCode}</a>
       </div>
 
       <div class="site-content">
@@ -166,11 +219,13 @@ if (pageKind !== 'home') {
       var scrim = document.getElementById('navScrim');
       var nav = document.getElementById('siteNav');
       if (!btn) return;
+      var openLabel = btn.getAttribute('data-label-open') || '';
+      var closeLabel = btn.getAttribute('data-label-close') || '';
 
       function set(open) {
         body.classList.toggle('site-nav-open', open);
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        btn.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+        btn.setAttribute('aria-label', open ? closeLabel : openLabel);
         if (open && close) close.focus();
         else btn.focus();
       }
@@ -188,6 +243,44 @@ if (pageKind !== 'home') {
           if (e.target.closest && e.target.closest('a')) set(false);
         });
       }
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var btn = document.getElementById('themeToggle');
+      if (!btn) return;
+      var media = window.matchMedia('(prefers-color-scheme: dark)');
+      var darkLabel = btn.getAttribute('data-label-dark') || '';
+      var lightLabel = btn.getAttribute('data-label-light') || '';
+      var meta = document.querySelector('meta[name="theme-color"]');
+
+      function stored() {
+        try { return localStorage.getItem('theme'); } catch (e) { return null; }
+      }
+
+      function apply(theme) {
+        var dark = theme === 'dark';
+        root.setAttribute('data-theme', dark ? 'dark' : 'light');
+        btn.setAttribute('aria-label', dark ? lightLabel : darkLabel);
+        btn.setAttribute('title', dark ? lightLabel : darkLabel);
+        btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+        if (meta) meta.setAttribute('content', dark ? '#0b1220' : '#0f766e');
+      }
+
+      btn.addEventListener('click', function () {
+        var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        apply(next);
+        try { localStorage.setItem('theme', next); } catch (e) {}
+      });
+      media.addEventListener('change', function (e) {
+        if (!stored()) apply(e.matches ? 'dark' : 'light');
+      });
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'theme') apply(e.newValue === 'dark' ? 'dark' : 'light');
+      });
+      apply(root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
     })();
   </script>
   <YandexMetrika />

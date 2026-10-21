@@ -1,0 +1,241 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteCopy, type Lang } from '../../i18n/site';
+import '../../styles/trainer.css';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = siteCopy[lang];
+const p = c.trainer;
+const B = import.meta.env.BASE_URL;
+const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+const offlineFile = lang === 'en' ? 'offline/en-practice.html' : 'offline/primery.html';
+const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
+---
+
+<BaseLayout title={c.trainerPage.title} page="trainer" lang={lang}>
+<section id="setup" class="screen active">
+  <div class="wrap">
+    <h1>{p.h1}</h1>
+    <p class="sub">{p.sub}</p>
+
+    <div class="setup-grid">
+      <div class="tile">
+        <div class="tile-title">{p.count}</div>
+        <div class="tile-body">
+          <div class="fields">
+            <label class="fld"><span>{p.from}</span><input id="from" class="num" type="number" inputmode="numeric" min="0" max="100" step="1" value="0"></label>
+            <label class="fld"><span>{p.to}</span><input id="limit" class="num" type="number" inputmode="numeric" min="1" max="100" step="1" value="18"></label>
+          </div>
+          <div class="chips" id="limitChips">
+            <button type="button" data-v="20">20</button>
+            <button type="button" data-v="30">30</button>
+            <button type="button" data-v="50">50</button>
+            <button type="button" data-v="100">100</button>
+          </div>
+          <div class="hint" id="rangeHint" hidden>{p.rangeHint}</div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-title">{p.actions}</div>
+        <div class="tile-body">
+          <div class="seg multi ops-seg" data-key="ops" data-multi="1">
+            <button type="button" data-v="add" title={p.addTitle}>+</button>
+            <button type="button" data-v="sub" title={p.subTitle}>−</button>
+            <button type="button" data-v="mul" title={p.mulTitle}>×</button>
+            <button type="button" data-v="div" title={p.divTitle}>÷</button>
+          </div>
+          <div class="hint">{p.actionsHint}</div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-title">{p.extra}</div>
+        <div class="tile-body">
+          <label class="switch">
+            <input id="carry" type="checkbox" checked>
+            <span class="track"></span>
+            <span>{p.carryOnly}</span>
+          </label>
+          <div class="hint" id="carryHint" hidden>{p.carryHint}</div>
+          <label class="switch">
+            <input id="trickZero" type="checkbox">
+            <span class="track"></span>
+            <span>{p.trickZero}</span>
+          </label>
+          <div class="hint" id="trickHint" hidden></div>
+        </div>
+      </div>
+
+      <div class="tile wide">
+        <div class="tile-title">{p.missing}</div>
+        <div class="tile-body">
+          <div class="seg miss-seg" data-key="miss">
+            <button type="button" data-v="r">{p.answerR}</button>
+            <button type="button" data-v="a">{p.answerA}</button>
+            <button type="button" data-v="b">{p.answerB}</button>
+            <button type="button" data-v="ab">{p.answerAB}</button>
+            <button type="button" data-v="rab">{p.answerRab}</button>
+            <button type="button" data-v="all">{p.answerAll}</button>
+          </div>
+          <div class="hint" id="missHint" hidden></div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-title">{p.answerWith}</div>
+        <div class="tile-body">
+          <div class="seg answer-seg" data-key="answer">
+            <button type="button" data-v="type">{p.answerType}</button>
+            <button type="button" data-v="tiles6">{p.answerTiles6}</button>
+            <button type="button" data-v="tiles9">{p.answerTiles9}</button>
+            <button type="button" data-v="tiles12">{p.answerTiles12}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-title">{p.mode}</div>
+        <div class="tile-body">
+          <div class="seg mode-seg" data-key="mode">
+            <button type="button" data-v="free">{p.modeFree}</button>
+            <button type="button" data-v="timed">{p.modeTimed}</button>
+          </div>
+          <div class="duration" id="timeRow">
+            <span class="duration-label">{p.duration}</span>
+            <span class="numitem"><input id="min" class="num" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{p.minUnit}</span></span>
+            <span class="numitem"><input id="sec" class="num" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{p.secUnit}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-title">{p.sound}</div>
+        <div class="tile-body">
+          <div class="sound-row">
+            <label class="switch">
+              <input id="sound" type="checkbox" checked>
+              <span class="track"></span>
+              <span>{p.soundLabel}</span>
+            </label>
+            <button id="soundTest" class="btn small" type="button">{p.soundTest}</button>
+          </div>
+          <div class="hint">{p.soundHint}</div>
+        </div>
+      </div>
+
+      <div class="tile wide start-tile">
+        <div class="tile-title">{p.setTitle}</div>
+        <div class="start-info">
+          <div class="hint" id="poolInfo">{p.poolInfo}</div>
+          <a class="btn small" href={asset(offlineFile)} download={downloadName} title={p.offlineTitle} data-offline-hide>{p.offline}</a>
+        </div>
+        <button id="startBtn" class="btn primary" type="button">{p.start}</button>
+      </div>
+
+      <div class="tile wide hard-tile">
+        <div class="tile-title">{p.hardTitle}</div>
+        <div class="tile-body hard-body">
+          <div class="hard-info">
+            <div class="hint" id="hardInfo">{p.hardInfo}</div>
+            <div id="hardList" class="exlist" hidden></div>
+          </div>
+          <div class="hard-actions">
+            <button id="hardBtn" class="btn" type="button" disabled>{p.hardBtn}</button>
+            <button id="clearHard" class="btn small" type="button" hidden>{p.clearHard}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tile history-tile">
+      <div class="tile-title">{p.history}</div>
+      <div class="tile-body hist-body">
+        <div id="histList" class="hist"></div>
+        <button id="clearHist" class="btn small" type="button">{p.clear}</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="gbar">
+    <button id="stopBtn" class="btn" type="button">{p.stop}</button>
+    <div class="gmeta" id="gInfo"></div>
+    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+  </div>
+  <div class="timewrap" id="timeWrap">
+    <div class="tbar"><div class="tfill" id="tfill"></div></div>
+    <div class="tclock" id="tclock">{p.time}</div>
+  </div>
+  <div class="playarea">
+    <div class="playgroup">
+      <div class="eqwrap" id="eqw">
+        <div class="eq" id="eq"></div>
+        <div class="cap" id="cap"></div>
+        <div class="pairinfo" id="pairInfo" hidden></div>
+      </div>
+      <div class="padwrap">
+        <div class="pad tiles" id="tiles" hidden></div>
+        <div class="pad" id="pad">
+          <button type="button" data-k="1">1</button>
+          <button type="button" data-k="2">2</button>
+          <button type="button" data-k="3">3</button>
+          <button type="button" data-k="4">4</button>
+          <button type="button" data-k="5">5</button>
+          <button type="button" data-k="6">6</button>
+          <button type="button" data-k="7">7</button>
+          <button type="button" data-k="8">8</button>
+          <button type="button" data-k="9">9</button>
+          <button type="button" data-k="del" class="del">⌫</button>
+          <button type="button" data-k="0">0</button>
+          <button type="button" data-k="ok" class="ok">OK</button>
+        </div>
+        <div class="pad trickanswer" id="trickAnswer" hidden>
+          <button id="trickBtn" type="button">{p.trick}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="results" class="screen">
+  <div class="wrap">
+    <h2 id="resTitle">{p.resTitle}</h2>
+    <div class="verdict" id="verdict"></div>
+    <div class="verdict" id="advice" hidden></div>
+    <div class="stats">
+      <div class="stat good"><b id="rOk">0</b><span>{p.rOk}</span></div>
+      <div class="stat bad"><b id="rBad">0</b><span>{p.rBad}</span></div>
+      <div class="stat"><b id="rAcc">—</b><span>{p.rAcc}</span></div>
+      <div class="stat"><b id="rAvg">—</b><span>{p.rAvg}</span></div>
+      <div class="stat"><b id="rFast">—</b><span>{p.rFast}</span></div>
+      <div class="stat"><b id="rSlow">—</b><span>{p.rSlow}</span></div>
+      <div class="stat"><b id="rDur">0:00</b><span>{p.rDur}</span></div>
+    </div>
+    <div class="card">
+      <div class="lbl" id="misTitle">{p.mistakes}</div>
+      <div id="misList" class="mis"></div>
+    </div>
+    <div class="card" id="pairsCard" hidden>
+      <div class="lbl">{p.pairs}</div>
+      <div id="pairsList" class="pairs"></div>
+    </div>
+    <div class="card" id="retryCard" hidden>
+      <div class="lbl">{p.retry}</div>
+      <div class="retryeq" id="retryEq"></div>
+      <div class="retrybtns" id="retryBtns"></div>
+    </div>
+    <div class="actions">
+      <button id="againBtn" class="btn primary" type="button">{p.again}</button>
+      <button id="toSetupBtn" class="btn" type="button">{p.settings}</button>
+    </div>
+  </div>
+</section>
+<script is:inline src={asset('js/trainer.js') + '?v=' + jsVersion}></script>
+</BaseLayout>
