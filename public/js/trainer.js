@@ -378,9 +378,8 @@ function updateHints(){
   els.rangeHint.textContent = parts.join(' ');
   var canTrick = S.ops.indexOf('div') >= 0 && S.miss === 'r';
   els.trickZero.disabled = !canTrick;
-  els.trickHint.textContent = canTrick
-    ? 'Изредка будет пример «число ÷ 0 = ?» — правильный ответ «нельзя».'
-    : 'Доступно для «÷», когда пропущен ответ.';
+  els.trickHint.hidden = true;
+  els.trickHint.textContent = '';
   var excl = S.miss === 'all' && muldiv;
   els.missHint.hidden = !excl;
   if(excl){
@@ -457,8 +456,7 @@ function start(){
   lastHardList = [];
 
   els.gInfo.textContent = rangeLabel() + ' · ' + opsLabel(S.ops) +
-    (S.carry && hasAddSub() ? ' · с переходом' + (hasMulDiv() ? ' (+, −)' : '') : '') +
-    (trickActive() ? ' · подвох ÷0' : '');
+    (S.carry && hasAddSub() ? ' · с переходом' + (hasMulDiv() ? ' (+, −)' : '') : '');
   els.pad.hidden = isTiles();
   els.tiles.hidden = !isTiles();
   els.tiles.innerHTML = '';
@@ -636,46 +634,97 @@ function nextExercise(){
 
 function startTrick(){
   var a = S.from + Math.floor(Math.random() * (S.limit - S.from + 1));
+  run.vmax = S.limit;
   run.typed = '';
   run.curDone = false;
   run.shownAt = Date.now();
   run.cur = { a: a, b: 0, r: null, op: '÷', miss: 'r', trick: true };
   els.eqw.className = 'eqwrap';
-  els.cap.textContent = 'Будь внимателен!';
+  els.cap.textContent = '';
   els.cap.className = 'cap';
   els.pairInfo.hidden = true;
   els.pairInfo.innerHTML = '';
   els.eq.innerHTML = '<span class="opd">' + a + '</span><span class="op">÷</span><span class="opd">0</span>' +
     '<span class="op">=</span><span class="slot empty" id="slot">?</span>';
-  els.pad.hidden = true;
-  els.tiles.hidden = true;
-  els.tiles.innerHTML = '';
-  els.trickAnswer.hidden = false;
   els.trickBtn.disabled = false;
+  if(isTiles()){
+    els.pad.hidden = true;
+    els.tiles.hidden = false;
+    els.trickAnswer.hidden = true;
+    buildTrickTiles();
+  } else {
+    els.pad.hidden = false;
+    els.tiles.hidden = true;
+    els.tiles.innerHTML = '';
+    els.trickAnswer.hidden = false;
+  }
 }
 
-function answerTrick(){
+function buildTrickTiles(){
+  var c = run.cur, n = tileCount();
+  var max = Math.max(S.limit, n - 1);
+  var nums = [0, c.a, c.a - 1, c.a + 1, Math.floor(c.a / 2), 1, 2, 3];
+  var opts = [];
+  nums = shuffle(nums);
+  nums.forEach(function(v){
+    if(opts.length < n - 1 && v >= 0 && v <= max && opts.indexOf(v) < 0) opts.push(v);
+  });
+  var guard = 0;
+  while(opts.length < n - 1 && guard++ < 500){
+    var v = Math.floor(Math.random() * (max + 1));
+    if(opts.indexOf(v) < 0) opts.push(v);
+  }
+  opts.push('none');
+  opts = shuffle(opts);
+  els.tiles.classList.toggle('dense', n >= 10);
+  els.tiles.innerHTML = opts.map(function(v){
+    return '<button type="button" data-v="' + v + '">' + (v === 'none' ? 'Нельзя' : v) + '</button>';
+  }).join('');
+}
+
+function judgeTrick(val, btn){
   if(!run || run.locked || run.done || !run.cur || !run.cur.trick) return;
+  unlockAudio();
   var cur = run.cur, dt = Date.now() - run.shownAt;
+  var correct = val === 'none';
   run.locked = true;
   run.curDone = true;
   run.tok++;
-  run.ok++;
   run.tSum += dt;
   run.tN++;
   if(!run.minMs || dt < run.minMs) run.minMs = dt;
   if(dt > run.maxMs) run.maxMs = dt;
-  run.records.push({ a: cur.a, b: 0, op: '÷', ms: dt, ok: true });
-  playCorrect();
-  els.trickBtn.disabled = true;
-  els.eqw.classList.add('ok');
-  els.cap.textContent = 'Верно! На 0 делить нельзя.';
-  els.cap.className = 'cap ok';
-  updateScore();
+  run.records.push({ a: cur.a, b: 0, op: '÷', ms: dt, ok: correct });
   var tok = run.tok;
-  setTimeout(function(){
-    if(run && run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
-  }, 900);
+  var good = isTiles() ? els.tiles.querySelector('button[data-v="none"]') : els.trickBtn;
+  each(els.tiles.querySelectorAll('button'), function(b){ b.disabled = true; });
+  els.trickBtn.disabled = true;
+  fillSlot(correct ? 'Нельзя' : val);
+  if(correct){
+    run.ok++;
+    playCorrect();
+    if(btn) btn.classList.add('correct');
+    els.eqw.classList.add('ok');
+    els.cap.textContent = 'Верно! На 0 делить нельзя.';
+    els.cap.className = 'cap ok';
+    setTimeout(function(){
+      if(run && run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
+    }, 900);
+  } else {
+    run.bad++;
+    playWrong();
+    run.mistakes.push({ q: cur.a + ' ÷ 0 = ?', ua: val });
+    if(navigator.vibrate){ try{ navigator.vibrate(80); }catch(e){} }
+    if(btn) btn.classList.add('wrong');
+    if(good) good.classList.add('correct');
+    els.eqw.classList.add('bad');
+    els.cap.textContent = 'Правильный ответ: Нельзя';
+    els.cap.className = 'cap bad';
+    setTimeout(function(){
+      if(run && run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
+    }, 1500);
+  }
+  updateScore();
 }
 
 function eqHtml(c, slot){
@@ -819,8 +868,18 @@ function submitPair(){
 }
 
 function press(k){
-  if(!run || run.locked || run.done || !run.cur || run.cur.trick) return;
+  if(!run || run.locked || run.done || !run.cur) return;
   unlockAudio();
+  if(run.cur.trick){
+    if(k === 'del'){ run.typed = run.typed.slice(0, -1); paint(); return; }
+    if(k === 'ok'){ if(run.typed !== '') judgeTrick(parseInt(run.typed, 10), null); return; }
+    var tmax = String(run.vmax).length;
+    if(run.typed.length >= tmax) return;
+    run.typed += k;
+    paint();
+    if(run.typed.length >= tmax) judgeTrick(parseInt(run.typed, 10), null);
+    return;
+  }
   if(run.cur.miss === 'all'){ pressAll(k); return; }
   if(k === 'del'){ run.typed = run.typed.slice(0, -1); paint(); return; }
   if(k === 'ok'){ submit(); return; }
@@ -1405,7 +1464,7 @@ els.trickZero.addEventListener('change', function(){
   saveSettings();
   updateHints();
 });
-els.trickBtn.addEventListener('click', answerTrick);
+els.trickBtn.addEventListener('click', function(){ judgeTrick('none', els.trickBtn); });
 
 each(document.querySelectorAll('.seg'), function(seg){
   seg.addEventListener('click', function(e){
@@ -1466,13 +1525,17 @@ els.tiles.addEventListener('pointerdown', function(e){
   var b = tileButton(e);
   if(!b) return;
   e.preventDefault();
-  judge(parseInt(b.getAttribute('data-v'), 10), b);
+  var v = b.getAttribute('data-v');
+  if(run && run.cur && run.cur.trick) judgeTrick(v === 'none' ? 'none' : parseInt(v, 10), b);
+  else judge(parseInt(v, 10), b);
 });
 els.tiles.addEventListener('click', function(e){
   if(e.detail !== 0 && window.PointerEvent) return;
   var b = tileButton(e);
   if(!b) return;
-  judge(parseInt(b.getAttribute('data-v'), 10), b);
+  var v = b.getAttribute('data-v');
+  if(run && run.cur && run.cur.trick) judgeTrick(v === 'none' ? 'none' : parseInt(v, 10), b);
+  else judge(parseInt(v, 10), b);
 });
 
 document.addEventListener('keydown', function(e){

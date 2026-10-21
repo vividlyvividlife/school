@@ -41,13 +41,13 @@ const jsVersion = Date.now().toString(36);
       </div>
 
       <div class="row">
-        <span class="lbl">Подвох</span>
+        <span class="lbl">Дополнительно</span>
         <label class="switch">
           <input id="trickZero" type="checkbox">
           <span class="track"></span>
           <span>Деление на 0</span>
         </label>
-        <div class="hint wide" id="trickHint">Изредка будет пример «число ÷ 0 = ?» — правильный ответ «нельзя».</div>
+        <div class="hint wide" id="trickHint" hidden></div>
       </div>
 
       <div class="row">
@@ -114,6 +114,7 @@ const jsVersion = Date.now().toString(36);
 
       <div class="row startrow">
         <div class="hint" id="poolInfo">В наборе: 36 примеров</div>
+        <a class="btn" href={asset('offline/primery.html')} download="primery.html" data-offline-hide>Скачать офлайн</a>
         <button id="startBtn" class="btn primary big" type="button">Начать</button>
       </div>
 
@@ -153,9 +154,6 @@ const jsVersion = Date.now().toString(36);
         <div class="pairinfo" id="pairInfo" hidden></div>
       </div>
       <div class="padwrap">
-        <div class="trickanswer" id="trickAnswer" hidden>
-          <button id="trickBtn" class="btn primary big" type="button">Нельзя</button>
-        </div>
         <div class="pad tiles" id="tiles" hidden></div>
         <div class="pad" id="pad">
           <button type="button" data-k="1">1</button>
@@ -170,6 +168,9 @@ const jsVersion = Date.now().toString(36);
           <button type="button" data-k="del" class="del">⌫</button>
           <button type="button" data-k="0">0</button>
           <button type="button" data-k="ok" class="ok">OK</button>
+        </div>
+        <div class="pad trickanswer" id="trickAnswer" hidden>
+          <button id="trickBtn" type="button">Нельзя</button>
         </div>
       </div>
     </div>

@@ -114,8 +114,7 @@ input.num:focus{outline:2px solid #99f6e4;border-color:var(--blue)}
 .cap.ok{color:var(--green)}
 .cap.bad{color:var(--red)}
 .padwrap{width:100%;max-width:440px}
-.trickanswer{display:flex;justify-content:center;padding:8px 0}
-.trickanswer .btn{width:min(100%,320px)}
+.trickanswer{display:flex;justify-content:center;padding:8px 0 0}
 .pad{display:flex;flex-wrap:wrap;gap:clamp(6px,1.6vw,12px);width:100%;max-width:420px;margin:0 auto}
 .pad button{flex:1 1 30%;height:56px;height:clamp(46px,9.2dvh,84px);font-size:clamp(19px,4.5dvh,30px);font-weight:600;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.07);padding:0}
 .pad button:active{background:#eef2f7}
@@ -126,6 +125,7 @@ input.num:focus{outline:2px solid #99f6e4;border-color:var(--blue)}
 .pad.tiles.dense button{flex:1 1 22%;font-size:clamp(16px,4dvh,26px)}
 .pad button.correct{background:var(--green-bg);border-color:var(--green);color:#15803d}
 .pad button.wrong{background:var(--red-bg);border-color:var(--red);color:#b91c1c}
+#trickAnswer button{flex:0 1 30%}
 [hidden]{display:none !important}
 
 .verdict{border-radius:14px;padding:14px 16px;font-size:15.5px;font-weight:600;line-height:1.45;margin:0 0 14px;box-shadow:0 2px 10px rgba(16,24,40,.08);background:#fff}
