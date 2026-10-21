@@ -1,15 +1,19 @@
 ---
 import '../styles/site.css';
 import NavTree from '../components/NavTree.astro';
+import YandexMetrika from '../components/YandexMetrika.astro';
 import { findTrail, navigation, normalizePath } from '../data/navigation';
 
 interface Props {
   title: string;
+  description?: string;
+  keywords?: string;
   page?: string;
   crumbs?: string[];
+  noindex?: boolean;
 }
 
-const { title, page, crumbs } = Astro.props;
+const { title, description, keywords, page, crumbs, noindex = false } = Astro.props;
 const B = import.meta.env.BASE_URL;
 const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
 
@@ -29,6 +33,41 @@ const crumbLabels = crumbs ?? (
       : [title.split(' — ')[0]]
 );
 const pageKind = page ?? active?.page ?? 'home';
+
+const siteName = 'Учебные материалы';
+const defaultDescriptions: Record<string, string> = {
+  home: 'Учебные материалы для начальной школы: тренажёр по математике и раздаточные материалы для 2 класса.',
+  trainer: 'Тренажёр по математике для 2 класса: сложение, вычитание, умножение и деление. Настройте диапазон, перенос через десяток и режим тренировки.',
+  examples: 'Раздаточный материал по математике для 2 класса: примеры на сложение, вычитание, умножение и деление для печати на A4.'
+};
+const desc = description || defaultDescriptions[pageKind] || `Учебные материалы: ${title}.`;
+const keywordList = keywords || '2 класс, математика, начальная школа, тренажёр по математике, примеры по математике, раздаточный материал, сложение, вычитание, умножение, деление, печать, офлайн';
+const site = Astro.site ?? new URL('https://example.github.io');
+const rawPath = Astro.url.pathname || '/';
+const canonicalPath = basePath && !(rawPath === basePath || rawPath.startsWith(basePath + '/'))
+  ? basePath + (rawPath.startsWith('/') ? rawPath : `/${rawPath}`)
+  : rawPath;
+const canonical = new URL(canonicalPath, site).href;
+const robots = noindex ? 'noindex, nofollow' : 'index, follow';
+const googlebot = noindex
+  ? 'noindex, nofollow'
+  : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+const ogType = pageKind === 'home' ? 'website' : 'article';
+const schema: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': pageKind === 'home' ? 'WebSite' : 'LearningResource',
+  name: title,
+  description: desc,
+  url: canonical,
+  inLanguage: 'ru'
+};
+if (pageKind !== 'home') {
+  schema.isAccessibleForFree = true;
+  schema.learningResourceType = pageKind === 'trainer' ? 'Тренажёр' : 'Раздаточный материал';
+  schema.educationalLevel = '2 класс';
+  schema.about = { '@type': 'Thing', name: 'Математика' };
+  schema.audience = { '@type': 'EducationalAudience', educationalRole: 'student' };
+}
 ---
 
 <!doctype html>
@@ -43,6 +82,26 @@ const pageKind = page ?? active?.page ?? 'home';
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
   <title>{title}</title>
+  <meta name="description" content={desc} />
+  <meta name="keywords" content={keywordList} />
+  <meta name="author" content={siteName} />
+  <meta name="robots" content={robots} />
+  <meta name="googlebot" content={googlebot} />
+  <meta name="yandex" content={robots} />
+  <meta name="bingbot" content={robots} />
+  <link rel="canonical" href={canonical} />
+  <link rel="alternate" hreflang="ru" href={canonical} />
+  <link rel="alternate" hreflang="x-default" href={canonical} />
+  <meta property="og:locale" content="ru_RU" />
+  <meta property="og:type" content={ogType} />
+  <meta property="og:site_name" content={siteName} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={desc} />
+  <meta property="og:url" content={canonical} />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={desc} />
+  <script type="application/ld+json" set:html={JSON.stringify(schema)}></script>
 </head>
 <body data-page={pageKind}>
   <div class="site-shell">
@@ -131,5 +190,6 @@ const pageKind = page ?? active?.page ?? 'home';
       }
     })();
   </script>
+  <YandexMetrika />
 </body>
 </html>

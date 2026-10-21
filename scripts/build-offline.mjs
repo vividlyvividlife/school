@@ -42,9 +42,13 @@ async function inlinePage(html) {
 
   return html
     .replace(/<a\b[^>]*\bdata-offline-hide\b[^>]*>[\s\S]*?<\/a>/gi, '')
+    .replace(/<!--\s*Yandex\.Metrika counter\s*-->[\s\S]*?<!--\s*\/Yandex\.Metrika counter\s*-->/gi, '')
+    .replace(/<script\b[^>]*\bdata-yandex-metrika\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<noscript\b[^>]*\bdata-yandex-metrika\b[^>]*>[\s\S]*?<\/noscript>/gi, '')
+    .replace(/<meta\b[^>]*\bname="(?:robots|googlebot|yandex|bingbot)"[^>]*>/gi, '')
     .replace(/<link\b[^>]*href="https:\/\/fonts\.(?:googleapis|gstatic)\.com[^"]*"[^>]*>/gi, '')
     .replace(/<link\b[^>]*rel="icon"[^>]*>/gi, '')
-    .replace('</head>', '<style>.site-nav,.site-top,.site-scrim{display:none!important}</style></head>');
+    .replace('</head>', '<meta name="robots" content="noindex, nofollow"><style>.site-nav,.site-top,.site-scrim{display:none!important}</style></head>');
 }
 
 for (const [src, out] of pages) {
