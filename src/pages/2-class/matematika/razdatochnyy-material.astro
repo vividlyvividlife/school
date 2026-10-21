@@ -57,7 +57,7 @@ const jsVersion = Date.now().toString(36);
     <input id="seed" type="number" min="1" value="1234">
   </label>
   <button id="again" class="btn" type="button">Другой вариант</button>
-  <a class="btn" href={asset('offline/razdatochnyy-material.html')} download="razdatochnyy-material.html" data-offline-hide>Скачать офлайн</a>
+  <a class="btn" href={asset('offline/razdatochnyy-material.html')} download="razdatochnyy-material.html" title="Файл будет работать без интернета" data-offline-hide>Скачать страницу для работы офлайн</a>
   <button id="print" class="btn primary" type="button">Печать</button>
   <button id="sheet-help" class="btn help-btn" type="button" aria-expanded="false" aria-controls="sheet-help-panel">Инструкция</button>
   <div id="sheet-help-panel" class="help-panel" hidden>
