@@ -915,7 +915,7 @@ function judge(val, tileBtn){
       tileBtn.classList.add('wrong');
       var good = els.tiles.querySelector('button[data-v="' + need + '"]');
       if(good) good.classList.add('correct');
-      fillSlot(need);
+      fillSlot(val);
     }
     els.eqw.classList.add('bad');
     els.cap.textContent = 'Правильный ответ: ' + need;
@@ -1438,15 +1438,40 @@ each(document.querySelectorAll('.seg'), function(seg){
   });
 });
 
+function padButton(e){
+  var b = e.target && e.target.closest ? e.target.closest('button[data-k]') : null;
+  return b && els.pad.contains(b) ? b : null;
+}
+function tileButton(e){
+  var b = e.target && e.target.closest ? e.target.closest('button[data-v]') : null;
+  return b && els.tiles.contains(b) ? b : null;
+}
+
+els.pad.addEventListener('pointerdown', function(e){
+  if(e.pointerType === 'mouse' && e.button !== 0) return;
+  var b = padButton(e);
+  if(!b) return;
+  e.preventDefault();
+  press(b.getAttribute('data-k'));
+});
 els.pad.addEventListener('click', function(e){
-  var b = e.target && e.target.closest ? e.target.closest('button') : null;
-  if(!b || !els.pad.contains(b)) return;
+  if(e.detail !== 0 && window.PointerEvent) return;
+  var b = padButton(e);
+  if(!b) return;
   press(b.getAttribute('data-k'));
 });
 
+els.tiles.addEventListener('pointerdown', function(e){
+  if(e.pointerType === 'mouse' && e.button !== 0) return;
+  var b = tileButton(e);
+  if(!b) return;
+  e.preventDefault();
+  judge(parseInt(b.getAttribute('data-v'), 10), b);
+});
 els.tiles.addEventListener('click', function(e){
-  var b = e.target && e.target.closest ? e.target.closest('button') : null;
-  if(!b || !els.tiles.contains(b)) return;
+  if(e.detail !== 0 && window.PointerEvent) return;
+  var b = tileButton(e);
+  if(!b) return;
   judge(parseInt(b.getAttribute('data-v'), 10), b);
 });
 
@@ -1485,13 +1510,13 @@ els.histList.addEventListener('click', function(e){
   if(!rec || !Array.isArray(rec.hardEx) || !rec.hardEx.length) return;
   startHardList(rec.hardEx, false);
 });
-els.retryBtns.addEventListener('click', function(e){
-  var b = e.target && e.target.closest ? e.target.closest('button[data-v]') : null;
+function retryAnswer(b){
   if(!b || !retryState || retryState.done) return;
   retryState.done = true;
+  var val = parseInt(b.getAttribute('data-v'), 10);
   var slot = $('retrySlot');
-  if(slot){ slot.textContent = String(retryState.need); slot.classList.remove('empty'); }
-  if(parseInt(b.getAttribute('data-v'), 10) === retryState.need){
+  if(slot){ slot.textContent = String(val); slot.classList.remove('empty'); }
+  if(val === retryState.need){
     b.classList.add('correct');
     playCorrect();
   } else {
@@ -1500,6 +1525,19 @@ els.retryBtns.addEventListener('click', function(e){
     var good = els.retryBtns.querySelector('button[data-v="' + retryState.need + '"]');
     if(good) good.classList.add('correct');
   }
+}
+els.retryBtns.addEventListener('pointerdown', function(e){
+  if(e.pointerType === 'mouse' && e.button !== 0) return;
+  var b = e.target && e.target.closest ? e.target.closest('button[data-v]') : null;
+  if(!b || !els.retryBtns.contains(b)) return;
+  e.preventDefault();
+  retryAnswer(b);
+});
+els.retryBtns.addEventListener('click', function(e){
+  if(e.detail !== 0 && window.PointerEvent) return;
+  var b = e.target && e.target.closest ? e.target.closest('button[data-v]') : null;
+  if(!b || !els.retryBtns.contains(b)) return;
+  retryAnswer(b);
 });
 
 loadSettings();

@@ -4,34 +4,45 @@ import '../../../styles/examples.css';
 
 const B = import.meta.env.BASE_URL;
 const asset = (p: string) => B.replace(/\/+$/, '') + '/' + p.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
 ---
 
 <BaseLayout title="Раздаточный материал — примеры для печати">
 <div class="toolbar">
   <label class="fld">Рядов
-    <input id="rows" type="number" min="2" max="20" value="8">
+    <input id="rows" type="number" min="2" max="40" value="8">
   </label>
   <label class="fld">Столбцов
-    <input id="cols" type="number" min="2" max="6" value="3">
+    <input id="cols" type="number" min="2" max="10" value="3">
   </label>
   <label class="fld">Страниц с примерами
     <input id="pages" type="number" min="1" max="12" value="1">
   </label>
-  <label class="fld">Тип примеров
-    <select id="type">
-      <option value="mix">Сложение и вычитание</option>
-      <option value="add">Только сложение +</option>
-      <option value="sub">Только вычитание −</option>
-    </select>
+  <label class="fld">Считать от
+    <input id="from" type="number" min="0" max="100" value="0">
   </label>
+  <label class="fld">до
+    <input id="limit" type="number" min="1" max="100" value="18">
+  </label>
+  <label class="chk" title="Только примеры с переходом через десяток">
+    <input id="carry" type="checkbox" checked> с переходом через 10
+  </label>
+  <div class="fld">Действия
+    <div class="ops" id="ops" role="group" aria-label="Действия">
+      <label title="Сложение"><input type="checkbox" value="add" checked aria-label="Сложение"> +</label>
+      <label title="Вычитание"><input type="checkbox" value="sub" checked aria-label="Вычитание"> −</label>
+      <label title="Умножение"><input type="checkbox" value="mul" aria-label="Умножение"> ×</label>
+      <label title="Деление"><input type="checkbox" value="div" aria-label="Деление"> ÷</label>
+    </div>
+  </div>
   <label class="fld">Что пропущено
     <select id="miss">
-      <option value="r">1. Ответ (8 + 5 = ___)</option>
-      <option value="a">2. Первое число (___ + 5 = 13)</option>
-      <option value="b">3. Второе число (8 + ___ = 13)</option>
-      <option value="ra">1 + 2: ответ и первое</option>
-      <option value="rb">1 + 3: ответ и второе</option>
-      <option value="ab">2 + 3: первое и второе</option>
+      <option value="r">Только ответ</option>
+      <option value="a">Только первое число</option>
+      <option value="b">Только второе число</option>
+      <option value="ra">Ответ и первое число</option>
+      <option value="rb">Ответ и второе число</option>
+      <option value="ab">Первое и второе число</option>
       <option value="all">Все три вида</option>
     </select>
   </label>
@@ -47,10 +58,16 @@ const asset = (p: string) => B.replace(/\/+$/, '') + '/' + p.replace(/^\/+/, '')
   </label>
   <button id="again" class="btn" type="button">Другой вариант</button>
   <button id="print" class="btn primary" type="button">Печать</button>
-  <div class="hint">Печатайте на A4, масштаб 100 %, поля по умолчанию. Каждый лист — отдельный вариант, примеры на листах не повторяются. Разных примеров одного типа всего 36, поэтому в очень больших вариантах повторы начнутся.</div>
+  <button id="sheet-help" class="btn help-btn" type="button" aria-expanded="false" aria-controls="sheet-help-panel">Инструкция</button>
+  <div id="sheet-help-panel" class="help-panel" hidden>
+    <h2>Как печатать</h2>
+    <p>Печатайте на A4, масштаб 100 %, поля по умолчанию.</p>
+    <p>Шрифт подстраивается под плотность; при 40×10 он будет мелким. В больших вариантах примеры могут повторяться.</p>
+    <p>Для ×/÷ «от/до» — это произведение или делимое; множители и делители 1–10. С двумя пропусками возможны несколько решений.</p>
+  </div>
 </div>
 
 <div id="sheets"></div>
-<script is:inline src={asset('js/examples-logic.js')}></script>
-<script is:inline src={asset('js/examples-ui.js')}></script>
+<script is:inline src={asset('js/examples-logic.js') + '?v=' + jsVersion}></script>
+<script is:inline src={asset('js/examples-ui.js') + '?v=' + jsVersion}></script>
 </BaseLayout>

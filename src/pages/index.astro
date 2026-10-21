@@ -61,7 +61,7 @@ const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, ''
     letter-spacing: 0.12em;
     text-transform: uppercase;
     font-weight: 700;
-    color: var(--site-blue);
+    color: var(--site-teal);
     background: #fff;
     border: 1px solid var(--site-line);
     border-radius: 999px;
@@ -105,7 +105,7 @@ const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, ''
     width: 0.28rem;
     height: 1.4em;
     border-radius: 99px;
-    background: var(--site-blue);
+    background: var(--site-teal);
     flex: 0 0 auto;
   }
   .subject-name {
@@ -152,23 +152,23 @@ const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, ''
   .arrow {
     flex: 0 0 auto;
     font-size: 1.1rem;
-    color: var(--site-blue);
+    color: var(--site-teal);
     transition: transform 0.15s;
   }
   .item:active {
     transform: translateY(0);
   }
   .item:focus-visible {
-    outline: 3px solid #bfdbfe;
+    outline: 3px solid var(--site-teal-line);
     outline-offset: 2px;
-    border-color: var(--site-blue);
+    border-color: var(--site-teal);
   }
   @media (hover: hover) {
     .item:hover {
-      border-color: var(--site-blue);
-      background: #eff6ff;
+      border-color: var(--site-teal);
+      background: var(--site-teal-soft);
       transform: translateY(-1px);
-      box-shadow: 0 10px 20px -16px rgba(37, 99, 235, 0.7);
+      box-shadow: 0 10px 20px -16px rgba(15, 118, 110, 0.5);
     }
     .item:hover .arrow {
       transform: translateX(3px);

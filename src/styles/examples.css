@@ -1,7 +1,7 @@
 :root{ --line:#1b1b1b; --ink:#1b1b1b; --muted:#6b7280; }
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; }
-body{ font-family:"Segoe UI",Roboto,Arial,sans-serif; background:#eef1f5; color:var(--ink); }
+body{ font-family:"Work Sans","Segoe UI",Roboto,Arial,sans-serif; background:#f8fafc; color:var(--ink); }
 
 /* ---------- панель управления (не печатается) ---------- */
 .toolbar{
@@ -15,17 +15,41 @@ body{ font-family:"Segoe UI",Roboto,Arial,sans-serif; background:#eef1f5; color:
   padding:5px 8px; border:1px solid #c6ccd6; border-radius:6px;
 }
 .fld input[type=number]{ width:84px; }
+.fld select:disabled{ opacity:.45; }
+.chk{
+  display:inline-flex; align-items:center; gap:6px; height:32px; white-space:nowrap;
+  font-size:14px; color:var(--ink); cursor:pointer;
+}
+.chk input{ width:auto; margin:0; padding:0; accent-color:#0f766e; }
+.chk input:disabled{ opacity:.4; }
+.ops{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; min-height:32px; padding:0 2px; }
+.ops label{ display:inline-flex; align-items:center; gap:4px; font-size:14px; color:var(--ink); white-space:nowrap; }
+.ops input{ margin:0; accent-color:#0f766e; }
 .btn{
   font:inherit; font-size:14px; font-weight:600; cursor:pointer;
   padding:8px 14px; border:1px solid #c6ccd6; border-radius:6px; background:#fff;
 }
 .btn:hover{ background:#f3f5f8; }
-.btn.primary{ background:#2563eb; border-color:#2563eb; color:#fff; }
-.btn.primary:hover{ background:#1d4ed8; }
-.hint{ font-size:12px; color:var(--muted); margin-left:auto; max-width:230px; line-height:1.35; }
+.btn.primary{ background:#0f766e; border-color:#0f766e; color:#fff; }
+.btn.primary:hover{ background:#115e59; }
+.help-btn{ margin-left:auto; }
+.help-panel{
+  position:absolute; top:calc(100% + 8px); right:16px; z-index:20;
+  width:min(430px, calc(100vw - 32px));
+  padding:14px 16px; border:1px solid #d7dbe2; border-radius:10px;
+  background:#fff; box-shadow:0 10px 30px rgba(16,24,40,.16);
+  color:#334155; font-size:13px; line-height:1.45;
+}
+.help-panel h2{ margin:0 0 8px; color:#0f172a; font-size:14px; }
+.help-panel p{ margin:6px 0; }
+.help-panel[hidden]{ display:none; }
 
 /* ---------- листы A4 ---------- */
 #sheets{ padding:12mm 0 20mm; display:flex; flex-direction:column; align-items:center; gap:8mm; }
+.empty-note{
+  max-width:520px; margin:24px auto; padding:16px 20px; text-align:center;
+  background:#fff; border:1px solid #d7dbe2; border-radius:8px; color:#475569;
+}
 .sheet{
   width:210mm; min-height:297mm; background:#fff; padding:12mm;
   box-shadow:0 2px 10px rgba(16,24,40,.12);
@@ -37,25 +61,32 @@ body{ font-family:"Segoe UI",Roboto,Arial,sans-serif; background:#eef1f5; color:
 .wr .line.short{ min-width:20mm; }
 .sheet-head .right{ margin-left:auto; color:#555; font-size:10pt; }
 
-/* строки примеров распределяются по всей высоте листа */
-.grid{ display:grid; grid-gap:5mm 4mm; gap:5mm 4mm; flex:1 1 auto; align-content:space-between; }
+/* строки делят высоту листа поровну — важно для 40 рядов */
+.grid{
+  display:grid; gap:0 3mm; flex:1 1 auto; min-height:0;
+  grid-auto-rows:minmax(0,1fr); align-items:baseline;
+  justify-content:flex-start;
+}
 
 .ex{
-  display:flex; align-items:baseline; justify-content:center; gap:.45em;
+  display:flex; align-items:baseline; justify-content:flex-start; gap:.35em;
   font-size:var(--fs,20pt); line-height:1.15; white-space:nowrap;
   font-variant-numeric:tabular-nums; break-inside:avoid;
 }
 .ex .num{ font-weight:600; }
 .ex .op,.ex .eq{ color:#333; }
 .blank{
-  display:inline-block; width:2.2ch; height:0.98em; vertical-align:-0.1em;
-  border:1.6px solid var(--line); border-radius:3px;
+  display:inline-block; width:3.6ch; height:0.98em; vertical-align:-0.1em;
+  border:1.4px solid var(--line); border-radius:3px;
 }
-.ansv{ color:#9aa2b1; font-weight:600; }
+.ansv{ color:#e6e8ec; font-weight:600; }
 
 /* ---------- лист с ответами ---------- */
 .sheet.key h2{ font-size:13pt; margin:0 0 5mm; color:#444; }
-.key-cols{ columns:4; column-gap:8mm; font-size:12pt; line-height:1.9; font-variant-numeric:tabular-nums; }
+.key-cols{
+  columns:var(--keycols,4); column-gap:6mm; font-size:var(--keyfs,12pt);
+  line-height:1.4; font-variant-numeric:tabular-nums;
+}
 .key-cols div{ break-inside:avoid; }
 
 /* ---------- печать ---------- */
