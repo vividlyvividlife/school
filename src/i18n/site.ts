@@ -105,9 +105,9 @@ export const siteCopy = {
       offlineTitle: 'Файл будет работать без интернета',
       start: 'Начать',
       hardTitle: 'Повторение',
-      hardInfo: 'Трудных примеров пока нет',
-      hardBtn: 'Проработка трудных примеров',
-      clearHard: 'Сбросить список трудных',
+      hardInfo: 'Ошибок для повторения пока нет',
+      hardBtn: 'Проработать ошибки',
+      clearHard: 'Сбросить список ошибок',
       history: 'История тренировок',
       clear: 'Очистить',
       stop: 'Стоп',
@@ -122,6 +122,9 @@ export const siteCopy = {
       rSlow: 'самый медленный',
       rDur: 'длительность',
       mistakes: 'Ошибки',
+      slowTitle: 'Медленные, но верные',
+      slowHint: 'Эти ответы верные, но медленнее остальных. Повтори их на скорость.',
+      slowBtn: 'Тренировка беглости',
       pairs: 'Пары чисел',
       retry: 'Не успел решить — выбери ответ',
       again: 'Ещё раз',
@@ -170,7 +173,10 @@ export const siteCopy = {
       sub: 'Творы для пазакласнага чытання з тэкстамі',
       read: 'Чытаць',
       print: 'Друкаваць',
-      textSoon: 'Тэкст хутка з’явіцца'
+      textSoon: 'Тэкст хутка з’явіцца',
+      bookKicker: 'Кніга',
+      bookTitle: 'Беларуская літаратура. Пазакласнае чытанне 2–4 класы',
+      bookOpen: 'Адкрыць PDF'
     }
   },
   en: {
@@ -271,9 +277,9 @@ export const siteCopy = {
       offlineTitle: 'The file will work without the internet',
       start: 'Start',
       hardTitle: 'Review',
-      hardInfo: 'No tricky problems yet',
-      hardBtn: 'Practice tricky problems',
-      clearHard: 'Clear tricky list',
+      hardInfo: 'No mistakes to review yet',
+      hardBtn: 'Practice mistakes',
+      clearHard: 'Clear mistakes list',
       history: 'Practice history',
       clear: 'Clear',
       stop: 'Stop',
@@ -288,6 +294,9 @@ export const siteCopy = {
       rSlow: 'slowest',
       rDur: 'duration',
       mistakes: 'Mistakes',
+      slowTitle: 'Slow but correct',
+      slowHint: 'These answers were correct but slower than the rest. Repeat them for speed.',
+      slowBtn: 'Fluency practice',
       pairs: 'Number pairs',
       retry: 'Not solved in time — choose an answer',
       again: 'Try again',
@@ -336,7 +345,10 @@ export const siteCopy = {
       sub: 'Extracurricular reading works with full texts.',
       read: 'Read',
       print: 'Print',
-      textSoon: 'Text coming soon'
+      textSoon: 'Text coming soon',
+      bookKicker: 'Book',
+      bookTitle: 'Belarusian Literature. Extracurricular Reading, Grades 2–4',
+      bookOpen: 'Open PDF'
     }
   }
 } as const;

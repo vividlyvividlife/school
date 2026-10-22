@@ -6,6 +6,7 @@ function each(list, fn){ Array.prototype.forEach.call(list, fn); }
 
 var LANG = (document.documentElement.lang || 'ru').toLowerCase().indexOf('en') === 0 ? 'en' : 'ru';
 function tr(ru, en){ return LANG === 'en' ? en : ru; }
+function answerText(v){ return v === 'none' ? tr('Нельзя', 'Undefined') : String(v); }
 function pluralEx(n){
   if(LANG === 'en') return n === 1 ? 'example' : 'examples';
   return plural(n, 'пример', 'примера', 'примеров');
@@ -25,7 +26,7 @@ var K_HIST = 'mathTrainer.history.v1';
 var K_HARD = 'mathTrainer.hard.v1';
 var HARD_MAX = 60;
 var screenName = 'setup';
-var run = null, lastHard = false, lastHardList = [], lastHardTrack = false, histCache = [], retryState = null;
+var run = null, lastHard = false, lastHardList = [], lastHardTrack = false, lastHardKind = 'review', histCache = [], retryState = null;
 
 var els = {
   limitChips: $('limitChips'), limitInput: $('limit'), fromInput: $('from'), carry: $('carry'),
@@ -36,11 +37,10 @@ var els = {
   histList: $('histList'), clearHist: $('clearHist'),
   gInfo: $('gInfo'), scoreOk: $('scoreOk'), scoreBad: $('scoreBad'),
   timeWrap: $('timeWrap'), tfill: $('tfill'), tclock: $('tclock'),
-  eqw: $('eqw'), eq: $('eq'), cap: $('cap'), pairInfo: $('pairInfo'), pad: $('pad'), tiles: $('tiles'), stopBtn: $('stopBtn'),
-  trickAnswer: $('trickAnswer'), trickBtn: $('trickBtn'),
+  eqw: $('eqw'), eq: $('eq'), cap: $('cap'), pairInfo: $('pairInfo'), pad: $('pad'), tiles: $('tiles'), stopBtn: $('stopBtn'), cannotBtn: $('cannotBtn'),
   verdict: $('verdict'), advice: $('advice'), resTitle: $('resTitle'), rOk: $('rOk'), rBad: $('rBad'), rAcc: $('rAcc'), rAvg: $('rAvg'), rFast: $('rFast'), rSlow: $('rSlow'), rDur: $('rDur'),
   hardInfo: $('hardInfo'), hardList: $('hardList'), hardBtn: $('hardBtn'), clearHard: $('clearHard'), soundTest: $('soundTest'),
-  misTitle: $('misTitle'), misList: $('misList'), pairsCard: $('pairsCard'), pairsList: $('pairsList'), retryCard: $('retryCard'), retryEq: $('retryEq'), retryBtns: $('retryBtns'), againBtn: $('againBtn'), toSetupBtn: $('toSetupBtn')
+  misTitle: $('misTitle'), misList: $('misList'), slowCard: $('slowCard'), slowTitle: $('slowTitle'), slowList: $('slowList'), slowBtn: $('slowBtn'), pairsCard: $('pairsCard'), pairsList: $('pairsList'), retryCard: $('retryCard'), retryEq: $('retryEq'), retryBtns: $('retryBtns'), againBtn: $('againBtn'), toSetupBtn: $('toSetupBtn')
 };
 
 function showScreen(n){
@@ -158,7 +158,7 @@ function makeDrawer(items){
     return rest.pop();
   };
 }
-/* перебор трудных примеров по кругу: повторно берём только те, что ещё не отработаны */
+/* перебор примеров для повторения по кругу: повторно берём только те, что ещё не отработаны */
 function makeHardDrawer(r, all){
   var queue = [];
   function alive(it){
@@ -257,7 +257,7 @@ function loadSettings(){
 }
 function saveSettings(){ saveJSON(K_SET, S); }
 
-/* трудные примеры: хранятся как {a,b,op,ts}, op — '+', '−', '×' или '÷' */
+/* ошибки для повторения: хранятся как {a,b,op,ts}, op — '+', '−', '×' или '÷' */
 function loadHard(){
   var h = loadJSON(K_HARD, []);
   if(!Array.isArray(h)) h = [];
@@ -295,8 +295,8 @@ function hardInfo(){
   var list = loadHard();
   var n = list.length;
   els.hardInfo.textContent = n
-    ? tr('Трудные примеры: ', 'Tricky problems: ') + n + ' ' + pluralEx(n)
-    : tr('Трудных примеров пока нет', 'No tricky problems yet');
+    ? tr('Для повторения: ', 'To review: ') + n + ' ' + pluralEx(n)
+    : tr('Ошибок для повторения пока нет', 'No mistakes to review yet');
   els.hardList.innerHTML = exChips(list.slice().sort(function(p, q){
     return p.a - q.a || p.b - q.b;
   }));
@@ -394,8 +394,12 @@ function updateHints(){
   els.rangeHint.textContent = parts.join(' ');
   var canTrick = S.ops.indexOf('div') >= 0 && S.miss === 'r';
   els.trickZero.disabled = !canTrick;
-  els.trickHint.hidden = true;
-  els.trickHint.textContent = '';
+  els.trickHint.hidden = !canTrick && !S.trickZero;
+  els.trickHint.textContent = !canTrick
+    ? tr('Доступно при делении, если пропущен ответ.', 'Available for division when the answer is missing.')
+    : S.trickZero
+      ? tr('Иногда в примерах встретится деление на 0. Верный ответ — «Нельзя».', 'Occasionally a problem will divide by zero. The correct answer is “Undefined”.')
+      : '';
   var excl = S.miss === 'all' && muldiv;
   els.missHint.hidden = !excl;
   if(excl){
@@ -461,10 +465,10 @@ function start(){
   if(!useOps.length) return;
 
   run = {
-    hardMode: false, trackHard: false,
+    hardMode: false, trackHard: false, listKind: 'review',
     next: null, ops: useOps, drawers: drawers,
     cur: null, typed: '', locked: false, done: false, tok: 0, vmax: S.limit,
-    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [],
+    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], slow: [],
     curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0,
     exCount: 0, trickAt: 5 + Math.floor(Math.random() * 4)
   };
@@ -483,10 +487,11 @@ function start(){
   nextExercise();
 }
 
-function startHard(){ startHardList(loadHard(), true); }
-function startHardList(h, track){
+function startHard(){ startHardList(loadHard(), true, 'review'); }
+function startHardList(h, track, kind){
   unlockAudio();
   if(!h.length){ hardInfo(); return; }
+  kind = kind === 'fluency' ? 'fluency' : 'review';
   S.min = clampInt(els.minInput.value, 0, 300, 2);
   S.sec = clampInt(els.secInput.value, 0, 59, 0);
   if(S.mode === 'timed' && S.min * 60 + S.sec < 5) S.sec = 5;
@@ -503,17 +508,19 @@ function startHardList(h, track){
   });
   if(!items.length){ hardInfo(); return; }
   run = {
-    hardMode: true, trackHard: !!track,
+    hardMode: true, trackHard: !!track, listKind: kind,
     next: null, ops: [], drawers: null, hardRemaining: items.slice(),
     cur: null, typed: '', locked: false, done: false, tok: 0, vmax: S.limit,
-    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [],
+    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], slow: [],
     curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0
   };
   run.next = makeHardDrawer(run, items);
   lastHard = true;
   lastHardList = h;
   lastHardTrack = !!track;
-  els.gInfo.textContent = tr('трудные', 'tricky') + ' · ' + items.length + ' ' + pluralEx(items.length) +
+  lastHardKind = kind;
+  els.gInfo.textContent = (kind === 'fluency' ? tr('беглость', 'fluency') : tr('ошибки', 'mistakes')) +
+    ' · ' + items.length + ' ' + pluralEx(items.length) +
     ' · ' + (S.mode === 'timed' ? tr('на время', 'timed') : tr('тренировка', 'practice'));
   els.pad.hidden = isTiles();
   els.tiles.hidden = !isTiles();
@@ -606,7 +613,7 @@ function nextExercise(){
   }
   var base = drawBase();
   if(!base){ finish('done'); return; }
-  els.trickAnswer.hidden = true;
+  els.cannotBtn.hidden = (S.miss === 'all' && !run.hardMode);
   els.pad.hidden = isTiles();
   els.tiles.hidden = !isTiles();
   els.tiles.innerHTML = '';
@@ -649,7 +656,8 @@ function nextExercise(){
 }
 
 function startTrick(){
-  var a = S.from + Math.floor(Math.random() * (S.limit - S.from + 1));
+  var lo = Math.max(1, S.from);
+  var a = lo + Math.floor(Math.random() * Math.max(1, S.limit - lo + 1));
   run.vmax = S.limit;
   run.typed = '';
   run.curDone = false;
@@ -662,17 +670,16 @@ function startTrick(){
   els.pairInfo.innerHTML = '';
   els.eq.innerHTML = '<span class="opd">' + a + '</span><span class="op">÷</span><span class="opd">0</span>' +
     '<span class="op">=</span><span class="slot empty" id="slot">?</span>';
-  els.trickBtn.disabled = false;
+  els.cannotBtn.hidden = false;
   if(isTiles()){
     els.pad.hidden = true;
     els.tiles.hidden = false;
-    els.trickAnswer.hidden = true;
+    els.tiles.innerHTML = '';
     buildTrickTiles();
   } else {
     els.pad.hidden = false;
     els.tiles.hidden = true;
     els.tiles.innerHTML = '';
-    els.trickAnswer.hidden = false;
   }
 }
 
@@ -681,7 +688,6 @@ function buildTrickTiles(){
   var max = Math.max(S.limit, n - 1);
   var nums = [0, c.a, c.a - 1, c.a + 1, Math.floor(c.a / 2), 1, 2, 3];
   var opts = [];
-  nums = shuffle(nums);
   nums.forEach(function(v){
     if(opts.length < n - 1 && v >= 0 && v <= max && opts.indexOf(v) < 0) opts.push(v);
   });
@@ -690,12 +696,14 @@ function buildTrickTiles(){
     var v = Math.floor(Math.random() * (max + 1));
     if(opts.indexOf(v) < 0) opts.push(v);
   }
+  opts.sort(function(x, y){ return x - y; });
   opts.push('none');
-  opts = shuffle(opts);
   els.tiles.classList.toggle('dense', n >= 10);
   els.tiles.innerHTML = opts.map(function(v){
-    return '<button type="button" data-v="' + v + '">' + (v === 'none' ? tr('Нельзя', 'Undefined') : v) + '</button>';
+    return '<button type="button" data-v="' + v + '"' + (v === 'none' ? ' class="cannot"' : '') + '>' +
+      (v === 'none' ? '<span class="tlabel">' + answerText(v) + '</span>' : answerText(v)) + '</button>';
   }).join('');
+  fitCannotTile();
 }
 
 function judgeTrick(val, btn){
@@ -712,10 +720,9 @@ function judgeTrick(val, btn){
   if(dt > run.maxMs) run.maxMs = dt;
   run.records.push({ a: cur.a, b: 0, op: '÷', ms: dt, ok: correct });
   var tok = run.tok;
-  var good = isTiles() ? els.tiles.querySelector('button[data-v="none"]') : els.trickBtn;
+  var good = isTiles() ? els.tiles.querySelector('button[data-v="none"]') : null;
   each(els.tiles.querySelectorAll('button'), function(b){ b.disabled = true; });
-  els.trickBtn.disabled = true;
-  fillSlot(correct ? tr('Нельзя', 'Undefined') : val);
+  fillSlot(answerText(val));
   if(correct){
     run.ok++;
     playCorrect();
@@ -886,6 +893,11 @@ function submitPair(){
 function press(k){
   if(!run || run.locked || run.done || !run.cur) return;
   unlockAudio();
+  if(k === 'none'){
+    if(run.cur.trick) judgeTrick('none', null);
+    else if(run.cur.miss !== 'all') judge('none', null);
+    return;
+  }
   if(run.cur.trick){
     if(k === 'del'){ run.typed = run.typed.slice(0, -1); paint(); return; }
     if(k === 'ok'){ if(run.typed !== '') judgeTrick(parseInt(run.typed, 10), null); return; }
@@ -918,25 +930,45 @@ function tileCount(){
 function buildTiles(){
   var c = run.cur;
   var correct = c.miss === 'r' ? c.r : c.miss === 'a' ? c.a : c.b;
-  var n = tileCount();
+  var n = tileCount(), numerics = n - 1;
   var max = Math.max(run.vmax, n - 1, correct);
   var opts = [correct];
   var cands = shuffle([correct - 1, correct + 1, correct - 2, correct + 2, correct - 10, correct + 10, 0, 1, 2, 3]);
   var i, guard;
-  for(i = 0; i < cands.length && opts.length < n; i++){
+  for(i = 0; i < cands.length && opts.length < numerics; i++){
     if(cands[i] >= 0 && cands[i] <= max && opts.indexOf(cands[i]) < 0) opts.push(cands[i]);
   }
   guard = 0;
-  while(opts.length < n && guard++ < 500){
+  while(opts.length < numerics && guard++ < 500){
     var v = Math.floor(Math.random() * (max + 1));
     if(opts.indexOf(v) < 0) opts.push(v);
   }
   opts.sort(function(x, y){ return x - y; });
+  opts.push('none');
   els.tiles.classList.toggle('dense', n >= 10);
   els.tiles.innerHTML = opts.map(function(v){
-    return '<button type="button" data-v="' + v + '">' + v + '</button>';
+    return '<button type="button" data-v="' + v + '"' + (v === 'none' ? ' class="cannot"' : '') + '>' +
+      (v === 'none' ? '<span class="tlabel">' + answerText(v) + '</span>' : answerText(v)) + '</button>';
   }).join('');
+  fitCannotTile();
 }
+
+function fitCannotTile(){
+  if(!els.tiles || els.tiles.hidden) return;
+  var btn = els.tiles.querySelector('button.cannot');
+  var label = btn && btn.querySelector('.tlabel');
+  if(!label) return;
+  var num = els.tiles.querySelector('button:not(.cannot)');
+  var base = num ? parseFloat(getComputedStyle(num).fontSize) : 20;
+  btn.style.fontSize = base + 'px';
+  var cs = getComputedStyle(btn);
+  var avail = btn.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  var textW = label.getBoundingClientRect().width;
+  if(avail > 0 && textW > avail - 2){
+    btn.style.fontSize = Math.max(9, Math.floor(base * (avail - 2) / textW)) + 'px';
+  }
+}
+window.addEventListener('resize', fitCannotTile);
 
 function fillSlot(v){
   var slot = $('slot');
@@ -968,9 +1000,11 @@ function judge(val, tileBtn){
   if(correct){
     run.ok++;
     playCorrect();
+    var hk = cur.a + cur.op + cur.b;
     if(run.trackHard){
-      var hk = cur.a + cur.op + cur.b;
       removeHard([hk]);
+      run.hardRemaining = run.hardRemaining.filter(function(x){ return x.k !== hk; });
+    } else if(run.listKind === 'fluency'){
       run.hardRemaining = run.hardRemaining.filter(function(x){ return x.k !== hk; });
     }
     if(tileBtn) tileBtn.classList.add('correct');
@@ -984,14 +1018,14 @@ function judge(val, tileBtn){
   } else {
     run.bad++;
     playWrong();
-    run.mistakes.push({ q: cur.a + ' ' + cur.op + ' ' + cur.b + ' = ' + cur.r, ua: val });
+    run.mistakes.push({ q: cur.a + ' ' + cur.op + ' ' + cur.b + ' = ' + cur.r, ua: answerText(val) });
     if(navigator.vibrate){ try{ navigator.vibrate(80); }catch(e){} }
     if(tileBtn){
       tileBtn.classList.add('wrong');
       var good = els.tiles.querySelector('button[data-v="' + need + '"]');
       if(good) good.classList.add('correct');
-      fillSlot(val);
     }
+    if(tileBtn || val === 'none') fillSlot(answerText(val));
     els.eqw.classList.add('bad');
     els.cap.textContent = tr('Правильный ответ: ', 'Correct answer: ') + need;
     els.cap.className = 'cap bad';
@@ -1002,18 +1036,40 @@ function judge(val, tileBtn){
   updateScore();
 }
 
-function collectHard(){
-  var recs = run.records;
-  if(recs.length < 4) return [];
-  var i, sum = 0;
-  for(i = 0; i < recs.length; i++) sum += recs[i].ms;
-  var thr = (sum / recs.length) * 1.2;
-  var now = Date.now(), out = [];
-  recs.forEach(function(r){
-    if(r.op === '÷' && r.b === 0) return;
-    if(r.ms >= thr) out.push({ a: r.a, b: r.b, op: r.op, ts: now });
+function collectErrors(){
+  var now = Date.now(), seen = {}, out = [];
+  function add(a, b, op){
+    if(op === '÷' && b === 0) return;
+    var k = a + op + b;
+    if(seen[k]) return;
+    seen[k] = 1;
+    out.push({ a: a, b: b, op: op, ts: now });
+  }
+  run.records.forEach(function(r){
+    if(!r.ok) add(r.a, r.b, r.op);
   });
-  addHard(out);
+  run.mistakes.forEach(function(m){
+    if(m.missed && typeof m.a === 'number') add(m.a, m.b, m.op);
+  });
+  return out;
+}
+
+function collectSlow(errors){
+  var out = [], okRecs = [], seen = {}, errSeen = {}, i, sum = 0;
+  errors.forEach(function(x){ errSeen[x.a + x.op + x.b] = 1; });
+  run.records.forEach(function(r){
+    if(r.ok) okRecs.push(r);
+  });
+  if(run.tN < 4 || !okRecs.length) return out;
+  for(i = 0; i < okRecs.length; i++) sum += okRecs[i].ms;
+  var avg = sum / okRecs.length, thr = avg * 1.2;
+  okRecs.forEach(function(r){
+    if(r.op === '÷' && r.b === 0) return;
+    var k = r.a + r.op + r.b;
+    if(errSeen[k] || seen[k] || r.ms < thr) return;
+    seen[k] = 1;
+    out.push({ a: r.a, b: r.b, op: r.op, ms: r.ms, avg: avg, ts: Date.now() });
+  });
   return out;
 }
 
@@ -1039,9 +1095,17 @@ function finish(reason){
   run.tok++;
   clearInterval(run.timer);
   var durSec = Math.round((Date.now() - run.start) / 1000);
-  var newHard = [];
-  if(!run.hardMode && S.miss !== 'all') newHard = collectHard();
   markUnsolved();
+  var newHard = [];
+  run.slow = [];
+  if(!run.hardMode && S.miss !== 'all'){
+    newHard = collectErrors();
+    addHard(newHard);
+    run.slow = collectSlow(newHard);
+  } else if(run.hardMode && run.listKind === 'fluency' && S.miss !== 'all'){
+    newHard = collectErrors();
+    addHard(newHard);
+  }
   showResults(reason, durSec);
   saveSession(durSec, newHard);
   if(run.hardMode && run.trackHard) lastHardList = loadHard();
@@ -1080,7 +1144,7 @@ var VERDICTS = [
     'Уже неплохо! Давай разберём ошибки вместе. 🧮',
     'Продолжай тренироваться — результат обязательно придёт! 🚀',
     'Больше половины верных — хорошая база! 🧱',
-    'Стараешься — это главное! Повтори трудные примеры. ✏️',
+    'Стараешься — это главное! Повтори ошибки. ✏️',
     'Счёт до 20 — дело привычки, а привычка — дело времени. 🕐',
     'Молодец, что не бросил! Разбери ошибки — и вперёд. 💡',
     'Растёшь! Ещё пара тренировок — и будет отлично. 🌱',
@@ -1147,7 +1211,7 @@ var EN_VERDICTS = [
     'Getting there! Let us go over the mistakes together. 🧮',
     'Keep practicing — results will definitely come! 🚀',
     'More than half correct — a good foundation! 🧱',
-    'Effort is what matters! Review the tricky problems. ✏️'
+    'Effort is what matters! Review your mistakes. ✏️'
   ]},
   { min:40, cls:'g2', msgs:[
     'Do not give up! Mistakes are normal — practice is what counts. 💪',
@@ -1367,7 +1431,9 @@ function showResults(reason, durSec){
     : reason === 'stop'
       ? tr('Тренировка остановлена', 'Training stopped')
       : reason === 'done'
-        ? tr('Все трудные примеры пройдены!', 'All tricky problems completed!')
+        ? (run.listKind === 'fluency'
+            ? tr('Все примеры на беглость пройдены!', 'All fluency problems completed!')
+            : tr('Все ошибки проработаны!', 'All mistakes reviewed!'))
         : tr('Готово', 'Done');
   var total = run.ok + run.bad;
   if(!total){
@@ -1415,11 +1481,14 @@ function showResults(reason, durSec){
   }
   renderPairs(run);
   if(reason === 'done'){
-    els.verdict.textContent = tr('Все трудные примеры проработаны — ошибок не осталось! 🎉', 'All tricky problems are done — no mistakes left! 🎉');
+    els.verdict.textContent = run.listKind === 'fluency'
+      ? tr('Все примеры на беглость пройдены — отличная скорость! 🎉', 'All fluency problems completed — great speed! 🎉')
+      : tr('Все ошибки проработаны — список пуст! 🎉', 'All mistakes reviewed — the list is empty! 🎉');
     els.verdict.className = 'verdict g5';
     els.advice.hidden = true;
     els.advice.textContent = '';
   }
+  renderSlow(run);
   renderRetry();
 }
 
@@ -1443,6 +1512,20 @@ function renderPairs(r){
       (pend.length ? pend.map(function(p){ return chip(p, 'misspair'); }).join('') : '<span class="none">' + tr('всё найдено', 'all found') + '</span>') +
     '</div>';
   els.pairsCard.hidden = false;
+}
+
+function renderSlow(r){
+  var slow = r.slow || [];
+  els.slowCard.hidden = !slow.length;
+  if(!slow.length){
+    els.slowList.innerHTML = '';
+    return;
+  }
+  els.slowTitle.textContent = tr('Медленные, но верные: ', 'Slow but correct: ') + slow.length;
+  els.slowList.innerHTML = slow.map(function(x){
+    return '<div class="mrow">' + x.a + ' ' + x.op + ' ' + x.b + ' = ' + computeResult(x.op, x.a, x.b) +
+      '<span class="ua slow">' + fmtSec1(x.ms) + '</span></div>';
+  }).join('');
 }
 
 function retryOptions(need, vmax){
@@ -1486,6 +1569,7 @@ function saveSession(durSec, hardEx){
   var hex = (hardEx || []).slice(0, 20).map(function(x){ return { a: x.a, b: x.b, op: x.op }; });
   h.unshift({
     t: Date.now(), mode: S.mode, limit: S.limit, from: S.from, ops: S.ops, carry: S.carry, hard: !!run.hardMode,
+    kind: run.listKind || 'review',
     dur: durSec, ok: run.ok, bad: run.bad, psec: S.min * 60 + S.sec, hardEx: hex
   });
   saveJSON(K_HIST, h.slice(0, 15));
@@ -1504,7 +1588,9 @@ function renderHistory(){
     var total = r.ok + r.bad;
     var acc = total ? Math.round(r.ok / total * 100) + '%' : '—';
     var mode = r.mode === 'timed' ? tr('на время ', 'timed ') + fmt(r.psec || 0) : tr('тренировка', 'practice');
-    var desc = r.hard ? tr('проработка трудных', 'tricky problems practice') : (r.from > 0 ? tr('от ', 'from ') + r.from + tr(' до ', ' to ') + r.limit : tr('до ', 'up to ') + r.limit) + ' · ' + opsLabel(r.ops);
+    var desc = r.hard
+      ? (r.kind === 'fluency' ? tr('беглость', 'fluency practice') : tr('проработка ошибок', 'mistake review'))
+      : (r.from > 0 ? tr('от ', 'from ') + r.from + tr(' до ', ' to ') + r.limit : tr('до ', 'up to ') + r.limit) + ' · ' + opsLabel(r.ops);
     var html = '<div class="hrow">' + fmtDate(r.t) + ' · ' + desc +
       ' · ' + mode + ' · ' + tr('верно ', 'correct ') + r.ok + ', ' + r.bad + ' ' + pluralErr(r.bad) +
       ' · ' + acc;
@@ -1595,7 +1681,6 @@ els.trickZero.addEventListener('change', function(){
   saveSettings();
   updateHints();
 });
-els.trickBtn.addEventListener('click', function(){ judgeTrick('none', els.trickBtn); });
 
 each(document.querySelectorAll('.seg'), function(seg){
   seg.addEventListener('click', function(e){
@@ -1636,6 +1721,7 @@ function tileButton(e){
   var b = e.target && e.target.closest ? e.target.closest('button[data-v]') : null;
   return b && els.tiles.contains(b) ? b : null;
 }
+function tileVal(v){ return v === 'none' ? 'none' : parseInt(v, 10); }
 
 els.pad.addEventListener('pointerdown', function(e){
   if(e.pointerType === 'mouse' && e.button !== 0) return;
@@ -1656,17 +1742,17 @@ els.tiles.addEventListener('pointerdown', function(e){
   var b = tileButton(e);
   if(!b) return;
   e.preventDefault();
-  var v = b.getAttribute('data-v');
-  if(run && run.cur && run.cur.trick) judgeTrick(v === 'none' ? 'none' : parseInt(v, 10), b);
-  else judge(parseInt(v, 10), b);
+  var v = tileVal(b.getAttribute('data-v'));
+  if(run && run.cur && run.cur.trick) judgeTrick(v, b);
+  else judge(v, b);
 });
 els.tiles.addEventListener('click', function(e){
   if(e.detail !== 0 && window.PointerEvent) return;
   var b = tileButton(e);
   if(!b) return;
-  var v = b.getAttribute('data-v');
-  if(run && run.cur && run.cur.trick) judgeTrick(v === 'none' ? 'none' : parseInt(v, 10), b);
-  else judge(parseInt(v, 10), b);
+  var v = tileVal(b.getAttribute('data-v'));
+  if(run && run.cur && run.cur.trick) judgeTrick(v, b);
+  else judge(v, b);
 });
 
 document.addEventListener('keydown', function(e){
@@ -1689,9 +1775,13 @@ els.startBtn.addEventListener('click', start);
 els.hardBtn.addEventListener('click', startHard);
 els.clearHard.addEventListener('click', function(){ saveHard([]); hardInfo(); });
 els.stopBtn.addEventListener('click', function(){ finish('stop'); });
+els.slowBtn.addEventListener('click', function(){
+  if(!run || !run.slow || !run.slow.length) return;
+  startHardList(run.slow, false, 'fluency');
+});
 els.againBtn.addEventListener('click', function(){ againAction(); });
 function againAction(){
-  if(lastHard && lastHardList.length){ startHardList(lastHardList, lastHardTrack); return; }
+  if(lastHard && lastHardList.length){ startHardList(lastHardList, lastHardTrack, lastHardKind); return; }
   if(lastHard){ showScreen('setup'); renderHistory(); hardInfo(); return; }
   start();
 }
@@ -1702,7 +1792,7 @@ els.histList.addEventListener('click', function(e){
   if(!b) return;
   var rec = histCache[parseInt(b.getAttribute('data-hi'), 10)];
   if(!rec || !Array.isArray(rec.hardEx) || !rec.hardEx.length) return;
-  startHardList(rec.hardEx, false);
+  startHardList(rec.hardEx, false, 'review');
 });
 function retryAnswer(b){
   if(!b || !retryState || retryState.done) return;

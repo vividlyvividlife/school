@@ -195,9 +195,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
           <button type="button" data-k="del" class="del">⌫</button>
           <button type="button" data-k="0">0</button>
           <button type="button" data-k="ok" class="ok">OK</button>
-        </div>
-        <div class="pad trickanswer" id="trickAnswer" hidden>
-          <button id="trickBtn" type="button">{p.trick}</button>
+          <button id="cannotBtn" type="button" data-k="none" class="cannot">{p.trick}</button>
         </div>
       </div>
     </div>
@@ -221,6 +219,14 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
     <div class="card">
       <div class="lbl" id="misTitle">{p.mistakes}</div>
       <div id="misList" class="mis"></div>
+    </div>
+    <div class="card" id="slowCard" hidden>
+      <div class="lbl" id="slowTitle">{p.slowTitle}</div>
+      <div class="hint">{p.slowHint}</div>
+      <div id="slowList" class="mis"></div>
+      <div class="slow-actions">
+        <button id="slowBtn" class="btn primary" type="button">{p.slowBtn}</button>
+      </div>
     </div>
     <div class="card" id="pairsCard" hidden>
       <div class="lbl">{p.pairs}</div>
