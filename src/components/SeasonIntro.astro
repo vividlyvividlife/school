@@ -1,0 +1,221 @@
+---
+import leafMaple from '../assets/fx/leaf-maple.webp';
+import leafOak from '../assets/fx/leaf-oak.webp';
+import flake from '../assets/fx/flake.webp';
+
+type Season = 'autumn' | 'winter' | 'spring';
+interface Props {
+  season: Season;
+}
+
+const { season } = Astro.props;
+
+const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+const leaves = Array.from({ length: 14 }, () => ({
+  x: rnd(2, 96),
+  dur: rnd(3.8, 5.6),
+  delay: rnd(0, 1.3),
+  size: rnd(26, 54),
+  drift: rnd(-16, 16),
+  sway: rnd(2.6, 4.2),
+  spin: rnd(3, 6),
+  img: pick([leafMaple, leafOak]),
+  hue: rnd(-14, 18)
+}));
+
+const flakes = Array.from({ length: 32 }, () => ({
+  x: rnd(0, 100),
+  dur: rnd(4, 6.2),
+  delay: rnd(0, 1.6),
+  size: rnd(9, 30),
+  drift: rnd(-14, 14),
+  sway: rnd(2.8, 4.6),
+  op: rnd(0.55, 0.95),
+  blur: rnd(0, 1.4),
+  sprite: Math.random() < 0.38
+}));
+
+const drops = Array.from({ length: 28 }, () => ({
+  x: rnd(-4, 104),
+  dur: rnd(0.9, 1.5),
+  delay: rnd(0, 3.2),
+  h: rnd(12, 26),
+  op: rnd(0.35, 0.7)
+}));
+---
+
+<div class="sfx" data-season={season} aria-hidden="true">
+  {season === 'autumn' && leaves.map((l) => (
+    <span class="sfx-p" style={`--x:${l.x}%;--dur:${l.dur}s;--delay:${l.delay}s;--drift:${l.drift}vw`}>
+      <span class="sfx-i sfx-leaf" style={`--size:${l.size}px;--sway:${l.sway}s;--spin:${l.spin}s;--hue:${l.hue}deg`}>
+        <img src={l.img.src} width={l.img.width} height={l.img.height} alt="" decoding="async" />
+      </span>
+    </span>
+  ))}
+
+  {season === 'winter' && flakes.map((f) => (
+    <span class="sfx-p" style={`--x:${f.x}%;--dur:${f.dur}s;--delay:${f.delay}s;--drift:${f.drift}vw`}>
+      <span class="sfx-i" style={`--size:${f.size}px;--sway:${f.sway}s;--op:${f.op}`}>
+        {f.sprite
+          ? <img class="sfx-flake-img" src={flake.src} width={flake.width} height={flake.height} alt="" style={`filter:blur(${f.blur}px)`} decoding="async" />
+          : <span class="sfx-dot" style={`filter:blur(${f.blur}px)`}></span>}
+      </span>
+    </span>
+  ))}
+
+  {season === 'spring' && (
+    <>
+      <span class="fx-sun" aria-hidden="true"></span>
+      <span class="fx-bow" aria-hidden="true"></span>
+      {drops.map((d) => (
+        <span class="sfx-p sfx-drop-p" style={`--x:${d.x}%;--dur:${d.dur}s;--delay:${d.delay}s`}>
+          <span class="fx-drop" style={`height:${d.h}px;--op:${d.op}`}></span>
+        </span>
+      ))}
+    </>
+  )}
+</div>
+
+<style>
+  .sfx {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    overflow: hidden;
+    animation: sfx-out 0.9s ease-in 6.9s forwards;
+  }
+  .sfx-p {
+    position: absolute;
+    top: -14%;
+    left: var(--x);
+    will-change: transform;
+    animation: sfx-fall var(--dur) linear var(--delay) forwards;
+  }
+  .sfx-i {
+    display: block;
+    opacity: var(--op, 1);
+    transform-origin: center;
+    animation: sfx-sway var(--sway) ease-in-out var(--delay) infinite alternate;
+  }
+
+  .sfx-leaf img {
+    display: block;
+    width: var(--size);
+    height: auto;
+    filter: hue-rotate(var(--hue)) drop-shadow(0 2px 3px rgba(60, 30, 10, 0.18));
+    animation: sfx-spin var(--spin) linear infinite;
+  }
+
+  .sfx-dot {
+    display: block;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%,
+      #ffffff 0 40%,
+      rgba(255, 255, 255, 0.85) 55%,
+      rgba(220, 236, 255, 0.45) 74%,
+      rgba(255, 255, 255, 0) 100%);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.55);
+  }
+  .sfx-flake-img {
+    display: block;
+    width: var(--size);
+    height: auto;
+  }
+
+  .fx-sun {
+    position: absolute;
+    top: 4%;
+    left: 8%;
+    width: clamp(160px, 30vw, 340px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%,
+      rgba(255, 249, 224, 0.55) 0 18%,
+      rgba(255, 236, 170, 0.34) 34%,
+      rgba(255, 224, 140, 0.14) 55%,
+      rgba(255, 224, 140, 0) 72%);
+    filter: blur(6px);
+    animation: sfx-sun 7.6s ease-out forwards;
+  }
+  .fx-bow {
+    position: absolute;
+    left: 50%;
+    top: 8vh;
+    width: 300vw;
+    height: 300vw;
+    margin-left: -150vw;
+    border-radius: 50%;
+    background: radial-gradient(circle closest-side at 50% 50%,
+      transparent 0 82%,
+      rgba(255, 118, 118, 0.26) 85%,
+      rgba(255, 176, 92, 0.25) 87.5%,
+      rgba(255, 226, 110, 0.24) 90%,
+      rgba(132, 210, 132, 0.24) 92.5%,
+      rgba(112, 164, 244, 0.24) 95%,
+      rgba(168, 128, 228, 0.22) 97.5%,
+      transparent 100%);
+    filter: blur(12px) saturate(1.05);
+    opacity: 0;
+    animation: sfx-bow 7.6s ease-out forwards;
+  }
+  .sfx-drop-p {
+    top: -10%;
+    animation: sfx-fall var(--dur) linear var(--delay) infinite;
+  }
+  .fx-drop {
+    display: block;
+    width: 2px;
+    border-radius: 2px;
+    opacity: var(--op);
+    background: linear-gradient(to bottom, rgba(180, 215, 255, 0), rgba(150, 200, 255, 0.9));
+    transform: rotate(9deg);
+  }
+
+  @keyframes sfx-fall {
+    from { transform: translate3d(0, -14vh, 0); }
+    to { transform: translate3d(var(--drift), 118vh, 0); }
+  }
+  @keyframes sfx-sway {
+    from { transform: translateX(-16px); }
+    to { transform: translateX(16px); }
+  }
+  @keyframes sfx-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes sfx-sun {
+    0% { opacity: 0; }
+    8% { opacity: 1; }
+    45% { opacity: 1; }
+    58% { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  @keyframes sfx-bow {
+    0% { opacity: 0; }
+    44% { opacity: 0; }
+    62% { opacity: 0.8; }
+    80% { opacity: 0.8; }
+    96% { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  @keyframes sfx-out {
+    to { opacity: 0; visibility: hidden; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sfx { display: none; }
+  }
+  @media print {
+    .sfx { display: none; }
+  }
+</style>
+
+<script>
+  const sfx = document.querySelector('.sfx');
+  if (sfx) setTimeout(() => sfx.remove(), 8000);
+</script>

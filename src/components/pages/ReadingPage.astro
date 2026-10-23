@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Decor from '../Decor.astro';
+import SeasonIntro from '../SeasonIntro.astro';
 import { siteCopy, type Lang } from '../../i18n/site';
 import { readingWorksBySeason, type ReadingSeason } from '../../data/reading';
 
@@ -19,6 +20,7 @@ const blocks = (text: string) => text.split(/\n{2,}/);
 
 <BaseLayout title={head.pageTitle} description={head.pageDescription} page="reading" lang={lang}>
   <Decor variant="reading" season={season} />
+  <SeasonIntro season={season} />
   <main class="reading">
     <header class="rhero">
       <div class="rkicker">{head.kicker}</div>
