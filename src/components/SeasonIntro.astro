@@ -2,6 +2,7 @@
 import leafMaple from '../assets/fx/leaf-maple.webp';
 import leafOak from '../assets/fx/leaf-oak.webp';
 import flake from '../assets/fx/flake.webp';
+import bee from '../assets/fx/bee.webp';
 
 type Season = 'autumn' | 'winter' | 'spring';
 interface Props {
@@ -37,6 +38,15 @@ const flakes = Array.from({ length: 32 }, () => ({
   sprite: Math.random() < 0.38
 }));
 
+const bees = Array.from({ length: 5 }, (_, i) => ({
+  y: rnd(10, 66),
+  dur: rnd(5.2, 6.8),
+  delay: rnd(0.4, 2.6),
+  size: rnd(34, 58),
+  bob: rnd(0.9, 1.6),
+  right: i % 2 === 0
+}));
+
 const drops = Array.from({ length: 28 }, () => ({
   x: rnd(-4, 104),
   dur: rnd(0.9, 1.5),
@@ -68,7 +78,13 @@ const drops = Array.from({ length: 28 }, () => ({
   {season === 'spring' && (
     <>
       <span class="fx-sun" aria-hidden="true"></span>
-      <span class="fx-bow" aria-hidden="true"></span>
+      {bees.map((b) => (
+        <span class={`sfx-bee-p ${b.right ? 'bee-go-r' : 'bee-go-l'}`} style={`--y:${b.y}%;--dur:${b.dur}s;--delay:${b.delay}s`}>
+          <span class="sfx-bee" style={`--size:${b.size}px;--bob:${b.bob}s`}>
+            <img src={bee.src} width={bee.width} height={bee.height} alt="" decoding="async" style={b.right ? 'transform:scaleX(-1)' : undefined} />
+          </span>
+        </span>
+      ))}
       {drops.map((d) => (
         <span class="sfx-p sfx-drop-p" style={`--x:${d.x}%;--dur:${d.dur}s;--delay:${d.delay}s`}>
           <span class="fx-drop" style={`height:${d.h}px;--op:${d.op}`}></span>
@@ -142,26 +158,27 @@ const drops = Array.from({ length: 28 }, () => ({
     filter: blur(6px);
     animation: sfx-sun 7.6s ease-out forwards;
   }
-  .fx-bow {
+  .sfx-bee-p {
     position: absolute;
-    left: 50%;
-    top: 8vh;
-    width: 300vw;
-    height: 300vw;
-    margin-left: -150vw;
-    border-radius: 50%;
-    background: radial-gradient(circle closest-side at 50% 50%,
-      transparent 0 82%,
-      rgba(255, 118, 118, 0.26) 85%,
-      rgba(255, 176, 92, 0.25) 87.5%,
-      rgba(255, 226, 110, 0.24) 90%,
-      rgba(132, 210, 132, 0.24) 92.5%,
-      rgba(112, 164, 244, 0.24) 95%,
-      rgba(168, 128, 228, 0.22) 97.5%,
-      transparent 100%);
-    filter: blur(12px) saturate(1.05);
-    opacity: 0;
-    animation: sfx-bow 7.6s ease-out forwards;
+    top: var(--y);
+    left: 0;
+    will-change: transform;
+  }
+  .bee-go-r {
+    animation: sfx-cross-r var(--dur) linear var(--delay) both;
+  }
+  .bee-go-l {
+    animation: sfx-cross-l var(--dur) linear var(--delay) both;
+  }
+  .sfx-bee {
+    display: block;
+    animation: sfx-bob var(--bob) ease-in-out infinite alternate;
+  }
+  .sfx-bee img {
+    display: block;
+    width: var(--size);
+    height: auto;
+    filter: drop-shadow(0 3px 4px rgba(40, 30, 10, 0.15));
   }
   .sfx-drop-p {
     top: -10%;
@@ -195,13 +212,17 @@ const drops = Array.from({ length: 28 }, () => ({
     58% { opacity: 0; }
     100% { opacity: 0; }
   }
-  @keyframes sfx-bow {
-    0% { opacity: 0; }
-    44% { opacity: 0; }
-    62% { opacity: 0.8; }
-    80% { opacity: 0.8; }
-    96% { opacity: 0; }
-    100% { opacity: 0; }
+  @keyframes sfx-cross-r {
+    from { transform: translateX(-22vw); }
+    to { transform: translateX(122vw); }
+  }
+  @keyframes sfx-cross-l {
+    from { transform: translateX(122vw); }
+    to { transform: translateX(-22vw); }
+  }
+  @keyframes sfx-bob {
+    from { transform: translateY(-9px) rotate(-5deg); }
+    to { transform: translateY(9px) rotate(5deg); }
   }
   @keyframes sfx-out {
     to { opacity: 0; visibility: hidden; }
