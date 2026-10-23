@@ -4,6 +4,15 @@ import Decor from '../Decor.astro';
 import SeasonIntro from '../SeasonIntro.astro';
 import { siteCopy, type Lang } from '../../i18n/site';
 import { readingWorksBySeason, type ReadingSeason } from '../../data/reading';
+import mapleLeaf from '../../assets/decor/maple-leaf.webp';
+import rowanBranch from '../../assets/decor/rowan-branch.webp';
+import winterSnowflake from '../../assets/decor/winter-snowflake.webp';
+import winterSpruce from '../../assets/decor/winter-spruce.webp';
+import springBlossom from '../../assets/decor/spring-blossom.webp';
+import springButterfly from '../../assets/decor/spring-butterfly.webp';
+import springBee from '../../assets/fx/bee.webp';
+import leafOak from '../../assets/fx/leaf-oak.webp';
+import flakeSprite from '../../assets/fx/flake.webp';
 
 interface Props {
   lang: Lang;
@@ -16,6 +25,12 @@ const p = c.reading;
 const head = p.seasons[season];
 const works = readingWorksBySeason[season];
 const blocks = (text: string) => text.split(/\n{2,}/);
+const artBySeason = {
+  autumn: [mapleLeaf, rowanBranch, leafOak],
+  winter: [winterSnowflake, winterSpruce, flakeSprite],
+  spring: [springBlossom, springButterfly, springBee],
+} as const;
+const art = artBySeason[season];
 ---
 
 <BaseLayout title={head.pageTitle} description={head.pageDescription} page="reading" lang={lang}>
@@ -53,7 +68,7 @@ const blocks = (text: string) => text.split(/\n{2,}/);
     </a>
 
     <ul class="works">
-      {works.map((w) => (
+      {works.map((w, wi) => (
         <li>
           {w.text ? (
             <details class="work" name="reading-work">
@@ -80,6 +95,13 @@ const blocks = (text: string) => text.split(/\n{2,}/);
                 </span>
               </summary>
               <div class="wtext">
+                <img
+                  class="w-art"
+                  src={art[wi % art.length].src}
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                />
                 {blocks(w.text).map((par) => <p>{par}</p>)}
               </div>
             </details>
@@ -354,9 +376,23 @@ const blocks = (text: string) => text.split(/\n{2,}/);
     transform: rotate(180deg);
   }
   .wtext {
+    position: relative;
     padding: 0.95rem 1.1rem 1.15rem;
     border-top: 1px solid var(--site-line);
     background: var(--site-surface-3);
+  }
+  .wtext p {
+    position: relative;
+    z-index: 1;
+  }
+  .w-art {
+    position: absolute;
+    right: 0.9rem;
+    bottom: 0.9rem;
+    width: clamp(68px, 12vw, 104px);
+    height: auto;
+    opacity: 0.4;
+    pointer-events: none;
   }
   .wtext p {
     margin: 0 0 0.85rem;
