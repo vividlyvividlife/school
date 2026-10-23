@@ -464,6 +464,11 @@ const art = artBySeason[season];
 
 <style is:global>
   @media print {
+    body.printing-work,
+    body.printing-work * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
     body.printing-work .site-nav,
     body.printing-work .site-top,
     body.printing-work .site-scrim,
