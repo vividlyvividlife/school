@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { siteCopy, type Lang } from '../../i18n/site';
+import { skillCopy } from '../../i18n/skills';
 import '../../styles/examples.css';
 
 interface Props {
@@ -15,11 +16,64 @@ const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+
 const jsVersion = Date.now().toString(36);
 const offlineFile = lang === 'en' ? 'offline/en-worksheets.html' : 'offline/razdatochnyy-material.html';
 const downloadName = lang === 'en' ? 'math-worksheets.html' : 'razdatochnyy-material.html';
+const typeEntries: [string, string][] = [
+  ['examples', p.typeExamples],
+  ['digits', p.typeDigits],
+  ['compare', p.typeCompare],
+  ['missing', p.typeMissing],
+  ['brackets', p.typeBrackets],
+  ['units', p.typeUnits],
+  ['perimeter', p.typePerimeter]
+];
+const rangeHints: Record<string, string> = {
+  examples: p.rangeHintExamples,
+  digits: p.rangeHintDigits,
+  compare: p.rangeHintCompare,
+  missing: p.rangeHintMissing,
+  brackets: p.rangeHintBrackets,
+  units: p.rangeHintUnits,
+  perimeter: p.rangeHintPerimeter
+};
+const taskEntries: [string, [string, string][]][] = [
+  ['digits', Object.entries(skillCopy[lang].digits.tasks)],
+  ['compare', Object.entries(skillCopy[lang].compare.tasks)],
+  ['brackets', Object.entries(skillCopy[lang].brackets.tasks)],
+  ['units', Object.entries(skillCopy[lang].units.tasks)],
+  ['perimeter', Object.entries(skillCopy[lang].perimeter.tasks)]
+];
+const missingEntries: [string, string][] = [
+  ['r', p.missR],
+  ['a', p.missA],
+  ['b', p.missB],
+  ['ra', p.missRA],
+  ['rb', p.missRB],
+  ['ab', p.missAB],
+  ['all', p.missAll]
+];
+const answerEntries: [string, string][] = [
+  ['none', p.ansNone],
+  ['faint', p.ansFaint],
+  ['key', p.ansKey]
+];
 ---
 
 <BaseLayout title={c.worksheetPage.title} page="examples" lang={lang}>
 <div class="toolbar">
   <div class="toolbar-inner">
+    <section class="tgroup tgroup-type" aria-labelledby="tg-type">
+      <div class="tgroup-title" id="tg-type">{p.typeTitle}</div>
+      <div class="tgroup-body">
+        <div class="types" id="sheet-type" role="radiogroup" aria-label={p.typeTitle}>
+          {typeEntries.map(([key, label]) => (
+            <label class="type">
+              <input type="radio" name="sheet-type" value={key} checked={key === 'examples'}>
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </section>
+
     <div class="tgroups">
       <section class="tgroup" aria-labelledby="tg-grid">
         <div class="tgroup-title" id="tg-grid">{p.gridTitle}</div>
@@ -35,10 +89,13 @@ const downloadName = lang === 'en' ? 'math-worksheets.html' : 'razdatochnyy-mate
         <div class="tgroup-body">
           <label class="fld">{p.from}<input id="from" type="number" min="0" max="100" value="0"></label>
           <label class="fld">{p.to}<input id="limit" type="number" min="1" max="100" value="18"></label>
+          <div class="range-hint" id="range-hint">
+            {typeEntries.map(([key]) => <span data-for={key} hidden={key !== 'examples'}>{rangeHints[key]}</span>)}
+          </div>
         </div>
       </section>
 
-      <section class="tgroup" aria-labelledby="tg-actions">
+      <section class="tgroup" data-only="examples missing brackets" aria-labelledby="tg-actions">
         <div class="tgroup-title" id="tg-actions">{p.actions}</div>
         <div class="tgroup-body">
           <div class="ops" id="ops" role="group" aria-label={p.actions}>
@@ -47,6 +104,12 @@ const downloadName = lang === 'en' ? 'math-worksheets.html' : 'razdatochnyy-mate
             <label class="op" title={p.multiplication}><input type="checkbox" value="mul" aria-label={p.multiplication}><span aria-hidden="true">×</span></label>
             <label class="op" title={p.division}><input type="checkbox" value="div" aria-label={p.division}><span aria-hidden="true">÷</span></label>
           </div>
+        </div>
+      </section>
+
+      <section class="tgroup" data-only="examples missing" aria-labelledby="tg-carry">
+        <div class="tgroup-title" id="tg-carry">{p.extra}</div>
+        <div class="tgroup-body">
           <label class="switch" title={p.carryTitle}>
             <input id="carry" type="checkbox" checked>
             <span class="track"></span>
@@ -55,33 +118,46 @@ const downloadName = lang === 'en' ? 'math-worksheets.html' : 'razdatochnyy-mate
         </div>
       </section>
 
-      <section class="tgroup" aria-labelledby="tg-missing">
+      <section class="tgroup" data-only="examples missing" aria-labelledby="tg-missing">
         <div class="tgroup-title" id="tg-missing">{p.missing}</div>
         <div class="tgroup-body">
-          <label class="fld">
-            <select id="miss" aria-label={p.missing}>
-              <option value="r">{p.missR}</option>
-              <option value="a">{p.missA}</option>
-              <option value="b">{p.missB}</option>
-              <option value="ra">{p.missRA}</option>
-              <option value="rb">{p.missRB}</option>
-              <option value="ab">{p.missAB}</option>
-              <option value="all">{p.missAll}</option>
-            </select>
-          </label>
+          <div class="seg seg-miss" id="miss" role="radiogroup" aria-label={p.missing}>
+            {missingEntries.map(([key, label]) => (
+              <label>
+                <input type="radio" name="miss-mode" value={key} checked={key === 'r'}>
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
         </div>
       </section>
+
+      {taskEntries.map(([forType, entries]) => (
+        <section class="tgroup" data-only={forType} hidden>
+          <div class="tgroup-title">{p.tasksTitle}</div>
+          <div class="tgroup-body">
+            <div class="chips" data-tasks={forType}>
+              {entries.map(([key, label]) => (
+                <label><input type="checkbox" value={key} checked><span>{label}</span></label>
+              ))}
+            </div>
+            <div class="hint">{p.tasksHint}</div>
+          </div>
+        </section>
+      ))}
 
       <section class="tgroup" aria-labelledby="tg-answers">
         <div class="tgroup-title" id="tg-answers">{p.answers}</div>
         <div class="tgroup-body">
-          <label class="fld">
-            <select id="ans" aria-label={p.answers}>
-              <option value="none">{p.ansNone}</option>
-              <option value="faint">{p.ansFaint}</option>
-              <option value="key">{p.ansKey}</option>
-            </select>
-          </label>
+          <div class="seg seg-ans" id="ans" role="radiogroup" aria-label={p.answers}>
+            {answerEntries.map(([key, label]) => (
+              <label>
+                <input type="radio" name="ans-mode" value={key} checked={key === 'none'}>
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+          <div class="hint">{p.answersHint}</div>
         </div>
       </section>
 
@@ -102,6 +178,7 @@ const downloadName = lang === 'en' ? 'math-worksheets.html' : 'razdatochnyy-mate
       </div>
       <div id="sheet-help-panel" class="help-panel" hidden>
         <h2>{p.helpTitle}</h2>
+        <p>{p.helpType}</p>
         <p>{p.help1}</p>
         <p>{p.help2}</p>
         <p>{p.help3}</p>
@@ -112,5 +189,6 @@ const downloadName = lang === 'en' ? 'math-worksheets.html' : 'razdatochnyy-mate
 
 <div id="sheets"></div>
 <script is:inline src={asset('js/examples-logic.js') + '?v=' + jsVersion}></script>
+<script is:inline src={asset('js/worksheet-tasks.js') + '?v=' + jsVersion}></script>
 <script is:inline src={asset('js/examples-ui.js') + '?v=' + jsVersion}></script>
 </BaseLayout>

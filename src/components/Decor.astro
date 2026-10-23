@@ -1,0 +1,411 @@
+---
+import type { ImageMetadata } from 'astro';
+import type { SkillId } from '../i18n/skills';
+import mapleLeaf from '../assets/decor/maple-leaf.webp';
+import rowanBranch from '../assets/decor/rowan-branch.webp';
+import winterSnowflake from '../assets/decor/winter-snowflake.webp';
+import winterSpruce from '../assets/decor/winter-spruce.webp';
+import springBlossom from '../assets/decor/spring-blossom.webp';
+import springButterfly from '../assets/decor/spring-butterfly.webp';
+
+type Motif = 'abacus' | 'calc' | 'parens' | 'pencil' | 'ruler' | 'shapes' | 'signs' | 'maple' | 'rowan' | 'mushroom' | 'snowflake' | 'tree' | 'flower' | 'butterfly';
+type Pos = 'tl' | 'tr' | 'bl' | 'br';
+type DecorSet = SkillId | 'reading';
+type Season = 'autumn' | 'winter' | 'spring';
+
+interface Item {
+  name: Motif;
+  pos: Pos;
+  size?: string;
+  img?: ImageMetadata;
+}
+
+interface Props {
+  variant: DecorSet;
+  season?: Season;
+}
+
+const { variant, season = 'autumn' } = Astro.props;
+const tone = variant === 'reading' ? season : 'math';
+const skillSets: Record<SkillId, Item[]> = {
+  digits: [{ name: 'abacus', pos: 'tr' }, { name: 'pencil', pos: 'bl' }],
+  compare: [{ name: 'signs', pos: 'tr' }, { name: 'shapes', pos: 'bl' }],
+  brackets: [{ name: 'parens', pos: 'tr' }, { name: 'pencil', pos: 'bl' }],
+  units: [{ name: 'ruler', pos: 'tr' }, { name: 'pencil', pos: 'bl' }],
+  perimeter: [{ name: 'shapes', pos: 'tr' }, { name: 'ruler', pos: 'bl' }],
+};
+const readingSets: Record<Season, Item[]> = {
+  autumn: [
+    { name: 'maple', pos: 'tr', size: 'clamp(150px, 17vw, 240px)', img: mapleLeaf },
+    { name: 'rowan', pos: 'bl', size: 'clamp(120px, 13vw, 190px)', img: rowanBranch }
+  ],
+  winter: [
+    { name: 'snowflake', pos: 'tr', size: 'clamp(150px, 17vw, 240px)', img: winterSnowflake },
+    { name: 'tree', pos: 'bl', size: 'clamp(120px, 13vw, 190px)', img: winterSpruce }
+  ],
+  spring: [
+    { name: 'flower', pos: 'tr', size: 'clamp(150px, 17vw, 240px)', img: springBlossom },
+    { name: 'butterfly', pos: 'bl', size: 'clamp(120px, 13vw, 190px)', img: springButterfly }
+  ]
+};
+const items = variant === 'reading' ? readingSets[season] : skillSets[variant as SkillId];
+---
+
+<div class="page-decor" data-tone={tone} aria-hidden="true">
+  {items.map((it) =>
+    it.img ? (
+      <img
+        class={`pd-art pd-img pos-${it.pos}`}
+        style={`width:${it.size ?? 'clamp(92px, 11vw, 148px)'}`}
+        src={it.img.src}
+        width={it.img.width}
+        height={it.img.height}
+        alt=""
+        decoding="async"
+      />
+    ) : (
+    <svg
+      class={`pd-art pos-${it.pos}`}
+      style={`width:${it.size ?? 'clamp(92px, 11vw, 148px)'}`}
+      viewBox="0 0 120 120"
+      fill="none"
+    >
+      {it.name === 'pencil' && (
+        <g transform="rotate(38 60 60)">
+          <path class="pd-fl pd-fa" d="M47 14h26v12H47z" />
+          <path class="pd-fl" d="M47 26h26v66H47z" />
+          <path class="pd-fl pd-fl2" d="M47 92h26l-13 18z" />
+          <path class="pd-st" d="M54 103l6 7 6-7z" />
+          <path class="pd-ln pd-thin" d="M54 36v48" />
+        </g>
+      )}
+
+      {it.name === 'ruler' && (
+        <g transform="rotate(-9 60 60)">
+          <rect class="pd-fl" x="8" y="44" width="104" height="32" rx="7" />
+          <path class="pd-ln pd-thin" d="M18 44v11M27 44v7M36 44v11M45 44v7M54 44v11M63 44v7M72 44v11M81 44v7M90 44v11M99 44v7" />
+        </g>
+      )}
+
+      {it.name === 'shapes' && (
+        <>
+          <circle class="pd-fl" cx="32" cy="36" r="17" />
+          <rect class="pd-fl pd-fl2" x="76" y="26" width="30" height="30" rx="5" />
+          <path class="pd-fl pd-fa" d="M36 94L54 60l18 34z" />
+          <rect class="pd-fl pd-fl2" x="80" y="76" width="20" height="20" rx="3" />
+        </>
+      )}
+
+      {it.name === 'signs' && (
+        <>
+          <path class="pd-ln pd-thick" d="M36 19v30M21 34h30" />
+          <path class="pd-ln pd-thick" d="M75 25l18 18M93 25L75 43" />
+          <path class="pd-ln pd-thick" d="M21 78h30M21 90h30" />
+          <path class="pd-ln pd-thick" d="M69 84h30" />
+          <circle class="pd-fl pd-fa" cx="84" cy="72" r="4.5" />
+          <circle class="pd-fl pd-fa" cx="84" cy="96" r="4.5" />
+        </>
+      )}
+
+      {it.name === 'calc' && (
+        <>
+          <rect class="pd-fl" x="33" y="12" width="54" height="96" rx="10" />
+          <rect class="pd-fl pd-fl2" x="41" y="21" width="38" height="17" rx="4" />
+          <g class="pd-keys">
+            <rect x="43" y="48" width="10" height="8" rx="2.5" />
+            <rect x="55" y="48" width="10" height="8" rx="2.5" />
+            <rect x="67" y="48" width="10" height="8" rx="2.5" />
+            <rect x="43" y="63" width="10" height="8" rx="2.5" />
+            <rect x="55" y="63" width="10" height="8" rx="2.5" />
+            <rect x="67" y="63" width="10" height="8" rx="2.5" />
+            <rect x="43" y="78" width="10" height="8" rx="2.5" />
+            <rect x="55" y="78" width="10" height="8" rx="2.5" />
+            <rect x="67" y="78" width="10" height="8" rx="2.5" />
+            <rect x="43" y="93" width="22" height="8" rx="2.5" />
+            <rect x="67" y="93" width="10" height="8" rx="2.5" />
+          </g>
+        </>
+      )}
+
+      {it.name === 'abacus' && (
+        <>
+          <rect class="pd-ln pd-frame" x="20" y="16" width="80" height="90" rx="9" />
+          <path class="pd-ln pd-thin" d="M23 40h74M23 62h74M23 84h74" />
+          <g class="pd-keys">
+            <circle cx="34" cy="40" r="5.5" />
+            <circle cx="47" cy="40" r="5.5" />
+            <circle cx="60" cy="40" r="5.5" />
+            <circle cx="70" cy="62" r="5.5" />
+            <circle cx="83" cy="62" r="5.5" />
+            <circle cx="32" cy="84" r="5.5" />
+            <circle cx="45" cy="84" r="5.5" />
+            <circle cx="58" cy="84" r="5.5" />
+          </g>
+        </>
+      )}
+
+      {it.name === 'parens' && (
+        <>
+          <path class="pd-ln pd-thick" d="M42 18C28 32 28 88 42 102" />
+          <path class="pd-ln pd-thick" d="M78 18c14 14 14 70 0 84" />
+          <path class="pd-fl pd-fa" d="M60 40l3.1 7.8 8.3.5-6.4 5.3 2 8.1-7-4.5-7 4.5 2-8.1-6.4-5.3 8.3-.5z" />
+          <path class="pd-ln pd-thin" d="M60 78v16M52 86h16" />
+        </>
+      )}
+
+      {it.name === 'mushroom' && (
+        <>
+          <path class="pd-fl pd-fa" d="M27 62c0-23 15-40 33-40s33 17 33 40c0 5-3 8-8 8H35c-5 0-8-3-8-8z" />
+          <path class="pd-fl pd-fl2" d="M49 70h22l-4 29c0 4-3 7-7 7s-7-3-7-7z" />
+          <g class="pd-dots">
+            <circle cx="47" cy="45" r="4" />
+            <circle cx="65" cy="37" r="3.2" />
+            <circle cx="76" cy="51" r="4" />
+          </g>
+          <path class="pd-ln pd-thin" d="M31 66c5 3 15 5 29 5s24-2 29-5" opacity=".5" />
+        </>
+      )}
+
+      {it.name === 'snowflake' && (
+        <>
+          <g class="pd-ln pd-thick" stroke-linecap="round">
+            <g><path d="M60 60V15" /><path d="M60 27l-9-9M60 27l9-9" /><path d="M60 40l-7-7M60 40l7-7" /></g>
+            <g transform="rotate(60 60 60)"><path d="M60 60V15" /><path d="M60 27l-9-9M60 27l9-9" /><path d="M60 40l-7-7M60 40l7-7" /></g>
+            <g transform="rotate(120 60 60)"><path d="M60 60V15" /><path d="M60 27l-9-9M60 27l9-9" /><path d="M60 40l-7-7M60 40l7-7" /></g>
+            <g transform="rotate(180 60 60)"><path d="M60 60V15" /><path d="M60 27l-9-9M60 27l9-9" /><path d="M60 40l-7-7M60 40l7-7" /></g>
+            <g transform="rotate(240 60 60)"><path d="M60 60V15" /><path d="M60 27l-9-9M60 27l9-9" /><path d="M60 40l-7-7M60 40l7-7" /></g>
+            <g transform="rotate(300 60 60)"><path d="M60 60V15" /><path d="M60 27l-9-9M60 27l9-9" /><path d="M60 40l-7-7M60 40l7-7" /></g>
+          </g>
+          <path class="pd-fl pd-fa" d="M60 49l9.5 5.5v11L60 71l-9.5-5.5v-11z" />
+          <circle class="pd-fl pd-fl2" cx="60" cy="60" r="4.5" />
+        </>
+      )}
+
+      {it.name === 'tree' && (
+        <>
+          <path class="pd-fa" style="stroke:none" d="M60 5l2.7 6.6L69.3 14l-6.6 2.4L60 23l-2.7-6.6L50.7 14l6.6-2.4z" />
+          <path class="pd-fl" d="M60 22c4 8 9 13 13 19H47c4-6 9-11 13-19z" />
+          <path class="pd-fl" d="M60 36c5 9 11 15 16 22H44c5-7 11-13 16-22z" />
+          <path class="pd-fl pd-fl2" d="M60 52c6 10 13 17 20 26H40c7-9 14-16 20-26z" />
+          <g class="pd-dots">
+            <circle cx="55" cy="47" r="2.4" />
+            <circle cx="66" cy="59" r="2.4" />
+            <circle cx="52" cy="67" r="2.4" />
+            <circle cx="68" cy="72" r="2.4" />
+          </g>
+          <rect class="pd-st" x="56" y="78" width="8" height="14" rx="2" />
+        </>
+      )}
+
+      {it.name === 'flower' && (
+        <>
+          <g class="pd-fl pd-fl2">
+            <path d="M60 60C49 44 48 24 56 15C58 17.5 62 17.5 64 15C72 24 71 44 60 60Z" />
+            <path d="M60 60C49 44 48 24 56 15C58 17.5 62 17.5 64 15C72 24 71 44 60 60Z" transform="rotate(45 60 60)" />
+            <path d="M60 60C49 44 48 24 56 15C58 17.5 62 17.5 64 15C72 24 71 44 60 60Z" transform="rotate(90 60 60)" />
+            <path d="M60 60C49 44 48 24 56 15C58 17.5 62 17.5 64 15C72 24 71 44 60 60Z" transform="rotate(135 60 60)" />
+            <path d="M60 60C49 44 48 24 56 15C58 17.5 62 17.5 64 15C72 24 71 44 60 60Z" transform="rotate(180 60 60)" />
+            <path d="M60 60C49 44 48 24 56 15C58 17.5 62 17.5 64 15C72 24 71 44 60 60Z" transform="rotate(225 60 60)" />
+            <path d="M60 60C49 44 48 24 56 15C58 17.5 62 17.5 64 15C72 24 71 44 60 60Z" transform="rotate(270 60 60)" />
+            <path d="M60 60C49 44 48 24 56 15C58 17.5 62 17.5 64 15C72 24 71 44 60 60Z" transform="rotate(315 60 60)" />
+          </g>
+          <g class="pd-fl">
+            <path d="M60 60C53 50 52 38 60 31C68 38 67 50 60 60Z" transform="rotate(22.5 60 60)" />
+            <path d="M60 60C53 50 52 38 60 31C68 38 67 50 60 60Z" transform="rotate(67.5 60 60)" />
+            <path d="M60 60C53 50 52 38 60 31C68 38 67 50 60 60Z" transform="rotate(112.5 60 60)" />
+            <path d="M60 60C53 50 52 38 60 31C68 38 67 50 60 60Z" transform="rotate(157.5 60 60)" />
+            <path d="M60 60C53 50 52 38 60 31C68 38 67 50 60 60Z" transform="rotate(202.5 60 60)" />
+            <path d="M60 60C53 50 52 38 60 31C68 38 67 50 60 60Z" transform="rotate(247.5 60 60)" />
+            <path d="M60 60C53 50 52 38 60 31C68 38 67 50 60 60Z" transform="rotate(292.5 60 60)" />
+            <path d="M60 60C53 50 52 38 60 31C68 38 67 50 60 60Z" transform="rotate(337.5 60 60)" />
+          </g>
+          <circle class="pd-fl pd-fa" cx="60" cy="60" r="12" />
+          <g class="pd-dots">
+            <circle cx="60" cy="53" r="1.7" />
+            <circle cx="65" cy="55.5" r="1.7" />
+            <circle cx="67" cy="60" r="1.7" />
+            <circle cx="65" cy="64.5" r="1.7" />
+            <circle cx="60" cy="67" r="1.7" />
+            <circle cx="55" cy="64.5" r="1.7" />
+            <circle cx="53" cy="60" r="1.7" />
+            <circle cx="55" cy="55.5" r="1.7" />
+          </g>
+          <circle class="pd-fl pd-fl2" cx="60" cy="60" r="3.4" />
+        </>
+      )}
+
+      {it.name === 'butterfly' && (
+        <>
+          <g class="pd-fl">
+            <path d="M59 55C48 30 16 24 13 43C11 57 30 64 46 60C53 58 57 57 59 58Z" />
+            <path d="M59 60C46 60 24 70 30 87C35 97 54 84 60 66Z" />
+          </g>
+          <g class="pd-fl pd-fl2" transform="translate(120 0) scale(-1 1)">
+            <path d="M59 55C48 30 16 24 13 43C11 57 30 64 46 60C53 58 57 57 59 58Z" />
+            <path d="M59 60C46 60 24 70 30 87C35 97 54 84 60 66Z" />
+          </g>
+          <g class="pd-ln pd-thin" opacity=".5">
+            <path d="M58 56C48 50 40 42 34 32M58 58C47 58 36 55 26 50M58 62C50 66 42 74 37 83" />
+            <path d="M62 56C72 50 80 42 86 32M62 58C73 58 84 55 94 50M62 62C70 66 78 74 83 83" />
+          </g>
+          <g class="pd-dots">
+            <circle cx="30" cy="42" r="4" /><circle cx="44" cy="50" r="2.4" /><circle cx="38" cy="80" r="2.6" />
+            <circle cx="90" cy="42" r="4" /><circle cx="76" cy="50" r="2.4" /><circle cx="82" cy="80" r="2.6" />
+          </g>
+          <g class="pd-fl pd-fa">
+            <circle cx="30" cy="42" r="1.6" /><circle cx="90" cy="42" r="1.6" />
+          </g>
+          <circle class="pd-st" cx="60" cy="43" r="4" />
+          <path class="pd-st" d="M57 46c0-2 6-2 6 0v30c0 4-6 4-6 0z" />
+          <g class="pd-ln pd-thin" stroke-linecap="round">
+            <path d="M59 40C56 32 50 28 44 26" />
+            <path d="M61 40C64 32 70 28 76 26" />
+          </g>
+          <circle class="pd-fl pd-fa" cx="44" cy="26" r="2.2" />
+          <circle class="pd-fl pd-fa" cx="76" cy="26" r="2.2" />
+        </>
+      )}
+    </svg>
+    )
+  )}
+</div>
+
+<style is:global>
+  .page-decor {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .page-decor .pd-art {
+    position: absolute;
+    height: auto;
+    opacity: 0.3;
+  }
+  .page-decor .pd-img {
+    opacity: 0.35;
+  }
+  .page-decor[data-tone='math'] {
+    --pd-stroke: #0d5f57;
+    --pd-fill: #b9e3db;
+    --pd-fill-2: #e8f6f2;
+    --pd-accent: #67bdb1;
+  }
+  .page-decor[data-tone='autumn'] {
+    --pd-stroke: #7c3f1d;
+    --pd-fill: #eab073;
+    --pd-fill-2: #f7dfbb;
+    --pd-accent: #b45309;
+  }
+  .page-decor[data-tone='winter'] {
+    --pd-stroke: #1e5a8a;
+    --pd-fill: #bfe0f2;
+    --pd-fill-2: #e7f4fb;
+    --pd-accent: #3f8fc4;
+  }
+  .page-decor[data-tone='spring'] {
+    --pd-stroke: #2f7d3a;
+    --pd-fill: #b6e6a8;
+    --pd-fill-2: #e6f7dd;
+    --pd-accent: #e070a8;
+  }
+  html[data-theme='dark'] .page-decor .pd-art {
+    opacity: 0.24;
+  }
+  html[data-theme='dark'] .page-decor .pd-img {
+    opacity: 0.28;
+  }
+  html[data-theme='dark'] .page-decor[data-tone='math'] {
+    --pd-stroke: #7dddd1;
+    --pd-fill: #2a615b;
+    --pd-fill-2: #183d39;
+    --pd-accent: #4fb3a7;
+  }
+  html[data-theme='dark'] .page-decor[data-tone='autumn'] {
+    --pd-stroke: #f0b37a;
+    --pd-fill: #6b3a1c;
+    --pd-fill-2: #452812;
+    --pd-accent: #c2703a;
+  }
+  html[data-theme='dark'] .page-decor[data-tone='winter'] {
+    --pd-stroke: #a9d8f0;
+    --pd-fill: #234c68;
+    --pd-fill-2: #163246;
+    --pd-accent: #6bb2dd;
+  }
+  html[data-theme='dark'] .page-decor[data-tone='spring'] {
+    --pd-stroke: #a6e3a0;
+    --pd-fill: #2c5c33;
+    --pd-fill-2: #1c3d22;
+    --pd-accent: #e88bbd;
+  }
+
+  .page-decor .pd-ln {
+    fill: none;
+    stroke: var(--pd-stroke);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .page-decor .pd-fl {
+    fill: var(--pd-fill);
+    stroke: var(--pd-stroke);
+    stroke-width: 2.4;
+    stroke-linejoin: round;
+  }
+  .page-decor .pd-fa {
+    fill: var(--pd-accent);
+  }
+  .page-decor .pd-fl2 {
+    fill: var(--pd-fill-2);
+  }
+  .page-decor .pd-st {
+    fill: var(--pd-stroke);
+  }
+  .page-decor .pd-keys {
+    fill: var(--pd-accent);
+    stroke: var(--pd-stroke);
+    stroke-width: 1.5;
+  }
+  .page-decor .pd-dots {
+    fill: var(--pd-fill-2);
+  }
+  .page-decor .pd-thin {
+    stroke-width: 1.6;
+  }
+  .page-decor .pd-thick {
+    stroke-width: 6.5;
+  }
+  .page-decor .pd-frame {
+    stroke-width: 3;
+  }
+
+  .page-decor .pos-tl {
+    top: clamp(64px, 11vh, 110px);
+    left: clamp(8px, 2.4vw, 36px);
+  }
+  .page-decor .pos-tr {
+    top: clamp(64px, 11vh, 110px);
+    right: clamp(8px, 2.4vw, 36px);
+  }
+  .page-decor .pos-bl {
+    bottom: clamp(10px, 3vh, 36px);
+    left: clamp(8px, 2.4vw, 36px);
+  }
+  .page-decor .pos-br {
+    bottom: clamp(10px, 3vh, 36px);
+    right: clamp(8px, 2.4vw, 36px);
+  }
+
+  @media (max-width: 760px) {
+    .page-decor {
+      display: none;
+    }
+  }
+  @media print {
+    .page-decor {
+      display: none;
+    }
+  }
+</style>

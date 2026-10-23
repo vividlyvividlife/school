@@ -251,7 +251,8 @@ function fontSizePt(cols, rows, opts){
   var cellMm = (usableMm - (cols - 1) * gapMm) / cols;
   var maxDigits = opts.maxDigits || 3;
   var blanks = opts.twoBlanks ? 2 : 1;
-  var exprEm = 5.4 + (maxDigits - 1) * 0.35 + blanks * 1.8;
+  var prefixEm = opts.numbered ? 1.9 : 0;
+  var exprEm = prefixEm + 5.4 + (maxDigits - 1) * 0.35 + blanks * 1.8;
   var byWidth = (cellMm - padMm) * 2.83465 / exprEm;
   var byHeight = (availMm / rows) * 2.83465 / 1.15;
   var fs = Math.min(byWidth, byHeight);

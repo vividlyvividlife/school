@@ -1,0 +1,273 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Decor from '../Decor.astro';
+import { siteCopy, type Lang } from '../../i18n/site';
+import { skillCommon, skillCopy, type SkillId } from '../../i18n/skills';
+import '../../styles/trainer.css';
+import '../../styles/skills.css';
+
+interface Props {
+  lang: Lang;
+  skill: SkillId;
+}
+
+const { lang, skill } = Astro.props;
+const p = skillCopy[lang][skill];
+const sc = skillCommon[lang];
+const t = siteCopy[lang].trainer;
+const B = import.meta.env.BASE_URL;
+const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+const isCompare = skill === 'compare';
+const isBrackets = skill === 'brackets';
+const defaults: Record<SkillId, { from: number; to: number }> = {
+  digits: { from: 10, to: 99 },
+  compare: { from: 1, to: 100 },
+  brackets: { from: 1, to: 100 },
+  units: { from: 1, to: 100 },
+  perimeter: { from: 1, to: 20 }
+};
+const d = defaults[skill];
+const toMax = skill === 'digits' ? 99 : skill === 'perimeter' ? 20 : skill === 'units' ? 10000 : 100;
+const slugRu: Record<SkillId, string> = {
+  digits: 'razryady', compare: 'sravnenie',
+  brackets: 'skobki', units: 'velichiny', perimeter: 'perimetr'
+};
+const slugEn: Record<SkillId, string> = {
+  digits: 'place-value', compare: 'comparison',
+  brackets: 'brackets', units: 'units', perimeter: 'perimeter'
+};
+const slug = lang === 'en' ? slugEn[skill] : slugRu[skill];
+const offlineFile = lang === 'en' ? `offline/en-${slug}.html` : `offline/${slug}.html`;
+const downloadName = `${slug}.html`;
+const taskEntries = Object.entries(p.tasks);
+---
+
+<BaseLayout title={p.meta.title} description={p.meta.description} keywords={p.meta.keywords} page="trainer" lang={lang}>
+<Decor variant={skill} />
+<section id="setup" class="screen active" data-skill={skill} data-lang={lang}>
+  <div class="wrap">
+    <h1>{p.h1}</h1>
+    <p class="sub">{p.sub}</p>
+
+    <div class="setup-grid">
+      <div class="tile">
+        <div class="tile-title">{sc.rangeTitle}</div>
+        <div class="tile-body">
+          <div class="fields">
+            <label class="fld"><span>{t.from}</span><input id="from" class="num" type="number" inputmode="numeric" min="0" max={toMax} step="1" value={d.from}></label>
+            <label class="fld"><span>{t.to}</span><input id="to" class="num" type="number" inputmode="numeric" min="1" max={toMax} step="1" value={d.to}></label>
+          </div>
+          <div class="chips" id="toChips">
+            {p.chips.map((v) => <button type="button" data-v={v}>{v}</button>)}
+          </div>
+          <div class="hint">{p.rangeHint}</div>
+        </div>
+      </div>
+
+      {taskEntries.length > 0 && (
+        <div class="tile">
+          <div class="tile-title">{sc.tasksTitle}</div>
+          <div class="tile-body">
+            <div class="seg multi types-seg" data-key="types">
+              {taskEntries.map(([key, label]) => <button type="button" data-v={key}>{label}</button>)}
+            </div>
+            <div class="hint">{sc.tasksHint}</div>
+          </div>
+        </div>
+      )}
+
+      {isBrackets && (
+        <div class="tile">
+          <div class="tile-title">{t.actions}</div>
+          <div class="tile-body">
+            <div class="seg multi ops-seg" data-key="ops" data-multi="1">
+              <button type="button" data-v="add" title={t.addTitle}>+</button>
+              <button type="button" data-v="sub" title={t.subTitle}>−</button>
+              <button type="button" data-v="mul" title={t.mulTitle}>×</button>
+              <button type="button" data-v="div" title={t.divTitle}>÷</button>
+            </div>
+            <div class="hint">{t.actionsHint}</div>
+          </div>
+        </div>
+      )}
+
+      {!isCompare && (
+        <div class="tile">
+          <div class="tile-title">{t.answerWith}</div>
+          <div class="tile-body">
+            <div class="seg answer-seg" data-key="answer">
+              <button type="button" data-v="type">{t.answerType}</button>
+              <button type="button" data-v="tiles6">{t.answerTiles6}</button>
+              <button type="button" data-v="tiles9">{t.answerTiles9}</button>
+              <button type="button" data-v="tiles12">{t.answerTiles12}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isCompare && (
+        <div class="tile answer-tile">
+          <div class="tile-title">{t.answerWith}</div>
+          <div class="tile-body">
+            <div class="sign-legend" aria-hidden="true">
+              <span><b>&lt;</b><i>{sc.signLess}</i></span>
+              <span><b>=</b><i>{sc.signEqual}</i></span>
+              <span><b>&gt;</b><i>{sc.signMore}</i></span>
+            </div>
+            <div class="hint">{sc.signHint}</div>
+          </div>
+        </div>
+      )}
+
+      <div class="tile">
+        <div class="tile-title">{t.mode}</div>
+        <div class="tile-body">
+          <div class="seg mode-seg" data-key="mode">
+            <button type="button" data-v="free">{t.modeFree}</button>
+            <button type="button" data-v="timed">{t.modeTimed}</button>
+          </div>
+          <div class="duration" id="timeRow">
+            <span class="duration-label">{t.duration}</span>
+            <span class="numitem"><input id="min" class="num" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{t.minUnit}</span></span>
+            <span class="numitem"><input id="sec" class="num" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{t.secUnit}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile sound-tile">
+        <div class="tile-title">{t.sound}</div>
+        <div class="tile-body">
+          <div class="sound-row">
+            <label class="switch">
+              <input id="sound" type="checkbox" checked>
+              <span class="track"></span>
+              <span>{t.soundLabel}</span>
+            </label>
+            <button id="soundTest" class="btn small" type="button">{t.soundTest}</button>
+          </div>
+          <div class="hint">{t.soundHint}</div>
+        </div>
+      </div>
+
+      <div class="tile wide start-tile">
+        <div class="tile-title">{t.setTitle}</div>
+        <div class="start-info">
+          <div class="hint" id="poolInfo">{sc.poolPrefix}…</div>
+          <a class="btn small" href={asset(offlineFile)} download={downloadName} title={t.offlineTitle} data-offline-hide>{t.offline}</a>
+        </div>
+        <button id="startBtn" class="btn primary" type="button">{t.start}</button>
+      </div>
+
+      <div class="tile wide hard-tile">
+        <div class="tile-title">{t.hardTitle}</div>
+        <div class="tile-body hard-body">
+          <div class="hard-info">
+            <div class="hint" id="hardInfo">{t.hardInfo}</div>
+            <div id="hardList" class="exlist" hidden></div>
+          </div>
+          <div class="hard-actions">
+            <button id="hardBtn" class="btn" type="button" disabled>{t.hardBtn}</button>
+            <button id="clearHard" class="btn small" type="button" hidden>{t.clearHard}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tile history-tile">
+      <div class="tile-title">{t.history}</div>
+      <div class="tile-body hist-body">
+        <div id="histList" class="hist"></div>
+        <button id="clearHist" class="btn small" type="button">{t.clear}</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="gbar">
+    <button id="stopBtn" class="btn" type="button">{t.stop}</button>
+    <div class="gmeta" id="gInfo"></div>
+    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+  </div>
+  <div class="timewrap" id="timeWrap">
+    <div class="tbar"><div class="tfill" id="tfill"></div></div>
+    <div class="tclock" id="tclock">{t.time}</div>
+  </div>
+  <div class="playarea">
+    <div class="playgroup">
+      <div class="eqwrap" id="eqw">
+        <div class="eq" id="eq"></div>
+        <div class="cap" id="cap"></div>
+        <details class="sk-acc" id="figWrap" hidden>
+          <summary id="figSummary">{sc.figShow}</summary>
+          <div class="sk-fig" id="fig"></div>
+        </details>
+      </div>
+      <div class="padwrap">
+        <div class="signpad" id="signpad" hidden>
+          <button type="button" data-s="&lt;" aria-label="меньше">&lt;</button>
+          <button type="button" data-s="=" aria-label="равно">=</button>
+          <button type="button" data-s="&gt;" aria-label="больше">&gt;</button>
+        </div>
+        <div class="pad tiles" id="tiles" hidden></div>
+        <div class="pad" id="pad">
+          <button type="button" data-k="1">1</button>
+          <button type="button" data-k="2">2</button>
+          <button type="button" data-k="3">3</button>
+          <button type="button" data-k="4">4</button>
+          <button type="button" data-k="5">5</button>
+          <button type="button" data-k="6">6</button>
+          <button type="button" data-k="7">7</button>
+          <button type="button" data-k="8">8</button>
+          <button type="button" data-k="9">9</button>
+          <button type="button" data-k="del" class="del">⌫</button>
+          <button type="button" data-k="0">0</button>
+          <button type="button" data-k="ok" class="ok">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="results" class="screen">
+  <div class="wrap">
+    <h2 id="resTitle">{t.resTitle}</h2>
+    <div class="verdict" id="verdict"></div>
+    <div class="stats">
+      <div class="stat good"><b id="rOk">0</b><span>{t.rOk}</span></div>
+      <div class="stat bad"><b id="rBad">0</b><span>{t.rBad}</span></div>
+      <div class="stat"><b id="rAcc">—</b><span>{t.rAcc}</span></div>
+      <div class="stat"><b id="rAvg">—</b><span>{t.rAvg}</span></div>
+      <div class="stat"><b id="rFast">—</b><span>{t.rFast}</span></div>
+      <div class="stat"><b id="rSlow">—</b><span>{t.rSlow}</span></div>
+      <div class="stat"><b id="rDur">0:00</b><span>{t.rDur}</span></div>
+    </div>
+    <div class="card">
+      <div class="lbl" id="misTitle">{t.mistakes}</div>
+      <div id="misList" class="mis"></div>
+    </div>
+    <div class="card" id="slowCard" hidden>
+      <div class="lbl" id="slowTitle">{t.slowTitle}</div>
+      <div class="hint">{t.slowHint}</div>
+      <div id="slowList" class="mis"></div>
+      <div class="slow-actions">
+        <button id="slowBtn" class="btn primary" type="button">{t.slowBtn}</button>
+      </div>
+    </div>
+    <div class="card" id="unsolvedCard" hidden>
+      <div class="lbl" id="unsolvedTitle">{t.unsolvedTitle}</div>
+      <div class="hint">{t.unsolvedHint}</div>
+      <div id="unsolvedList" class="mis"></div>
+      <div class="slow-actions">
+        <button id="unsolvedBtn" class="btn primary" type="button">{t.unsolvedBtn}</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="againBtn" class="btn primary" type="button">{t.again}</button>
+      <button id="toSetupBtn" class="btn" type="button">{t.settings}</button>
+    </div>
+  </div>
+</section>
+<script is:inline src={asset('js/skills.js') + '?v=' + jsVersion}></script>
+</BaseLayout>

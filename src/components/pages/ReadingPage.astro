@@ -1,24 +1,29 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Decor from '../Decor.astro';
 import { siteCopy, type Lang } from '../../i18n/site';
-import { readingWorks } from '../../data/reading';
+import { readingWorksBySeason, type ReadingSeason } from '../../data/reading';
 
 interface Props {
   lang: Lang;
+  season?: ReadingSeason;
 }
 
-const { lang } = Astro.props;
+const { lang, season = 'autumn' } = Astro.props;
 const c = siteCopy[lang];
 const p = c.reading;
+const head = p.seasons[season];
+const works = readingWorksBySeason[season];
 const blocks = (text: string) => text.split(/\n{2,}/);
 ---
 
-<BaseLayout title={c.readingPage.title} page="reading" lang={lang}>
+<BaseLayout title={head.pageTitle} description={head.pageDescription} page="reading" lang={lang}>
+  <Decor variant="reading" season={season} />
   <main class="reading">
     <header class="rhero">
-      <div class="rkicker">{p.kicker}</div>
-      <h1>{p.h1}</h1>
-      <p class="rsub">{p.sub}</p>
+      <div class="rkicker">{head.kicker}</div>
+      <h1>{head.h1}</h1>
+      <p class="rsub">{head.sub}</p>
     </header>
 
     <a
@@ -46,7 +51,7 @@ const blocks = (text: string) => text.split(/\n{2,}/);
     </a>
 
     <ul class="works">
-      {readingWorks.map((w) => (
+      {works.map((w) => (
         <li>
           {w.text ? (
             <details class="work" name="reading-work">

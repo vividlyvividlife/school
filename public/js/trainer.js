@@ -40,7 +40,7 @@ var els = {
   eqw: $('eqw'), eq: $('eq'), cap: $('cap'), pairInfo: $('pairInfo'), pad: $('pad'), tiles: $('tiles'), stopBtn: $('stopBtn'), cannotBtn: $('cannotBtn'),
   verdict: $('verdict'), advice: $('advice'), resTitle: $('resTitle'), rOk: $('rOk'), rBad: $('rBad'), rAcc: $('rAcc'), rAvg: $('rAvg'), rFast: $('rFast'), rSlow: $('rSlow'), rDur: $('rDur'),
   hardInfo: $('hardInfo'), hardList: $('hardList'), hardBtn: $('hardBtn'), clearHard: $('clearHard'), soundTest: $('soundTest'),
-  misTitle: $('misTitle'), misList: $('misList'), slowCard: $('slowCard'), slowTitle: $('slowTitle'), slowList: $('slowList'), slowBtn: $('slowBtn'), pairsCard: $('pairsCard'), pairsList: $('pairsList'), retryCard: $('retryCard'), retryEq: $('retryEq'), retryBtns: $('retryBtns'), againBtn: $('againBtn'), toSetupBtn: $('toSetupBtn')
+  misTitle: $('misTitle'), misList: $('misList'), slowCard: $('slowCard'), slowTitle: $('slowTitle'), slowList: $('slowList'), slowBtn: $('slowBtn'), unsolvedCard: $('unsolvedCard'), unsolvedTitle: $('unsolvedTitle'), unsolvedList: $('unsolvedList'), unsolvedBtn: $('unsolvedBtn'), pairsCard: $('pairsCard'), pairsList: $('pairsList'), retryCard: $('retryCard'), retryEq: $('retryEq'), retryBtns: $('retryBtns'), againBtn: $('againBtn'), toSetupBtn: $('toSetupBtn')
 };
 
 function showScreen(n){
@@ -137,7 +137,7 @@ function hasAddSub(ops){ ops = ops || S.ops; return ops.indexOf('add') >= 0 || o
 function hasMulDiv(ops){ ops = ops || S.ops; return ops.indexOf('mul') >= 0 || ops.indexOf('div') >= 0; }
 function trickActive(){ return !!(S.trickZero && S.miss === 'r' && S.ops.indexOf('div') >= 0); }
 function effectiveOps(){
-  return S.ops.filter(function(o){ return !(S.miss === 'all' && (o === 'mul' || o === 'div')); });
+  return S.ops.slice();
 }
 function computeResult(op, a, b){
   if(op === '+') return a + b;
@@ -296,7 +296,7 @@ function hardInfo(){
   var n = list.length;
   els.hardInfo.textContent = n
     ? tr('Для повторения: ', 'To review: ') + n + ' ' + pluralEx(n)
-    : tr('Ошибок для повторения пока нет', 'No mistakes to review yet');
+    : tr('Заданий для повторения пока нет', 'No tasks to review yet');
   els.hardList.innerHTML = exChips(list.slice().sort(function(p, q){
     return p.a - q.a || p.b - q.b;
   }));
@@ -400,12 +400,10 @@ function updateHints(){
     : S.trickZero
       ? tr('Иногда в примерах встретится деление на 0. Верный ответ — «Нельзя».', 'Occasionally a problem will divide by zero. The correct answer is “Undefined”.')
       : '';
-  var excl = S.miss === 'all' && muldiv;
+  var excl = S.miss === 'all';
   els.missHint.hidden = !excl;
   if(excl){
-    els.missHint.textContent = addsub
-      ? tr('«X + X = 10» — только сложение и вычитание: «×» и «÷» в этом режиме не участвуют.', '“X + X = 10” uses only addition and subtraction: × and ÷ are not included in this mode.')
-      : tr('Выберите «+» или «−»: режим «X + X = 10» работает только со сложением и вычитанием.', 'Choose + or −: “X + X = 10” works only with addition and subtraction.');
+    els.missHint.textContent = tr('Режим «X ★ X»: подбери два числа; подходит любая операция «+ − × ÷».', '“X ★ X” mode: pick two numbers; any of + − × ÷ works.');
   }
 }
 function poolCount(){
@@ -417,8 +415,6 @@ function poolInfo(){
   var n = poolCount();
   if(n){
     els.poolInfo.textContent = tr('В наборе: ', 'In the set: ') + n + ' ' + pluralEx(n);
-  } else if(S.miss === 'all' && !hasAddSub()){
-    els.poolInfo.textContent = tr('Режим «X + X = 10» работает только с «+» и «−»', '“X + X = 10” works only with + and −');
   } else {
     els.poolInfo.textContent = tr('Для этих настроек примеров нет', 'No examples for these settings');
   }
@@ -468,7 +464,7 @@ function start(){
     hardMode: false, trackHard: false, listKind: 'review',
     next: null, ops: useOps, drawers: drawers,
     cur: null, typed: '', locked: false, done: false, tok: 0, vmax: S.limit,
-    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], slow: [],
+    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], unsolved: [], slow: [],
     curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0,
     exCount: 0, trickAt: 5 + Math.floor(Math.random() * 4)
   };
@@ -511,7 +507,7 @@ function startHardList(h, track, kind){
     hardMode: true, trackHard: !!track, listKind: kind,
     next: null, ops: [], drawers: null, hardRemaining: items.slice(),
     cur: null, typed: '', locked: false, done: false, tok: 0, vmax: S.limit,
-    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], slow: [],
+    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], unsolved: [], slow: [],
     curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0
   };
   run.next = makeHardDrawer(run, items);
@@ -587,7 +583,7 @@ function solutionsFor(op, R, lim){
       }
       out.push([x, y]);
     }
-  } else {
+  } else if(op === '−'){
     var a0 = S.carry ? 11 : lo;
     for(a = a0; a <= lim; a++){
       b = a - R;
@@ -597,6 +593,19 @@ function solutionsFor(op, R, lim){
         if((a % 10) >= (b % 10)) continue;
         if(a <= 20 && a % 10 === 0 && b > 10) continue;
       }
+      out.push([a, b]);
+    }
+  } else if(op === '×'){
+    for(x = lo; x <= MAX_FACTOR; x++){
+      for(y = x; y <= MAX_FACTOR; y++){
+        if(x * y !== R) continue;
+        out.push([x, y]);
+      }
+    }
+  } else if(op === '÷'){
+    for(b = Math.max(1, lo); b <= MAX_FACTOR; b++){
+      a = R * b;
+      if(a < lo || a > lim) continue;
       out.push([a, b]);
     }
   }
@@ -631,13 +640,15 @@ function nextExercise(){
     var sols, tries = 0;
     do{
       sols = solutionsFor(base.op, base.r, run.vmax);
-      if(sols.length >= 2 && sols.length <= 12) break;
+      var minSols = (base.op === '×' || base.op === '÷') ? 1 : 2;
+      if(sols.length >= minSols && sols.length <= 12) break;
       if(run.hardMode) break;
       base = drawBase();
       run.vmax = S.limit;
     }while(tries++ < 20);
     if(!sols.length){
-      sols = [base.op === '+' ? [Math.min(base.a, base.b), Math.max(base.a, base.b)] : [base.a, base.b]];
+      var cm = base.op === '+' || base.op === '×';
+      sols = [cm ? [Math.min(base.a, base.b), Math.max(base.a, base.b)] : [base.a, base.b]];
     }
     run.cur = { a: base.a, b: base.b, r: base.r, op: base.op, miss: 'all',
       sols: sols, found: [], slots: ['', ''], active: 0, mistakeLogged: false };
@@ -669,7 +680,7 @@ function startTrick(){
   els.pairInfo.hidden = true;
   els.pairInfo.innerHTML = '';
   els.eq.innerHTML = '<span class="opd">' + a + '</span><span class="op">÷</span><span class="opd">0</span>' +
-    '<span class="op">=</span><span class="slot empty" id="slot">?</span>';
+    '<span class="op">=</span><span class="slot empty" id="slot"></span>';
   els.cannotBtn.hidden = false;
   if(isTiles()){
     els.pad.hidden = true;
@@ -832,8 +843,12 @@ function submitPair(){
   if(!c || run.locked || run.done) return;
   var x = parseInt(c.slots[0], 10), y = parseInt(c.slots[1], 10);
   if(!isFinite(x) || !isFinite(y)) return;
-  var mathOk = c.op === '+' ? (x + y === c.r) : (x - y === c.r);
-  var key = c.op === '+' ? [Math.min(x, y), Math.max(x, y)] : [x, y];
+  var mathOk = c.op === '+' ? (x + y === c.r)
+    : c.op === '−' ? (x - y === c.r)
+    : c.op === '×' ? (x * y === c.r)
+    : (y !== 0 && x === c.r * y);
+  var comm = c.op === '+' || c.op === '×';
+  var key = comm ? [Math.min(x, y), Math.max(x, y)] : [x, y];
   var dup = c.found.some(function(p){ return p[0] === key[0] && p[1] === key[1]; });
   var allowed = c.sols.some(function(p){ return p[0] === key[0] && p[1] === key[1]; });
   if(mathOk && allowed && !dup){
@@ -1048,8 +1063,8 @@ function collectErrors(){
   run.records.forEach(function(r){
     if(!r.ok) add(r.a, r.b, r.op);
   });
-  run.mistakes.forEach(function(m){
-    if(m.missed && typeof m.a === 'number') add(m.a, m.b, m.op);
+  run.unsolved.forEach(function(m){
+    if(typeof m.a === 'number') add(m.a, m.b, m.op);
   });
   return out;
 }
@@ -1079,9 +1094,10 @@ function markUnsolved(){
   var elapsed = Date.now() - run.shownAt;
   var avg = run.tSum / run.tN;
   if(elapsed <= avg) return;
-  run.bad++;
   var c = run.cur;
-  run.mistakes.push({
+  var dup = run.unsolved.some(function(u){ return u.a === c.a && u.b === c.b && u.op === c.op; });
+  if(dup) return;
+  run.unsolved.push({
     q: c.a + ' ' + c.op + ' ' + c.b + ' = ' + c.r,
     ua: null, missed: true, a: c.a, b: c.b, r: c.r, op: c.op, miss: c.miss,
     need: c.miss === 'r' ? c.r : c.miss === 'a' ? c.a : c.b
@@ -1475,15 +1491,24 @@ function showResults(reason, durSec){
   } else {
     els.misList.innerHTML = run.mistakes.map(function(m){
       return '<div class="mrow">' + m.q +
-        (m.missed ? '<span class="ua missed">' + tr('не успел решить', 'not solved in time') + '</span>' : '<span class="ua">' + tr('вы: ', 'you: ') + m.ua + '</span>') +
-        '</div>';
+        '<span class="ua">' + tr('вы: ', 'you: ') + m.ua + '</span></div>';
     }).join('');
+  }
+  els.unsolvedCard.hidden = !run.unsolved.length;
+  if(run.unsolved.length){
+    els.unsolvedTitle.textContent = tr('Не решено: ', 'Not solved: ') + run.unsolved.length;
+    els.unsolvedList.innerHTML = run.unsolved.map(function(u){
+      return '<div class="mrow">' + u.q +
+        '<span class="ua missed">' + tr('не решено', 'not solved') + '</span></div>';
+    }).join('');
+  } else {
+    els.unsolvedList.innerHTML = '';
   }
   renderPairs(run);
   if(reason === 'done'){
     els.verdict.textContent = run.listKind === 'fluency'
       ? tr('Все примеры на беглость пройдены — отличная скорость! 🎉', 'All fluency problems completed — great speed! 🎉')
-      : tr('Все ошибки проработаны — список пуст! 🎉', 'All mistakes reviewed — the list is empty! 🎉');
+      : tr('Все задания повторены — список пуст! 🎉', 'All tasks reviewed — the list is empty! 🎉');
     els.verdict.className = 'verdict g5';
     els.advice.hidden = true;
     els.advice.textContent = '';
@@ -1544,10 +1569,7 @@ function retryOptions(need, vmax){
 }
 function renderRetry(){
   retryState = null;
-  var m = null;
-  for(var i = 0; i < run.mistakes.length; i++){
-    if(run.mistakes[i].missed){ m = run.mistakes[i]; break; }
-  }
+  var m = run.unsolved.length ? run.unsolved[0] : null;
   if(!m){
     els.retryCard.hidden = true;
     els.retryEq.innerHTML = '';
@@ -1778,6 +1800,10 @@ els.stopBtn.addEventListener('click', function(){ finish('stop'); });
 els.slowBtn.addEventListener('click', function(){
   if(!run || !run.slow || !run.slow.length) return;
   startHardList(run.slow, false, 'fluency');
+});
+els.unsolvedBtn.addEventListener('click', function(){
+  if(!run || !run.unsolved || !run.unsolved.length) return;
+  startHardList(run.unsolved, false, 'review');
 });
 els.againBtn.addEventListener('click', function(){ againAction(); });
 function againAction(){

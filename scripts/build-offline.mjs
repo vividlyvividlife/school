@@ -3,13 +3,24 @@ import path from 'node:path';
 
 const root = process.cwd();
 const dist = path.join(root, 'dist');
+const publicDir = path.join(root, 'public');
 const base = (process.env.BASE_PATH || '/').replace(/\/+$/, '');
 
 const pages = [
   ['2-class/matematika/primery/index.html', 'offline/primery.html'],
   ['2-class/matematika/razdatochnyy-material/index.html', 'offline/razdatochnyy-material.html'],
   ['en/grade-2/math/practice/index.html', 'offline/en-practice.html'],
-  ['en/grade-2/math/worksheets/index.html', 'offline/en-worksheets.html']
+  ['en/grade-2/math/worksheets/index.html', 'offline/en-worksheets.html'],
+  ['2-class/matematika/razryady/index.html', 'offline/razryady.html'],
+  ['2-class/matematika/sravnenie/index.html', 'offline/sravnenie.html'],
+  ['2-class/matematika/skobki/index.html', 'offline/skobki.html'],
+  ['2-class/matematika/velichiny/index.html', 'offline/velichiny.html'],
+  ['2-class/matematika/perimetr/index.html', 'offline/perimetr.html'],
+  ['en/grade-2/math/place-value/index.html', 'offline/en-place-value.html'],
+  ['en/grade-2/math/comparison/index.html', 'offline/en-comparison.html'],
+  ['en/grade-2/math/brackets/index.html', 'offline/en-brackets.html'],
+  ['en/grade-2/math/units/index.html', 'offline/en-units.html'],
+  ['en/grade-2/math/perimeter/index.html', 'offline/en-perimeter.html']
 ];
 
 function localFile(url) {
@@ -56,8 +67,11 @@ async function inlinePage(html) {
 for (const [src, out] of pages) {
   const html = await readFile(path.join(dist, src), 'utf8');
   const standalone = await inlinePage(html);
-  const target = path.join(dist, out);
-  await mkdir(path.dirname(target), { recursive: true });
-  await writeFile(target, standalone, 'utf8');
+  // dist/offline for the built site; public/offline so `astro dev` serves the same files.
+  for (const dir of [dist, publicDir]) {
+    const target = path.join(dir, out);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, standalone, 'utf8');
+  }
   console.log(`offline: ${out} (${Buffer.byteLength(standalone)} bytes)`);
 }
