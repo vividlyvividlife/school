@@ -99,6 +99,23 @@ const navigationRu: NavItem[] = [
     path: '/3-class/',
     children: [{ label: 'Раздел в разработке', soon: true }],
   },
+  {
+    label: 'Помогатор',
+    children: [
+      {
+        label: 'Таймер уроков',
+        path: '/pomogator/',
+        page: 'helper',
+        desc: 'Стрелочные часы и расписание уроков',
+      },
+      {
+        label: 'Тренажёр времени',
+        path: '/pomogator/vremya/',
+        page: 'clock',
+        desc: 'Часы и минуты: чтение, задачи, на время',
+      },
+    ],
+  },
 ];
 
 const navigationEn: NavItem[] = [
@@ -185,6 +202,23 @@ const navigationEn: NavItem[] = [
     label: 'Grade 3',
     path: '/en/grade-3/',
     children: [{ label: 'Coming soon', soon: true }],
+  },
+  {
+    label: 'Helper',
+    children: [
+      {
+        label: 'Lesson timer',
+        path: '/en/helper/',
+        page: 'helper',
+        desc: 'Analog clock and lesson schedule',
+      },
+      {
+        label: 'Time trainer',
+        path: '/en/helper/time/',
+        page: 'clock',
+        desc: 'Clocks and minutes: read, calculate, timed',
+      },
+    ],
   },
 ];
 

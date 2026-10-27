@@ -1,0 +1,48 @@
+/* Тренажёр времени: дополнения к trainer.css */
+.clock-task{grid-template-columns:repeat(2,minmax(0,1fr))}
+.clock-step{grid-template-columns:repeat(3,minmax(0,1fr))}
+.clock-start{display:flex;flex-direction:column;gap:8px;grid-column:1/-1}
+.clock-start .btn{width:100%;padding:13px;font-size:16px;margin-top:2px}
+
+.qwrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.qprompt{font-size:15px;font-weight:600;color:var(--muted);text-align:center}
+.qday{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--blue-d);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.qclock{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.qclock-svg{width:min(52vw,280px);height:min(30dvh,280px);max-width:100%}
+.qdigital{font-size:clamp(42px,13vw,78px);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;line-height:1.05}
+.qsub{font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.qclock.calc .qclock-svg{width:min(40vw,210px);height:min(20dvh,210px)}
+
+.face{fill:var(--surface);stroke:var(--line-strong);stroke-width:3}
+.tick{stroke:var(--line-strong);stroke-width:2;stroke-linecap:round}
+.tick-major{stroke:var(--ink);stroke-width:4}
+.num{fill:var(--ink);font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif;font-weight:600;text-anchor:middle;dominant-baseline:central}
+.qclock-svg .num{font-size:17px}
+.optclock-svg .num{font-size:26px}
+.optclock-svg{width:100%;height:100%;display:block}
+.hand{stroke-linecap:round}
+.hand.hour{stroke:var(--ink);stroke-width:7}
+.hand.min{stroke:var(--blue);stroke-width:4.5}
+.pin{fill:var(--blue)}
+
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;max-width:520px}
+.opts.clocks{max-width:min(440px,86vw,48dvh)}
+.opts.clocks.calc{max-width:min(640px,86vw,37dvh)}
+.opt{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow-card);color:var(--ink);padding:0;transition:background .15s,border-color .15s}
+.opt-txt{display:flex;align-items:center;justify-content:center;min-height:clamp(56px,10dvh,84px);font-size:clamp(24px,6vw,34px);font-weight:700;font-variant-numeric:tabular-nums}
+.opt-clock{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;padding:6px}
+.opt.correct{background:var(--green-bg);border-color:var(--green)}
+.opt.wrong{background:var(--red-bg);border-color:var(--red)}
+@media (hover:hover){
+  .opt:not(.correct):not(.wrong):hover{border-color:var(--blue)}
+}
+@media (min-width:640px){
+  .opts.texts{grid-template-columns:repeat(4,minmax(0,1fr));max-width:640px}
+  .opts.clocks.calc{grid-template-columns:repeat(4,minmax(0,1fr));max-width:min(640px,86vw)}
+}
+@media (max-width:420px){
+  .clock-task,.clock-step{grid-template-columns:1fr}
+}
+html[data-theme="dark"] .stat{background:var(--surface)}
+html[data-theme="dark"] .opt.correct{color:var(--green-ink)}
+html[data-theme="dark"] .opt.wrong{color:var(--red-ink)}

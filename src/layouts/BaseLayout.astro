@@ -45,7 +45,11 @@ const pageMeta = pageKind === 'trainer'
     ? c.worksheetPage
     : pageKind === 'reading'
       ? c.readingPage
-      : c.homePage;
+      : pageKind === 'helper'
+        ? c.helperPage
+        : pageKind === 'clock'
+          ? c.clockPage
+          : c.homePage;
 const desc = description || pageMeta.description;
 const keywordList = keywords || pageMeta.keywords;
 const site = Astro.site ?? new URL('https://example.github.io');
@@ -64,15 +68,23 @@ const googlebot = noindex
   ? 'noindex, nofollow'
   : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 const ogType = pageKind === 'home' ? 'website' : 'article';
-const resourceType = pageKind === 'trainer'
+const resourceType = pageKind === 'trainer' || pageKind === 'clock'
   ? (lang === 'ru' ? 'Тренажёр' : 'Trainer')
-  : pageKind === 'reading'
-    ? (lang === 'ru' ? 'Материалы для чтения' : 'Reading materials')
-    : (lang === 'ru' ? 'Раздаточный материал' : 'Worksheet');
-const educationalLevel = lang === 'ru' ? '2 класс' : 'Grade 2';
-const subject = pageKind === 'reading'
-  ? (lang === 'ru' ? 'Літаратурнае чытанне' : 'Literary Reading')
-  : (lang === 'ru' ? 'Математика' : 'Mathematics');
+  : pageKind === 'helper'
+    ? (lang === 'ru' ? 'Инструмент' : 'Study tool')
+    : pageKind === 'reading'
+      ? (lang === 'ru' ? 'Материалы для чтения' : 'Reading materials')
+      : (lang === 'ru' ? 'Раздаточный материал' : 'Worksheet');
+const educationalLevel = pageKind === 'helper' || pageKind === 'clock'
+  ? (lang === 'ru' ? '2–4 класс' : 'Grades 2–4')
+  : (lang === 'ru' ? '2 класс' : 'Grade 2');
+const subject = pageKind === 'helper'
+  ? (lang === 'ru' ? 'Планирование занятий' : 'Study planning')
+  : pageKind === 'clock'
+    ? (lang === 'ru' ? 'Время и часы' : 'Time and clocks')
+    : pageKind === 'reading'
+    ? (lang === 'ru' ? 'Літаратурнае чытанне' : 'Literary Reading')
+    : (lang === 'ru' ? 'Математика' : 'Mathematics');
 const schema: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': pageKind === 'home' ? 'WebSite' : 'LearningResource',

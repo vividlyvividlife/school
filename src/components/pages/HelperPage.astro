@@ -1,0 +1,1003 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteCopy, type Lang } from '../../i18n/site';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = siteCopy[lang];
+const p = c.helper;
+
+const palette = {
+  math: '#0f766e',
+  rus: '#2563eb',
+  bel: '#16a34a',
+  lit: '#d97706',
+  belLit: '#db2777',
+  world: '#0891b2',
+  brk: '#64748b',
+  custom: '#7c3aed'
+};
+
+const subjectDefs = [
+  { key: 'math', name: p.subjects.math, color: palette.math },
+  { key: 'rus', name: p.subjects.rus, color: palette.rus },
+  { key: 'bel', name: p.subjects.bel, color: palette.bel },
+  { key: 'lit', name: p.subjects.lit, color: palette.lit },
+  { key: 'belLit', name: p.subjects.belLit, color: palette.belLit },
+  { key: 'world', name: p.subjects.world, color: palette.world }
+];
+
+const ticks = Array.from({ length: 60 }, (_, i) => {
+  const a = (i * 6 * Math.PI) / 180;
+  const major = i % 5 === 0;
+  const r1 = major ? 88 : 91;
+  const r2 = 96;
+  return {
+    x1: (100 + r1 * Math.sin(a)).toFixed(2),
+    y1: (100 - r1 * Math.cos(a)).toFixed(2),
+    x2: (100 + r2 * Math.sin(a)).toFixed(2),
+    y2: (100 - r2 * Math.cos(a)).toFixed(2),
+    major
+  };
+});
+
+const numerals = Array.from({ length: 12 }, (_, i) => {
+  const a = (i * 30 * Math.PI) / 180;
+  const r = 78;
+  return {
+    n: i === 0 ? 12 : i,
+    x: (100 + r * Math.sin(a)).toFixed(2),
+    y: (100 - r * Math.cos(a)).toFixed(2)
+  };
+});
+
+const copyPayload = {
+  remaining: p.remaining,
+  before: p.before,
+  finished: p.finished,
+  empty: p.empty,
+  minUnit: p.minUnit,
+  remove: p.remove,
+  start: p.start,
+  restart: p.restart,
+  clearAsk: p.clearAsk,
+  subjects: subjectDefs.map((s) => ({ key: s.key, name: s.name, color: s.color })),
+  brk: { key: 'break', name: p.break, color: palette.brk },
+  custom: { key: 'custom', name: p.custom, color: palette.custom }
+};
+---
+
+<BaseLayout title={c.helperPage.title} description={c.helperPage.description} page="helper" lang={lang}>
+  <main class="helper">
+    <header class="hhero">
+      <div class="hkicker">{p.kicker}</div>
+      <h1>{p.h1}</h1>
+      <p class="hsub">{p.sub}</p>
+    </header>
+
+    <div class="hgrid">
+      <section class="hcard hclockcard">
+        <svg class="dial" viewBox="0 0 200 200" role="img" aria-label={p.clockLabel}>
+          <circle class="dial-face" cx="100" cy="100" r="99" />
+          <g class="dial-ticks">
+            {ticks.map((t) => (
+              <line class={t.major ? 'tick major' : 'tick'} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} />
+            ))}
+          </g>
+          <g class="dial-nums">
+            {numerals.map((n) => (
+              <text x={n.x} y={n.y} text-anchor="middle" dominant-baseline="central">{n.n}</text>
+            ))}
+          </g>
+          <g id="dialRings"></g>
+          <g class="dial-hands">
+            <line id="handHour" x1="100" y1="100" x2="100" y2="62" />
+            <line id="handMin" x1="100" y1="100" x2="100" y2="44" />
+            <line id="handSec" x1="100" y1="112" x2="100" y2="40" />
+          </g>
+          <circle class="dial-pin" cx="100" cy="100" r="3.4" />
+        </svg>
+
+        <details class="hdig">
+          <summary>{p.digital}</summary>
+          <div class="hdigital" id="hDigital">--:--:--</div>
+        </details>
+        <div class="hstatus" role="status" aria-live="polite">
+          <span class="hdot" id="hDot" hidden></span>
+          <span id="hStatus">{p.empty}</span>
+        </div>
+      </section>
+
+      <section class="hcard">
+        <div class="phead">
+          <h2>{p.plan}</h2>
+          <div class="pctl">
+            <button id="hStart" class="btn" type="button" disabled>{p.start}</button>
+            <button id="hClear" class="btn ghost" type="button" disabled>{p.clear}</button>
+          </div>
+        </div>
+
+        <ol class="hplan" id="hPlan"></ol>
+        <p class="hempty" id="hEmpty">{p.empty}</p>
+
+        <form class="h-add" id="hAdd">
+          <label class="h-field">
+            <span>{p.subject}</span>
+            <select id="hSubject">
+              {subjectDefs.map((s) => <option value={s.key}>{s.name}</option>)}
+              <option value="break">{p.break}</option>
+              <option value="custom">{p.custom}</option>
+            </select>
+          </label>
+
+          <label class="h-field h-minutes">
+            <span>{p.minutes}</span>
+            <input id="hMinutes" type="number" inputmode="numeric" min="1" max="180" step="1" value="15" />
+          </label>
+
+          <button class="btn h-addbtn" type="submit">{p.add}</button>
+
+          <div class="hquick" id="hQuick">
+            {[5, 10, 15, 20, 30, 45].map((v) => <button type="button" data-v={v}>{v}</button>)}
+          </div>
+
+          <label class="h-field h-custom" id="hCustomWrap" hidden>
+            <span>{p.custom}</span>
+            <input id="hCustomName" type="text" maxlength="40" placeholder={p.customPlaceholder} />
+          </label>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script is:inline type="application/json" id="hCopy" set:html={JSON.stringify(copyPayload)}></script>
+
+  <script>
+    (function () {
+      var copyEl = document.getElementById('hCopy');
+      if (!copyEl) return;
+      var copy = JSON.parse(copyEl.textContent || '{}');
+      var KEY = 'helper:plan:v1';
+      var NS = 'http://www.w3.org/2000/svg';
+
+      var lookup = {};
+      (copy.subjects || []).forEach(function (s) { lookup[s.key] = s; });
+      lookup.break = copy.brk;
+      lookup.custom = copy.custom;
+
+      var planEl = document.getElementById('hPlan');
+      var emptyEl = document.getElementById('hEmpty');
+      var ringsEl = document.getElementById('dialRings');
+      var digitalEl = document.getElementById('hDigital');
+      var statusEl = document.getElementById('hStatus');
+      var dotEl = document.getElementById('hDot');
+      var startBtn = document.getElementById('hStart');
+      var clearBtn = document.getElementById('hClear');
+      var form = document.getElementById('hAdd');
+      var subjectEl = document.getElementById('hSubject');
+      var minutesEl = document.getElementById('hMinutes');
+      var quickEl = document.getElementById('hQuick');
+      var customWrap = document.getElementById('hCustomWrap');
+      var customEl = document.getElementById('hCustomName');
+      var hourHand = document.getElementById('handHour');
+      var minHand = document.getElementById('handMin');
+      var secHand = document.getElementById('handSec');
+
+      var state = { start: null, items: [] };
+      var segments = [];
+      var rowRefs = [];
+      var ringRefs = [];
+      var chimed = {};
+      var started = {};
+      var audioCtx = null;
+
+      function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+      function nameOf(item) {
+        if (item.key === 'custom') return item.name || (lookup.custom && lookup.custom.name) || '';
+        var def = lookup[item.key];
+        return def ? def.name : item.name || '';
+      }
+
+      function colorOf(item) {
+        var def = lookup[item.key];
+        return def ? def.color : item.color || lookup.custom.color;
+      }
+
+      function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
+
+      function load() {
+        try {
+          var raw = localStorage.getItem(KEY);
+          if (!raw) return;
+          var data = JSON.parse(raw);
+          if (!data || !Array.isArray(data.items)) return;
+          state.start = typeof data.start === 'number' ? data.start : null;
+          state.items = data.items
+            .filter(function (it) {
+              return it && typeof it.key === 'string' && isFinite(it.min);
+            })
+            .map(function (it) {
+              return {
+                id: String(it.id || Math.random().toString(36).slice(2)),
+                key: it.key,
+                name: typeof it.name === 'string' ? it.name : '',
+                min: clamp(Math.round(it.min), 1, 180)
+              };
+            });
+        } catch (e) {
+          state = { start: null, items: [] };
+        }
+      }
+
+      function save() {
+        try {
+          localStorage.setItem(KEY, JSON.stringify({ v: 1, start: state.start, items: state.items }));
+        } catch (e) {}
+      }
+
+      function schedule() {
+        if (state.start == null) return [];
+        var t = state.start;
+        return state.items.map(function (item) {
+          var a = t;
+          var b = t + item.min * 60000;
+          t = b;
+          return { item: item, start: a, end: b };
+        });
+      }
+
+      function ensureAudio() {
+        if (audioCtx) {
+          if (audioCtx.state === 'suspended') audioCtx.resume().catch(function () {});
+          return audioCtx;
+        }
+        try {
+          var AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return null;
+          audioCtx = new AC();
+        } catch (e) {
+          audioCtx = null;
+        }
+        return audioCtx;
+      }
+
+      function chime(kind) {
+        var ctx = ensureAudio();
+        if (!ctx) return;
+        var start = kind === 'start';
+        var notes = start ? [[659.25, 0], [880, 0.1]] : [[880, 0], [1108.73, 0.13], [1318.51, 0.27]];
+        var peak = start ? 0.12 : 0.16;
+        var tail = start ? 0.2 : 0.24;
+
+        function play() {
+          var t0 = ctx.currentTime + 0.02;
+          notes.forEach(function (n) {
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = n[0];
+            var at = t0 + n[1];
+            gain.gain.setValueAtTime(0.0001, at);
+            gain.gain.exponentialRampToValueAtTime(peak, at + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, at + tail);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(at);
+            osc.stop(at + tail + 0.02);
+          });
+        }
+
+        if (ctx.state === 'suspended') {
+          ctx.resume().then(play).catch(function () {});
+        } else {
+          play();
+        }
+      }
+
+      function markPassed() {
+        var now = Date.now();
+        segments.forEach(function (seg) {
+          if (now >= seg.start) started[seg.item.id] = true;
+          if (now >= seg.end) chimed[seg.item.id] = true;
+        });
+      }
+
+      function fmtTime(t) {
+        var d = new Date(t);
+        return pad(d.getHours()) + ':' + pad(d.getMinutes());
+      }
+
+      function fmtLeft(ms) {
+        var total = Math.max(0, Math.ceil(ms / 1000));
+        var s = total % 60;
+        var m = Math.floor(total / 60) % 60;
+        var h = Math.floor(total / 3600);
+        return h ? h + ':' + pad(m) + ':' + pad(s) : m + ':' + pad(s);
+      }
+
+      function angleOf(t) {
+        return ((t % 3600000) / 60000) * 6;
+      }
+
+      function sweepOf(minutes) {
+        return (Math.min(minutes, 60) / 60) * 360;
+      }
+
+      function buildRings() {
+        ringsEl.textContent = '';
+        ringRefs = [];
+        var n = segments.length;
+        var step = n > 1 ? Math.max(2.2, Math.min(5, 36 / (n - 1))) : 0;
+
+        segments.forEach(function (seg, i) {
+          var color = colorOf(seg.item);
+          var r = Math.max(12, 66 - i * step);
+
+          var track = document.createElementNS(NS, 'circle');
+          track.setAttribute('class', 'ring ring-track');
+          track.setAttribute('cx', '100');
+          track.setAttribute('cy', '100');
+          track.setAttribute('r', String(r));
+          track.setAttribute('pathLength', '360');
+          track.setAttribute('transform', 'rotate(-90 100 100)');
+          track.setAttribute('stroke', color);
+          track.setAttribute('stroke-dasharray', sweepOf(seg.item.min) + ' 360');
+          track.setAttribute('stroke-dashoffset', String(-angleOf(seg.start)));
+          ringsEl.appendChild(track);
+
+          var arc = document.createElementNS(NS, 'circle');
+          arc.setAttribute('class', 'ring ring-arc');
+          arc.setAttribute('cx', '100');
+          arc.setAttribute('cy', '100');
+          arc.setAttribute('r', String(r));
+          arc.setAttribute('pathLength', '360');
+          arc.setAttribute('transform', 'rotate(-90 100 100)');
+          arc.setAttribute('stroke', color);
+          arc.setAttribute('stroke-dasharray', sweepOf(seg.item.min) + ' 360');
+          arc.setAttribute('stroke-dashoffset', String(-angleOf(seg.start)));
+          ringsEl.appendChild(arc);
+
+          ringRefs.push({ seg: seg, arc: arc });
+        });
+      }
+
+      function buildRow(seg) {
+        var li = document.createElement('li');
+        li.className = 'hrow';
+        li.style.setProperty('--c', colorOf(seg.item));
+
+        var dot = document.createElement('span');
+        dot.className = 'hrow-dot';
+
+        var name = document.createElement('span');
+        name.className = 'hrow-name';
+        name.textContent = nameOf(seg.item);
+
+        var time = document.createElement('span');
+        time.className = 'hrow-time';
+        time.textContent = fmtTime(seg.start) + '–' + fmtTime(seg.end);
+
+        var dur = document.createElement('span');
+        dur.className = 'hrow-dur';
+        dur.textContent = seg.item.min + ' ' + copy.minUnit;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'hrow-x';
+        btn.title = copy.remove;
+        btn.setAttribute('aria-label', copy.remove);
+        btn.dataset.id = seg.item.id;
+        btn.textContent = '×';
+
+        li.append(dot, name, time, dur, btn);
+        return li;
+      }
+
+      function renderPlan() {
+        segments = schedule();
+        planEl.textContent = '';
+        rowRefs = [];
+
+        segments.forEach(function (seg) {
+          var row = buildRow(seg);
+          planEl.appendChild(row);
+          rowRefs.push({ seg: seg, row: row });
+        });
+
+        buildRings();
+
+        emptyEl.hidden = segments.length > 0;
+        startBtn.disabled = segments.length === 0;
+        clearBtn.disabled = segments.length === 0;
+        startBtn.textContent = segments.length ? copy.restart : copy.start;
+      }
+
+      function updateArcs(now) {
+        ringRefs.forEach(function (ref) {
+          var seg = ref.seg;
+          var sweep;
+          if (now <= seg.start) {
+            sweep = sweepOf(seg.item.min);
+          } else if (now >= seg.end) {
+            sweep = 0;
+          } else {
+            sweep = Math.min(sweepOf(seg.item.min), sweepOf((seg.end - now) / 60000));
+          }
+          var from = now > seg.start ? now : seg.start;
+          ref.arc.setAttribute('stroke-dasharray', sweep + ' 360');
+          ref.arc.setAttribute('stroke-dashoffset', String(-angleOf(from)));
+          ref.arc.style.opacity = sweep < 0.5 ? '0' : '1';
+        });
+      }
+
+      function updateStatus(now) {
+        var text = copy.empty;
+        var color = '';
+        var active = null;
+
+        if (segments.length) {
+          rowRefs.forEach(function (ref) {
+            ref.row.classList.toggle('now', now >= ref.seg.start && now < ref.seg.end);
+            ref.row.classList.toggle('done', now >= ref.seg.end);
+          });
+
+          var first = segments[0];
+          var last = segments[segments.length - 1];
+
+          if (now < first.start) {
+            active = first;
+            text = copy.before + ' ' + fmtLeft(first.start - now);
+            color = colorOf(first.item);
+          } else if (now >= last.end) {
+            text = copy.finished;
+          } else {
+            for (var i = 0; i < segments.length; i++) {
+              if (now >= segments[i].start && now < segments[i].end) {
+                active = segments[i];
+                break;
+              }
+            }
+            if (active) {
+              text = nameOf(active.item) + ' · ' + copy.remaining + ' ' + fmtLeft(active.end - now);
+              color = colorOf(active.item);
+            }
+          }
+        }
+
+        statusEl.textContent = text;
+        if (color) {
+          dotEl.hidden = false;
+          dotEl.style.background = color;
+        } else {
+          dotEl.hidden = true;
+        }
+      }
+
+      function updateHands(now) {
+        var d = new Date(now);
+        var sec = d.getSeconds() + d.getMilliseconds() / 1000;
+        var min = d.getMinutes() + sec / 60;
+        var hour = (d.getHours() % 12) + min / 60;
+        hourHand.setAttribute('transform', 'rotate(' + (hour * 30) + ' 100 100)');
+        minHand.setAttribute('transform', 'rotate(' + (min * 6) + ' 100 100)');
+        secHand.setAttribute('transform', 'rotate(' + (sec * 6) + ' 100 100)');
+      }
+
+      function tick() {
+        var now = Date.now();
+        var d = new Date(now);
+        digitalEl.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        updateHands(now);
+        updateArcs(now);
+        var rangStart = false;
+        var rangEnd = false;
+        segments.forEach(function (seg) {
+          if (now >= seg.start && !started[seg.item.id]) {
+            started[seg.item.id] = true;
+            if (!rangStart) {
+              rangStart = true;
+              chime('start');
+            }
+          }
+          if (now >= seg.end && !chimed[seg.item.id]) {
+            chimed[seg.item.id] = true;
+            if (!rangEnd) {
+              rangEnd = true;
+              chime('end');
+            }
+          }
+        });
+        updateStatus(now);
+      }
+
+      startBtn.addEventListener('click', function () {
+        if (!state.items.length) return;
+        state.start = Date.now();
+        chimed = {};
+        started = {};
+        save();
+        renderPlan();
+        tick();
+      });
+
+      clearBtn.addEventListener('click', function () {
+        if (!state.items.length) return;
+        if (!window.confirm(copy.clearAsk)) return;
+        state.items = [];
+        state.start = null;
+        chimed = {};
+        started = {};
+        save();
+        renderPlan();
+        tick();
+      });
+
+      quickEl.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-v]');
+        if (!b) return;
+        minutesEl.value = b.dataset.v;
+      });
+
+      subjectEl.addEventListener('change', function () {
+        var custom = subjectEl.value === 'custom';
+        customWrap.hidden = !custom;
+        if (custom) customEl.focus();
+      });
+
+      planEl.addEventListener('click', function (e) {
+        var b = e.target.closest('.hrow-x');
+        if (!b) return;
+        var id = b.dataset.id;
+        state.items = state.items.filter(function (it) { return it.id !== id; });
+        if (!state.items.length) state.start = null;
+        save();
+        renderPlan();
+        tick();
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var key = subjectEl.value;
+        var min = clamp(Math.round(Number(minutesEl.value) || 15), 1, 180);
+        var name = '';
+
+        if (key === 'custom') {
+          name = customEl.value.trim();
+          if (!name) {
+            customEl.focus();
+            return;
+          }
+        }
+
+        if (state.items.length >= 16) return;
+
+        state.items.push({
+          id: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          key: key,
+          name: name,
+          min: min
+        });
+
+        if (state.start == null) state.start = Date.now();
+        if (key === 'custom') {
+          customEl.value = '';
+          subjectEl.value = 'math';
+          customWrap.hidden = true;
+        }
+
+        save();
+        renderPlan();
+        tick();
+      });
+
+      window.addEventListener('storage', function (e) {
+        if (e.key !== KEY) return;
+        load();
+        if (state.items.length && state.start == null) state.start = Date.now();
+        renderPlan();
+        markPassed();
+        tick();
+      });
+
+      document.addEventListener('pointerdown', ensureAudio, { once: true });
+
+      load();
+      if (state.items.length && state.start == null) state.start = Date.now();
+      renderPlan();
+      markPassed();
+      tick();
+      setInterval(tick, 250);
+    })();
+  </script>
+</BaseLayout>
+
+<style is:global>
+  .helper {
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: clamp(1.2rem, 4vw, 2.6rem) clamp(0.9rem, 4vw, 2rem) 4rem;
+  }
+  .hhero {
+    text-align: center;
+    margin: 0 0 clamp(1.2rem, 3.5vw, 2rem);
+  }
+  .hkicker {
+    display: inline-block;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--site-teal);
+    background: var(--site-surface);
+    border: 1px solid var(--site-line);
+    border-radius: 999px;
+    padding: 0.35rem 0.8rem;
+    margin-bottom: 1rem;
+  }
+  .hhero h1 {
+    margin: 0;
+    font-size: clamp(1.7rem, 5vw, 2.7rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .hsub {
+    margin: 0.7rem auto 0;
+    max-width: 60ch;
+    color: var(--site-muted);
+    font-size: clamp(0.95rem, 2.4vw, 1.08rem);
+  }
+  .hgrid {
+    display: grid;
+    grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+    gap: clamp(1rem, 2.6vw, 1.5rem);
+    align-items: start;
+  }
+  .hcard {
+    background: var(--site-surface);
+    border: 1px solid var(--site-line);
+    border-radius: 20px;
+    padding: clamp(1rem, 3vw, 1.5rem);
+    box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.35);
+  }
+  .hclockcard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .dial {
+    width: min(100%, 380px);
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+  .dial-face {
+    fill: var(--site-surface-3);
+    stroke: var(--site-line);
+    stroke-width: 1.5;
+  }
+  .tick {
+    stroke: var(--site-line-strong);
+    stroke-width: 1;
+    stroke-linecap: round;
+  }
+  .tick.major {
+    stroke: var(--site-ink);
+    stroke-width: 1.8;
+  }
+  .dial-nums text {
+    fill: var(--site-muted);
+    font-family: "DM Sans", "Segoe UI", Roboto, sans-serif;
+    font-size: 9.4px;
+    font-weight: 600;
+  }
+  .dial-hands line {
+    stroke: var(--site-ink);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+  }
+  #handSec {
+    stroke: var(--site-teal);
+    stroke-width: 1.2;
+  }
+  .dial-pin {
+    fill: var(--site-teal);
+    stroke: var(--site-surface);
+    stroke-width: 1.5;
+  }
+  .ring {
+    fill: none;
+    stroke-linecap: round;
+  }
+  .ring-track {
+    stroke-width: 3;
+    opacity: 0.18;
+  }
+  .ring-arc {
+    stroke-width: 4;
+    transition: stroke-dasharray 0.22s linear, stroke-dashoffset 0.22s linear;
+  }
+  .hdig {
+    font-size: 0.78rem;
+    color: var(--site-muted);
+    text-align: center;
+  }
+  .hdig summary {
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    list-style-position: inside;
+  }
+  .hdig summary:hover {
+    color: var(--site-teal-d);
+  }
+  .hdigital {
+    margin-top: 0.2rem;
+    font-family: "DM Sans", "Segoe UI", Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+  .hstatus {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 100%;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--site-line);
+    border-radius: 999px;
+    background: var(--site-surface-2);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .hdot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--site-line-strong);
+    flex: 0 0 auto;
+  }
+  .hdot[hidden] {
+    display: none;
+  }
+  .phead {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin: 0 0 0.9rem;
+  }
+  .phead h2 {
+    margin: 0;
+    font-size: clamp(1.05rem, 2.6vw, 1.25rem);
+  }
+  .pctl {
+    margin-left: auto;
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 0.65rem;
+    border: 1px solid var(--site-teal);
+    background: var(--site-teal);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn:hover:not(:disabled) {
+    background: var(--site-teal-d);
+    border-color: var(--site-teal-d);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+  .btn.ghost {
+    background: var(--site-surface);
+    color: var(--site-ink);
+    border-color: var(--site-line);
+  }
+  .btn.ghost:hover:not(:disabled) {
+    background: var(--site-surface-2);
+    border-color: var(--site-line-strong);
+  }
+  .btn:focus-visible,
+  .hrow-x:focus-visible,
+  .hquick button:focus-visible {
+    outline: 3px solid var(--site-teal-line);
+    outline-offset: 2px;
+  }
+  html[data-theme="dark"] .helper .btn:not(.ghost) {
+    color: #04211e;
+  }
+  .hplan {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .hrow {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--site-line);
+    border-radius: 0.7rem;
+    background: var(--site-surface-2);
+    box-shadow: inset 3px 0 0 var(--c);
+  }
+  .hrow.now {
+    background: var(--site-teal-soft);
+    border-color: var(--site-teal-line);
+  }
+  .hrow.done {
+    opacity: 0.5;
+  }
+  .hrow-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--c);
+    flex: 0 0 auto;
+  }
+  .hrow-name {
+    font-weight: 700;
+    font-size: 0.92rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hrow-time,
+  .hrow-dur {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+    color: var(--site-muted);
+    white-space: nowrap;
+  }
+  .hrow-x {
+    border: 0;
+    background: none;
+    color: var(--site-muted);
+    font: inherit;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.4rem;
+  }
+  .hrow-x:hover {
+    color: #b91c1c;
+    background: var(--site-surface);
+  }
+  .hempty {
+    margin: 0.2rem 0 0;
+    padding: 1rem;
+    border: 1px dashed var(--site-line);
+    border-radius: 0.8rem;
+    color: var(--site-muted);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  .hempty[hidden] {
+    display: none;
+  }
+  .h-add {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7rem auto;
+    gap: 0.6rem;
+    align-items: end;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--site-line);
+  }
+  .h-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--site-muted);
+  }
+  .h-field select,
+  .h-field input {
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--site-ink);
+    background: var(--site-surface);
+    border: 1px solid var(--site-line);
+    border-radius: 0.6rem;
+    padding: 0.5rem 0.6rem;
+    min-width: 0;
+  }
+  .h-field select:focus-visible,
+  .h-field input:focus-visible {
+    outline: 3px solid var(--site-teal-line);
+    outline-offset: 1px;
+    border-color: var(--site-teal);
+  }
+  .h-minutes {
+    grid-column: 2;
+  }
+  .h-addbtn {
+    grid-column: 3;
+  }
+  .hquick {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .hquick button {
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.62rem;
+    border: 1px solid var(--site-line);
+    border-radius: 999px;
+    background: var(--site-surface);
+    color: var(--site-ink);
+    cursor: pointer;
+  }
+  .hquick button:hover {
+    border-color: var(--site-teal);
+    background: var(--site-teal-soft);
+    color: var(--site-teal-d);
+  }
+  .h-custom {
+    grid-column: 1 / -1;
+  }
+  .h-custom[hidden] {
+    display: none;
+  }
+  @media (max-width: 860px) {
+    .hgrid {
+      grid-template-columns: 1fr;
+    }
+    .dial {
+      width: min(100%, 340px);
+    }
+  }
+  @media (max-width: 540px) {
+    .h-add {
+      grid-template-columns: 1fr 1fr;
+    }
+    .h-addbtn {
+      grid-column: 1 / -1;
+    }
+    .hrow {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+    .hrow-time {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ring-arc,
+    .btn {
+      transition: none;
+    }
+  }
+</style>

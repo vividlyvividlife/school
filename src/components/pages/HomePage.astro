@@ -27,11 +27,27 @@ const countItems = (subject: NavItem) =>
 
     <div class="grid">
       {grades.map((grade) => (
-        <section class="card">
+        <section class={grade.path ? 'card' : 'card wide'}>
           <h2 class="grade">{grade.label}</h2>
           {grade.children?.map((child) => {
             if (child.soon) {
               return <div class="soon">{child.label}</div>;
+            }
+            if (child.children && child.children.length && !child.path) {
+              const items = child.children.filter((it) => !it.soon);
+              return (
+                <div class="links">
+                  {items.map((it) => (
+                    <a class="item" href={url(it.path)}>
+                      <span class="txt">
+                        <span class="title">{it.label}</span>
+                        {it.desc && <span class="desc">{it.desc}</span>}
+                      </span>
+                      <span class="arrow" aria-hidden="true">→</span>
+                    </a>
+                  ))}
+                </div>
+              );
             }
             if (child.children && child.children.length) {
               const items = child.children.filter((it) => !it.soon);
@@ -119,6 +135,9 @@ const countItems = (subject: NavItem) =>
     border-radius: 18px;
     padding: clamp(1rem, 2.8vw, 1.5rem);
     box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.35);
+  }
+  .card.wide {
+    grid-column: 1 / -1;
   }
   .grade {
     display: flex;

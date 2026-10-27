@@ -1,0 +1,896 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteCopy, type Lang } from '../../i18n/site';
+import '../../styles/trainer.css';
+import '../../styles/clock.css';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = siteCopy[lang];
+const p = c.clock;
+const copyPayload = {
+  readQ: p.readQ,
+  showQ: p.showQ,
+  capOk: p.capOk,
+  capBad: p.capBad,
+  taskMix: p.taskMix,
+  taskA2D: p.taskA2D,
+  taskD2A: p.taskD2A,
+  taskCalc: p.taskCalc,
+  calcPlus: p.calcPlus,
+  calcMinus: p.calcMinus,
+  calcFast: p.calcFast,
+  calcSlow: p.calcSlow,
+  calcLesson: p.calcLesson,
+  calcLessonEnd: p.calcLessonEnd,
+  calcLessonStart: p.calcLessonStart,
+  subNow: p.subNow,
+  subShown: p.subShown,
+  subStart: p.subStart,
+  subEnd: p.subEnd,
+  halfHour: p.halfHour,
+  hourShort: p.hourShort,
+  minUnit: p.minUnit,
+  minForms: p.minForms,
+  hourForms: p.hourForms,
+  lang: lang,
+  step30: p.step30,
+  step5: p.step5,
+  step1: p.step1,
+  format12: p.format12,
+  format24: p.format24,
+  dayNight: p.dayNight,
+  dayMorning: p.dayMorning,
+  dayDay: p.dayDay,
+  dayEvening: p.dayEvening,
+  mistakes: p.mistakes,
+  none: p.none,
+  yourAnswer: p.yourAnswer,
+  secShort: p.secShort,
+  v5: p.v5,
+  v4: p.v4,
+  v3: p.v3,
+  v2: p.v2,
+  v1: p.v1,
+  v0: p.v0
+};
+---
+
+<BaseLayout title={c.clockPage.title} page="clock" lang={lang}>
+<section id="setup" class="screen active">
+  <div class="wrap">
+    <h1>{p.h1}</h1>
+    <p class="sub">{p.sub}</p>
+
+    <div class="setup-grid">
+      <div class="tile">
+        <div class="tile-title">{p.task}</div>
+        <div class="tile-body">
+          <div class="seg clock-task" data-key="task">
+            <button type="button" data-v="mix">{p.taskMix}</button>
+            <button type="button" data-v="a2d">{p.taskA2D}</button>
+            <button type="button" data-v="d2a">{p.taskD2A}</button>
+            <button type="button" data-v="calc">{p.taskCalc}</button>
+          </div>
+          <div class="hint">{p.taskHint}</div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-title">{p.step}</div>
+        <div class="tile-body">
+          <div class="seg clock-step" data-key="step">
+            <button type="button" data-v="30">{p.step30}</button>
+            <button type="button" data-v="5">{p.step5}</button>
+            <button type="button" data-v="1">{p.step1}</button>
+          </div>
+          <div class="hint">{p.stepHint}</div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-title">{p.format}</div>
+        <div class="tile-body">
+          <div class="seg mode-seg" data-key="format">
+            <button type="button" data-v="12">{p.format12}</button>
+            <button type="button" data-v="24">{p.format24}</button>
+          </div>
+          <div class="hint">{p.formatHint}</div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-title">{p.mode}</div>
+        <div class="tile-body">
+          <div class="seg mode-seg" data-key="mode">
+            <button type="button" data-v="free">{p.modeFree}</button>
+            <button type="button" data-v="timed">{p.modeTimed}</button>
+          </div>
+          <div class="duration" id="timeRow" hidden>
+            <span class="duration-label">{p.duration}</span>
+            <span class="numitem"><input id="min" class="num" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{p.minUnit}</span></span>
+            <span class="numitem"><input id="sec" class="num" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{p.secUnit}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile wide">
+        <div class="tile-title">{p.sound}</div>
+        <div class="tile-body">
+          <div class="sound-row">
+            <label class="switch">
+              <input id="sound" type="checkbox" checked>
+              <span class="track"></span>
+              <span>{p.soundLabel}</span>
+            </label>
+            <button id="soundTest" class="btn small" type="button">{p.soundTest}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile wide clock-start">
+        <div class="tile-title">{p.startTitle}</div>
+        <div class="hint">{p.startHint}</div>
+        <button id="startBtn" class="btn primary" type="button">{p.start}</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="gbar">
+    <button id="stopBtn" class="btn" type="button">{p.stop}</button>
+    <div class="gmeta" id="gInfo"></div>
+    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+  </div>
+  <div class="timewrap" id="timeWrap">
+    <div class="tbar"><div class="tfill" id="tfill"></div></div>
+    <div class="tclock" id="tclock">0:00</div>
+  </div>
+  <div class="playarea">
+    <div class="playgroup">
+      <div class="qwrap">
+        <div class="qprompt" id="qPrompt"></div>
+        <div class="qday" id="qDay" hidden></div>
+        <div id="qBody" class="qclock"></div>
+      </div>
+      <div class="cap" id="cap"></div>
+      <div class="opts texts" id="opts"></div>
+    </div>
+  </div>
+</section>
+
+<section id="results" class="screen">
+  <div class="wrap">
+    <h2>{p.resTitle}</h2>
+    <div class="verdict" id="verdict" hidden></div>
+    <div class="stats">
+      <div class="stat good"><b id="rOk">0</b><span>{p.rOk}</span></div>
+      <div class="stat bad"><b id="rBad">0</b><span>{p.rBad}</span></div>
+      <div class="stat"><b id="rAcc">—</b><span>{p.rAcc}</span></div>
+      <div class="stat"><b id="rAvg">—</b><span>{p.rAvg}</span></div>
+      <div class="stat"><b id="rFast">—</b><span>{p.rFast}</span></div>
+      <div class="stat"><b id="rSlow">—</b><span>{p.rSlow}</span></div>
+      <div class="stat"><b id="rDur">0:00</b><span>{p.rDur}</span></div>
+    </div>
+    <div class="card">
+      <div class="lbl">{p.mistakes}</div>
+      <div id="misList" class="mis"></div>
+    </div>
+    <div class="actions">
+      <button id="againBtn" class="btn primary" type="button">{p.again}</button>
+      <button id="toSetupBtn" class="btn" type="button">{p.settings}</button>
+    </div>
+  </div>
+</section>
+
+<script is:inline type="application/json" id="clockCopy" set:html={JSON.stringify(copyPayload)}></script>
+
+<script>
+  (function () {
+    var copy = JSON.parse(document.getElementById('clockCopy').textContent);
+    var KEY = 'clock:v1';
+
+    var setupEl = document.getElementById('setup');
+    var gameEl = document.getElementById('game');
+    var resultsEl = document.getElementById('results');
+    var timeRow = document.getElementById('timeRow');
+    var minEl = document.getElementById('min');
+    var secEl = document.getElementById('sec');
+    var soundEl = document.getElementById('sound');
+    var soundTest = document.getElementById('soundTest');
+    var startBtn = document.getElementById('startBtn');
+    var stopBtn = document.getElementById('stopBtn');
+    var againBtn = document.getElementById('againBtn');
+    var toSetupBtn = document.getElementById('toSetupBtn');
+    var gInfo = document.getElementById('gInfo');
+    var scoreOk = document.getElementById('scoreOk');
+    var scoreBad = document.getElementById('scoreBad');
+    var timeWrap = document.getElementById('timeWrap');
+    var tfill = document.getElementById('tfill');
+    var tclock = document.getElementById('tclock');
+    var qPrompt = document.getElementById('qPrompt');
+    var qDay = document.getElementById('qDay');
+    var qBody = document.getElementById('qBody');
+    var capEl = document.getElementById('cap');
+    var optsEl = document.getElementById('opts');
+    var verdictEl = document.getElementById('verdict');
+    var rOk = document.getElementById('rOk');
+    var rBad = document.getElementById('rBad');
+    var rAcc = document.getElementById('rAcc');
+    var rAvg = document.getElementById('rAvg');
+    var rFast = document.getElementById('rFast');
+    var rSlow = document.getElementById('rSlow');
+    var rDur = document.getElementById('rDur');
+    var misList = document.getElementById('misList');
+
+    var settings = { task: 'mix', step: 5, format: 12, mode: 'free', min: 2, sec: 0, sound: true };
+    var game = null;
+    var lastKey = '';
+    var timerId = 0;
+    var audioCtx = null;
+    var NS = 'http://www.w3.org/2000/svg';
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function fmt(h, m) { return h + ':' + pad(m); }
+    function fmtTime(h, m, format) { return (format === 24 ? pad(h) : String(h)) + ':' + pad(m); }
+    function normHour(h, format) {
+      return format === 24 ? ((h % 24) + 24) % 24 : ((h - 1 + 12) % 12) + 1;
+    }
+    function dialHour(h, format) {
+      var d = h % 12;
+      return d === 0 ? 12 : d;
+    }
+    function fmtClock(ms) {
+      var total = Math.max(0, Math.round(ms / 1000));
+      var s = total % 60;
+      var m = Math.floor(total / 60) % 60;
+      var h = Math.floor(total / 3600);
+      return h ? h + ':' + pad(m) + ':' + pad(s) : m + ':' + pad(s);
+    }
+    function fmtSec(ms) { return (ms / 1000).toFixed(1) + ' ' + copy.secShort; }
+
+    function shuffle(arr) {
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = arr[i];
+        arr[i] = arr[j];
+        arr[j] = t;
+      }
+      return arr;
+    }
+
+    function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+
+    function randTime(step) {
+      for (var i = 0; i < 24; i++) {
+        var h = settings.format === 24 ? randInt(0, 23) : randInt(1, 12);
+        var m = step === 30 ? (Math.random() < 0.5 ? 0 : 30)
+          : step === 5 ? 5 * randInt(0, 11)
+            : randInt(0, 59);
+        var key = h + ':' + m;
+        if (key !== lastKey) {
+          lastKey = key;
+          return { h: h, m: m };
+        }
+      }
+      return { h: 3, m: 0 };
+    }
+
+    function variants(h, m, step, format) {
+      var out = [];
+      var add = function (hh, mm) {
+        hh = normHour(hh, format);
+        mm = ((mm % 60) + 60) % 60;
+        if (hh === h && mm === m) return;
+        for (var i = 0; i < out.length; i++) {
+          if (out[i].h === hh && out[i].m === mm) return;
+        }
+        out.push({ h: hh, m: mm });
+      };
+      add(h + 1, m);
+      add(h - 1, m);
+      add(h, m + step);
+      add(h, m - step);
+      if (m % 5 === 0) {
+        add(m / 5 === 0 ? 12 : m / 5, h * 5);
+      }
+      if (format === 24 && Math.random() < 0.6) add(h + 12, m);
+      add(h + 1, m + step);
+      add(h - 1, m - step);
+      return shuffle(out);
+    }
+
+    function pickDistractors(h, m, step, format) {
+      var pool = variants(h, m, step, format);
+      var out = pool.slice(0, 3);
+      while (out.length < 3) {
+        var hh = format === 24 ? randInt(0, 23) : randInt(1, 12);
+        var mm = step === 30 ? (Math.random() < 0.5 ? 0 : 30) : step === 5 ? 5 * randInt(0, 11) : randInt(0, 59);
+        if (hh === h && mm === m) continue;
+        var dup = false;
+        for (var i = 0; i < out.length; i++) {
+          if (out[i].h === hh && out[i].m === mm) dup = true;
+        }
+        if (!dup) out.push({ h: hh, m: mm });
+      }
+      return out;
+    }
+
+    function plural(n, forms) {
+      if (copy.lang === 'en') return n === 1 ? forms[0] : forms[1];
+      var n10 = n % 10;
+      var n100 = n % 100;
+      if (n10 === 1 && n100 !== 11) return forms[0];
+      if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return forms[1];
+      return forms[2];
+    }
+
+    function durMin(n) {
+      return n === 30 ? copy.halfHour : n + ' ' + plural(n, copy.minForms);
+    }
+
+    function durHour(n) {
+      return n + ' ' + plural(n, copy.hourForms);
+    }
+
+    function stepMinute() {
+      return settings.step === 30 ? (Math.random() < 0.5 ? 0 : 30)
+        : settings.step === 5 ? 5 * randInt(0, 11)
+          : randInt(0, 59);
+    }
+
+    function minuteDelta() {
+      return settings.step === 30 ? 30
+        : settings.step === 5 ? 5 * randInt(1, 11)
+          : randInt(1, 59);
+    }
+
+    function lessonDelta() {
+      if (settings.step === 30) return 30;
+      if (settings.step === 5) return 5 * randInt(6, 11);
+      return randInt(15, 55);
+    }
+
+    function offsetDelta() {
+      if (settings.step === 30) return 30;
+      if (settings.step === 5) return 5 * randInt(1, 6);
+      return randInt(5, 30);
+    }
+
+    function pickStart(format, delta, dir) {
+      for (var i = 0; i < 40; i++) {
+        var h = format === 24 ? randInt(0, 23) : randInt(1, 12);
+        var m = stepMinute();
+        var total = h * 60 + m + dir * delta;
+        if (format === 24 ? (total < 0 || total > 1439) : (total < 60 || total > 779)) continue;
+        return { h: h, m: m, rH: Math.floor(total / 60), rM: total % 60 };
+      }
+      return { h: 3, m: 0, rH: 3, rM: 30 };
+    }
+
+    function calcDistractors(ansH, ansM, format) {
+      var d = settings.step === 30 ? 30 : 5;
+      var out = [];
+      var add = function (h, m) {
+        h = normHour(h, format);
+        m = ((m % 60) + 60) % 60;
+        if (h === ansH && m === ansM) return;
+        for (var i = 0; i < out.length; i++) {
+          if (out[i].h === h && out[i].m === m) return;
+        }
+        out.push({ h: h, m: m });
+      };
+      add(ansH, ansM + d);
+      add(ansH, ansM - d);
+      add(ansH + 1, ansM);
+      add(ansH - 1, ansM);
+      add(ansH + 1, ansM + d);
+      add(ansH - 1, ansM - d);
+      shuffle(out);
+      return out.slice(0, 3);
+    }
+
+    function svgEl(name, attrs) {
+      var e = document.createElementNS(NS, name);
+      if (attrs) {
+        for (var k in attrs) e.setAttribute(k, attrs[k]);
+      }
+      return e;
+    }
+
+    function buildClock(h, m, big) {
+      var svg = svgEl('svg', {
+        viewBox: '0 0 200 200',
+        class: big ? 'qclock-svg' : 'optclock-svg',
+        role: 'img',
+        'aria-label': fmt(h, m)
+      });
+      svg.appendChild(svgEl('circle', { cx: 100, cy: 100, r: 96, class: 'face' }));
+      for (var i = 0; i < 60; i++) {
+        var major = i % 5 === 0;
+        var a = i * 6 * Math.PI / 180;
+        var r1 = major ? 80 : 88;
+        svg.appendChild(svgEl('line', {
+          x1: (100 + Math.sin(a) * r1).toFixed(2),
+          y1: (100 - Math.cos(a) * r1).toFixed(2),
+          x2: (100 + Math.sin(a) * 93).toFixed(2),
+          y2: (100 - Math.cos(a) * 93).toFixed(2),
+          class: major ? 'tick tick-major' : 'tick'
+        }));
+      }
+      var nums = big ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : [12, 3, 6, 9];
+      for (var n = 0; n < nums.length; n++) {
+        var ang = nums[n] * 30 * Math.PI / 180;
+        var r = big ? 64 : 62;
+        var txt = svgEl('text', {
+          x: (100 + Math.sin(ang) * r).toFixed(2),
+          y: (100 - Math.cos(ang) * r).toFixed(2),
+          class: 'num'
+        });
+        txt.textContent = String(nums[n]);
+        svg.appendChild(txt);
+      }
+      var hourA = ((h % 12) + m / 60) * 30;
+      svg.appendChild(svgEl('line', {
+        x1: 100, y1: 100, x2: 100, y2: big ? 46 : 50,
+        class: 'hand hour',
+        transform: 'rotate(' + hourA + ' 100 100)'
+      }));
+      svg.appendChild(svgEl('line', {
+        x1: 100, y1: 100, x2: 100, y2: big ? 22 : 26,
+        class: 'hand min',
+        transform: 'rotate(' + (m * 6) + ' 100 100)'
+      }));
+      svg.appendChild(svgEl('circle', { cx: 100, cy: 100, r: 4.5, class: 'pin' }));
+      return svg;
+    }
+
+    function ensureAudio() {
+      if (audioCtx) {
+        if (audioCtx.state === 'suspended') audioCtx.resume().catch(function () {});
+        return audioCtx;
+      }
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      } catch (e) {
+        audioCtx = null;
+      }
+      return audioCtx;
+    }
+
+    function beep(ok) {
+      var ctx = ensureAudio();
+      if (!ctx) return;
+      var notes = ok ? [[880, 0], [1174.66, 0.1]] : [[233.08, 0], [185, 0.14]];
+      var peak = ok ? 0.1 : 0.12;
+      var tail = ok ? 0.16 : 0.22;
+      function play() {
+        var t0 = ctx.currentTime + 0.02;
+        notes.forEach(function (n) {
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = n[0];
+          var at = t0 + n[1];
+          gain.gain.setValueAtTime(0.0001, at);
+          gain.gain.exponentialRampToValueAtTime(peak, at + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, at + tail);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(at);
+          osc.stop(at + tail + 0.02);
+        });
+      }
+      if (ctx.state === 'suspended') ctx.resume().then(play).catch(function () {});
+      else play();
+    }
+
+    function show(name) {
+      [setupEl, gameEl, resultsEl].forEach(function (el) {
+        el.classList.toggle('active', el.id === name);
+      });
+    }
+
+    function taskLabel() {
+      if (settings.task === 'a2d') return copy.taskA2D;
+      if (settings.task === 'd2a') return copy.taskD2A;
+      if (settings.task === 'calc') return copy.taskCalc;
+      return copy.taskMix;
+    }
+
+    function stepLabel() {
+      return settings.step === 30 ? copy.step30 : settings.step === 5 ? copy.step5 : copy.step1;
+    }
+
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch (e) {}
+    }
+
+    function load() {
+      try {
+        var raw = localStorage.getItem(KEY);
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (!data) return;
+        if (data.task === 'mix' || data.task === 'a2d' || data.task === 'd2a' || data.task === 'calc') settings.task = data.task;
+        if (data.step === 30 || data.step === 5 || data.step === 1) settings.step = data.step;
+        if (data.format === 24 || data.format === 12) settings.format = data.format;
+        if (data.mode === 'free' || data.mode === 'timed') settings.mode = data.mode;
+        if (isFinite(data.min)) settings.min = Math.max(0, Math.min(300, Math.round(data.min)));
+        if (isFinite(data.sec)) settings.sec = Math.max(0, Math.min(59, Math.round(data.sec)));
+        settings.sound = data.sound !== false;
+      } catch (e) {}
+    }
+
+    function syncControls() {
+      document.querySelectorAll('.seg[data-key]').forEach(function (seg) {
+        var key = seg.getAttribute('data-key');
+        seg.querySelectorAll('button[data-v]').forEach(function (b) {
+          b.classList.toggle('on', String(settings[key]) === b.getAttribute('data-v'));
+        });
+      });
+      timeRow.hidden = settings.mode !== 'timed';
+      minEl.value = settings.min;
+      secEl.value = settings.sec;
+      soundEl.checked = settings.sound;
+    }
+
+    function nextQuestion() {
+      if (!game) return;
+      var now = Date.now();
+      if (game.mode === 'timed' && now >= game.endsAt) {
+        finish();
+        return;
+      }
+      var kind = settings.task === 'mix' ? mixKind() : settings.task;
+      if (kind === 'calc') {
+        nextCalc(now);
+        return;
+      }
+      var format = settings.format;
+      var t = randTime(settings.step);
+      var dial = dialHour(t.h, format);
+      var options = kind === 'a2d'
+        ? [t].concat(pickDistractors(t.h, t.m, settings.step, format))
+        : [{ h: dial, m: t.m }].concat(pickDistractors(dial, t.m, settings.step, 12));
+      shuffle(options);
+
+      game.current = { kind: kind, h: t.h, m: t.m, dial: dial, format: format, startedAt: now, answered: false };
+      game.lock = false;
+
+      qPrompt.textContent = kind === 'a2d' ? copy.readQ : copy.showQ;
+      qDay.hidden = !(kind === 'a2d' && format === 24);
+      qDay.textContent = qDay.hidden ? '' : dayPart(t.h);
+      qBody.innerHTML = '';
+      qBody.className = 'qclock';
+      if (kind === 'a2d') {
+        qBody.appendChild(buildClock(dial, t.m, true));
+      } else {
+        var d = document.createElement('div');
+        d.className = 'qdigital';
+        d.textContent = fmtTime(t.h, t.m, format);
+        qBody.appendChild(d);
+      }
+
+      capEl.textContent = '';
+      capEl.className = 'cap';
+      optsEl.innerHTML = '';
+      optsEl.className = 'opts ' + (kind === 'a2d' ? 'texts' : 'clocks');
+
+      options.forEach(function (o) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'opt ' + (kind === 'a2d' ? 'opt-txt' : 'opt-clock');
+        b.setAttribute('data-h', o.h);
+        b.setAttribute('data-m', o.m);
+        if (kind === 'a2d') {
+          b.textContent = fmtTime(o.h, o.m, format);
+        } else {
+          b.setAttribute('aria-label', fmt(o.h, o.m));
+          b.appendChild(buildClock(o.h, o.m, false));
+        }
+        b.addEventListener('click', function () { answer(b, o); });
+        optsEl.appendChild(b);
+      });
+    }
+
+    function mixKind() {
+      var r = Math.random();
+      return r < 0.4 ? 'a2d' : r < 0.8 ? 'd2a' : 'calc';
+    }
+
+    function nextCalc(now) {
+      var format = settings.format;
+      var list = ['plusMin', 'minusMin', 'plusHour', 'minusHour', 'lesson', 'offset'];
+      var variant = list[randInt(0, list.length - 1)];
+      var isHour = variant === 'plusHour' || variant === 'minusHour';
+      var isLesson = variant === 'lesson';
+      var isOffset = variant === 'offset';
+      var dir = variant === 'minusMin' || variant === 'minusHour' ? -1
+        : isLesson || isOffset ? (Math.random() < 0.5 ? 1 : -1) : 1;
+      var delta = isHour ? randInt(1, 2) * 60
+        : isOffset ? offsetDelta()
+          : isLesson ? lessonDelta() : minuteDelta();
+      var st = pickStart(format, delta, dir);
+      var givenDial = dialHour(st.h);
+      var ansDial = dialHour(st.rH);
+      var nText = isHour ? durHour(delta / 60) : durMin(delta);
+      var prompt;
+      var sub;
+      if (isLesson) {
+        prompt = copy.calcLesson.replace('{n}', nText) + ' ' + (dir > 0 ? copy.calcLessonEnd : copy.calcLessonStart);
+        sub = dir > 0 ? copy.subStart : copy.subEnd;
+      } else if (isOffset) {
+        prompt = (dir > 0 ? copy.calcSlow : copy.calcFast).replace('{n}', nText);
+        sub = copy.subShown;
+      } else {
+        prompt = (dir > 0 ? copy.calcPlus : copy.calcMinus).replace('{n}', nText);
+        sub = copy.subNow;
+      }
+      var q = {
+        kind: 'calc', variant: variant,
+        givenDial: givenDial, m: st.m, ansDial: ansDial, ansM: st.rM,
+        delta: delta, dir: dir,
+        expr: fmt(givenDial, st.m) + (dir > 0 ? ' + ' : ' − ') +
+          (isHour ? (delta / 60) + ' ' + copy.hourShort : delta + ' ' + copy.minUnit),
+        format: format, startedAt: now, answered: false
+      };
+      var opts = [{ h: ansDial, m: st.rM }].concat(calcDistractors(ansDial, st.rM, 12));
+      shuffle(opts);
+
+      game.current = q;
+      game.lock = false;
+
+      qPrompt.textContent = prompt;
+      qDay.hidden = true;
+      qDay.textContent = '';
+      qBody.innerHTML = '';
+      qBody.className = 'qclock calc';
+      qBody.appendChild(buildClock(givenDial, st.m, true));
+      var subEl = document.createElement('div');
+      subEl.className = 'qsub';
+      subEl.textContent = sub;
+      qBody.appendChild(subEl);
+
+      capEl.textContent = '';
+      capEl.className = 'cap';
+      optsEl.innerHTML = '';
+      optsEl.className = 'opts clocks calc';
+
+      opts.forEach(function (o) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'opt opt-clock';
+        b.setAttribute('data-h', o.h);
+        b.setAttribute('data-m', o.m);
+        b.setAttribute('aria-label', fmt(o.h, o.m));
+        b.appendChild(buildClock(o.h, o.m, false));
+        b.addEventListener('click', function () { answer(b, o); });
+        optsEl.appendChild(b);
+      });
+    }
+
+    function dayPart(h) {
+      if (h < 6) return copy.dayNight;
+      if (h < 12) return copy.dayMorning;
+      if (h < 18) return copy.dayDay;
+      return copy.dayEvening;
+    }
+
+    function answer(btn, opt) {
+      if (!game || game.lock || !game.current || game.current.answered) return;
+      var q = game.current;
+      game.lock = true;
+      q.answered = true;
+
+      var ok;
+      var correctText;
+      var yourText;
+      var correctSel;
+      if (q.kind === 'a2d') {
+        ok = opt.h === q.h && opt.m === q.m;
+        correctText = fmtTime(q.h, q.m, q.format);
+        yourText = fmtTime(opt.h, opt.m, q.format);
+        correctSel = 'button[data-h="' + q.h + '"][data-m="' + q.m + '"]';
+      } else if (q.kind === 'd2a') {
+        ok = opt.h === q.dial && opt.m === q.m;
+        correctText = fmt(q.dial, q.m);
+        yourText = fmt(opt.h, opt.m);
+        correctSel = 'button[data-h="' + q.dial + '"][data-m="' + q.m + '"]';
+      } else {
+        ok = opt.h === q.ansDial && opt.m === q.ansM;
+        correctText = fmt(q.ansDial, q.ansM);
+        yourText = fmt(opt.h, opt.m);
+        correctSel = 'button[data-h="' + q.ansDial + '"][data-m="' + q.ansM + '"]';
+      }
+      var qText = q.kind === 'calc' ? q.expr + ' = ' + correctText : correctText;
+      var ms = Date.now() - q.startedAt;
+      game.answers.push({ q: qText, your: yourText, ok: ok, ms: ms });
+
+      if (ok) {
+        btn.classList.add('correct');
+        capEl.textContent = copy.capOk;
+        capEl.className = 'cap ok';
+        game.ok++;
+        scoreOk.textContent = game.ok;
+      } else {
+        btn.classList.add('wrong');
+        capEl.textContent = copy.capBad + ' ' + qText;
+        capEl.className = 'cap bad';
+        game.bad++;
+        scoreBad.textContent = game.bad;
+        var correct = optsEl.querySelector(correctSel);
+        if (correct) correct.classList.add('correct');
+      }
+      if (settings.sound) beep(ok);
+      window.setTimeout(nextQuestion, ok ? 650 : 1250);
+    }
+
+    function tick() {
+      if (!game) return;
+      var now = Date.now();
+      if (game.mode === 'timed') {
+        var left = Math.max(0, game.endsAt - now);
+        tclock.textContent = fmtClock(left);
+        tfill.style.width = (left / game.dur * 100) + '%';
+        tfill.classList.toggle('warn', left / game.dur <= 0.3 && left / game.dur > 0.1);
+        tfill.classList.toggle('low', left / game.dur <= 0.1);
+        if (left <= 0) finish();
+      } else {
+        tclock.textContent = fmtClock(now - game.startedAt);
+      }
+    }
+
+    function startGame() {
+      var secs = settings.mode === 'timed' ? Math.max(10, Math.round(settings.min) * 60 + Math.round(settings.sec)) : 0;
+      if (settings.mode === 'timed' && secs !== settings.min * 60 + settings.sec) {
+        settings.min = Math.floor(secs / 60);
+        settings.sec = secs % 60;
+        minEl.value = settings.min;
+        secEl.value = settings.sec;
+        save();
+      }
+      game = {
+        mode: settings.mode,
+        startedAt: Date.now(),
+        endsAt: Date.now() + secs * 1000,
+        dur: secs * 1000,
+        answers: [],
+        ok: 0,
+        bad: 0,
+        lock: false,
+        current: null
+      };
+      scoreOk.textContent = '0';
+      scoreBad.textContent = '0';
+      gInfo.textContent = taskLabel() + ' · ' + stepLabel() + ' · ' + (settings.format === 24 ? copy.format24 : copy.format12);
+      timeWrap.classList.toggle('free', settings.mode !== 'timed');
+      tfill.classList.remove('warn', 'low');
+      tfill.style.width = '100%';
+      if (settings.mode === 'timed') tclock.textContent = fmtClock(game.dur);
+      else tclock.textContent = '0:00';
+      show('game');
+      nextQuestion();
+      window.clearInterval(timerId);
+      timerId = window.setInterval(tick, 200);
+      tick();
+    }
+
+    function finish() {
+      if (!game) return;
+      window.clearInterval(timerId);
+      timerId = 0;
+      var endedAt = Date.now();
+      var answers = game.answers;
+      var ok = 0;
+      var bad = 0;
+      var totalMs = 0;
+      var fast = Infinity;
+      var slow = -Infinity;
+      answers.forEach(function (a) {
+        if (a.ok) ok++;
+        else bad++;
+        totalMs += a.ms;
+        if (a.ok) {
+          if (a.ms < fast) fast = a.ms;
+          if (a.ms > slow) slow = a.ms;
+        }
+      });
+      var answered = answers.length;
+      var acc = answered ? Math.round(ok / answered * 100) : 0;
+
+      rOk.textContent = String(ok);
+      rBad.textContent = String(bad);
+      rAcc.textContent = answered ? acc + '%' : '—';
+      rAvg.textContent = answered ? fmtSec(totalMs / answered) : '—';
+      rFast.textContent = fast !== Infinity ? fmtSec(fast) : '—';
+      rSlow.textContent = slow > -Infinity ? fmtSec(slow) : '—';
+      rDur.textContent = fmtClock(endedAt - game.startedAt);
+
+      if (!answered) {
+        verdictEl.hidden = true;
+        verdictEl.className = 'verdict';
+      } else {
+        var g = acc >= 95 ? 5 : acc >= 85 ? 4 : acc >= 70 ? 3 : acc >= 50 ? 2 : acc >= 30 ? 1 : 0;
+        verdictEl.hidden = false;
+        verdictEl.className = 'verdict g' + g;
+        verdictEl.textContent = copy['v' + g];
+      }
+
+      var mistakes = answers.filter(function (a) { return !a.ok; });
+      misList.innerHTML = '';
+      if (!mistakes.length) {
+        var none = document.createElement('div');
+        none.className = 'none';
+        none.textContent = copy.none;
+        misList.appendChild(none);
+      } else {
+        mistakes.forEach(function (a) {
+          var row = document.createElement('div');
+          row.className = 'mrow';
+          var b = document.createElement('b');
+          b.textContent = a.q;
+          var ua = document.createElement('span');
+          ua.className = 'ua';
+          ua.textContent = copy.yourAnswer + ': ' + a.your;
+          row.appendChild(b);
+          row.appendChild(ua);
+          misList.appendChild(row);
+        });
+      }
+
+      game = null;
+      show('results');
+    }
+
+    startBtn.addEventListener('click', startGame);
+    againBtn.addEventListener('click', startGame);
+    toSetupBtn.addEventListener('click', function () { show('setup'); });
+    stopBtn.addEventListener('click', finish);
+
+    document.querySelectorAll('.seg[data-key]').forEach(function (seg) {
+      seg.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-v]');
+        if (!b) return;
+        var key = seg.getAttribute('data-key');
+        var v = b.getAttribute('data-v');
+        settings[key] = key === 'step' || key === 'format' ? Number(v) : v;
+        syncControls();
+        save();
+      });
+    });
+
+    [minEl, secEl].forEach(function (input) {
+      input.addEventListener('change', function () {
+        var v = Number(input.value);
+        if (!isFinite(v)) v = input === minEl ? 2 : 0;
+        v = Math.round(v);
+        v = input === minEl ? Math.max(0, Math.min(300, v)) : Math.max(0, Math.min(59, v));
+        input.value = v;
+        settings[input === minEl ? 'min' : 'sec'] = v;
+        save();
+      });
+    });
+
+    soundEl.addEventListener('change', function () {
+      settings.sound = soundEl.checked;
+      save();
+    });
+
+    soundTest.addEventListener('click', function () {
+      beep(true);
+    });
+
+    document.addEventListener('pointerdown', ensureAudio, { once: true });
+
+    load();
+    syncControls();
+  })();
+</script>
+</BaseLayout>

@@ -159,11 +159,15 @@ body.site-nav-open .site-nav{transform:none}
 body.site-nav-open .site-scrim{display:block}
 body.site-nav-open{overflow:hidden}
 
-/* Тренажёр: экраны занимают оставшуюся высоту */
-body[data-page="trainer"] .site-content{overflow:hidden}
-body[data-page="trainer"] .site-content>.screen{flex:1 1 auto;min-height:0}
+/* Тренажёры: экраны занимают оставшуюся высоту */
+body[data-page="trainer"] .site-content,
+body[data-page="clock"] .site-content{overflow:hidden}
+body[data-page="trainer"] .site-content>.screen,
+body[data-page="clock"] .site-content>.screen{flex:1 1 auto;min-height:0}
 body[data-page="trainer"] #game,
-body[data-page="trainer"] #results{height:auto}
+body[data-page="trainer"] #results,
+body[data-page="clock"] #game,
+body[data-page="clock"] #results{height:auto}
 
 @media (prefers-reduced-motion:reduce){
   .site-nav{transition:none}

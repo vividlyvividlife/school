@@ -1,7 +1,7 @@
 import type { Lang } from './site';
 
 export interface PagePair {
-  kind: 'home' | 'trainer' | 'examples' | 'reading' | 'skill';
+  kind: 'home' | 'trainer' | 'examples' | 'reading' | 'skill' | 'helper' | 'clock';
   ru: string;
   en: string;
 }
@@ -17,7 +17,9 @@ export const pagePairs: PagePair[] = [
   { kind: 'skill', ru: '/2-class/matematika/perimetr/', en: '/en/grade-2/math/perimeter/' },
   { kind: 'reading', ru: '/2-class/belaruskaya-mova/pazaklasnae-chytanne/', en: '/en/grade-2/belarusian/extracurricular-reading/' },
   { kind: 'reading', ru: '/2-class/belaruskaya-mova/zima/', en: '/en/grade-2/belarusian/winter/' },
-  { kind: 'reading', ru: '/2-class/belaruskaya-mova/viasna/', en: '/en/grade-2/belarusian/spring/' }
+  { kind: 'reading', ru: '/2-class/belaruskaya-mova/viasna/', en: '/en/grade-2/belarusian/spring/' },
+  { kind: 'helper', ru: '/pomogator/', en: '/en/helper/' },
+  { kind: 'clock', ru: '/pomogator/vremya/', en: '/en/helper/time/' }
 ];
 
 export function pagePairFor(path: string): PagePair {
