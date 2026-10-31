@@ -10,10 +10,12 @@ var TASKS = {
   missing: ['missing'],
   brackets: ['brackets', 'chains'],
   units: ['convert', 'addsub'],
-  perimeter: ['triangle', 'quad', 'rectangle', 'square', 'pentagon', 'hexagon']
+  perimeter: ['triangle', 'quad', 'rectangle', 'square', 'pentagon', 'hexagon'],
+  problems: ['total', 'leftover', 'arriveLeave', 'reverse', 'difference', 'moreBy', 'lessBy', 'twoGroups', 'diffTotal', 'mulAdd', 'price', 'mulTotal', 'share', 'groups', 'timesMore', 'timesLess', 'timesCompare', 'sumDiff', 'equalize', 'wasUnknown'],
+  polylines: ['open3', 'open4', 'open5', 'mixed']
 };
 var OPS = ['add', 'sub', 'mul', 'div'];
-var FONT_BASE = { digits: 17, compare: 20, missing: 20, brackets: 18, units: 16, perimeter: 14 };
+var FONT_BASE = { digits: 17, compare: 20, missing: 20, brackets: 18, units: 16, perimeter: 14, problems: 12, polylines: 12 };
 
 function clampInt(v, min, max, dflt){ return MathSheet.clampInt(v, min, max, dflt); }
 function ri(rnd, a, b){ return a + Math.floor(rnd() * (b - a + 1)); }
@@ -33,8 +35,8 @@ function dm(){ return tr('дм', 'dm'); }
 function m(){ return tr('м', 'm'); }
 
 function taskSequence(count, tasks, rnd){
-  var arr = [], i;
-  for(i = 0; i < count; i++) arr.push(tasks[i % tasks.length]);
+  var order = shuffle(rnd, tasks), arr = [], i;
+  for(i = 0; i < count; i++) arr.push(order[i % order.length]);
   return shuffle(rnd, arr);
 }
 function missRoles(miss){
@@ -466,6 +468,21 @@ function generate(kind, task, rnd, opts){
   if(kind === 'brackets') return bracketsItem(rnd, task, opts);
   if(kind === 'units') return unitsItem(rnd, task, opts.from, opts.to);
   if(kind === 'perimeter') return perimeterItem(rnd, task, opts.from, opts.to);
+  if((kind === 'problems' || kind === 'polylines') && global.MathProblems){
+    var e = kind === 'problems'
+      ? global.MathProblems.generateProblem(task, rnd, opts)
+      : global.MathProblems.generatePolyline(task, rnd, { from: opts.from, to: opts.to, maxTotal: 16 });
+    return {
+      id: e.id,
+      html: e.sheetHtml,
+      answer: e.need,
+      key: e.text + ' → ' + e.answerText,
+      blank: 'num',
+      cls: kind === 'problems' ? 'wp-task' : 'poly-task',
+      answerText: e.answerText,
+      work: e.work || null
+    };
+  }
   return null;
 }
 
@@ -474,19 +491,25 @@ function makeVariant(opts){
   var kind = String(opts.kind || '');
   if(!TASKS[kind]) return { kind: kind, sheets: [] };
   var rows = clampInt(opts.rows, 2, 24, 8);
-  var maxCols = kind === 'perimeter' ? 2 : 4;
-  var cols = clampInt(opts.cols, 2, maxCols, kind === 'perimeter' ? 2 : 3);
+  var oneCol = kind === 'problems' || kind === 'polylines';
+  var maxCols = oneCol ? 1 : kind === 'perimeter' ? 2 : 4;
+  var cols = oneCol ? 1 : clampInt(opts.cols, 2, maxCols, kind === 'perimeter' ? 2 : 3);
   var pageCount = clampInt(opts.pages, 1, 12, 1);
-  var limit = kind === 'units' ? 10000 : 100;
+  var limit = kind === 'units' ? 10000 : kind === 'polylines' ? 20 : 100;
   var from = clampInt(opts.from, 1, limit, 1);
   var to = clampInt(opts.to, 1, limit, limit);
   if(from > to){ var t = from; from = to; to = t; }
   var seed = clampInt(opts.seed, 1, 4294967295, 1);
   var rnd = MathSheet.mulberry32(seed);
-  var tasks = (opts.tasks || []).filter(function(x){ return TASKS[kind].indexOf(x) >= 0; });
-  if(!tasks.length) tasks = TASKS[kind].slice();
   var ops = (opts.ops || []).filter(function(x){ return OPS.indexOf(x) >= 0; });
   if(!ops.length) ops = ['add', 'sub'];
+  var tasks = (opts.tasks || []).filter(function(x){ return TASKS[kind].indexOf(x) >= 0; });
+  if(kind === 'problems' && global.MathProblems){
+    tasks = global.MathProblems.problemTypesForOps(tasks.length ? tasks : TASKS[kind], ops, opts.star);
+  } else if(!tasks.length){
+    tasks = TASKS[kind].slice();
+  }
+  if(!tasks.length) return { kind: kind, rows: rows, cols: cols, pages: pageCount, from: from, to: to, seed: seed, per: 0, sheets: [] };
   var carry = !(opts.carry === false || opts.carry === '0' || opts.carry === 'false');
   var per = rows * cols;
   var sheets = [], p, k, seq, items, seen, last, cand, tries, it;
@@ -499,7 +522,7 @@ function makeVariant(opts){
     for(k = 0; k < per; k++){
       it = null;
       for(tries = 0; tries < 140; tries++){
-        cand = generate(kind, seq[k], rnd, { from: from, to: to, ops: ops, miss: opts.miss, carry: carry });
+        cand = generate(kind, seq[k], rnd, { from: from, to: to, ops: ops, miss: opts.miss, carry: carry, star: !!opts.star });
         if(!cand) break;
         if(cand.id === last) continue;
         if(!seen[cand.id]){ it = cand; break; }
@@ -516,6 +539,7 @@ function makeVariant(opts){
 }
 
 function taskFontPt(kind, cols, rows){
+  if(kind === 'problems' || kind === 'polylines') return kind === 'problems' ? 11 : 12;
   var base = FONT_BASE[kind] || 16;
   var byCols = base * (2 / Math.max(1, cols));
   var availMm = 252 - 2 * Math.max(0, rows - 1);

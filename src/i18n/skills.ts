@@ -1,6 +1,6 @@
 import type { Lang } from './site';
 
-export type SkillId = 'digits' | 'compare' | 'brackets' | 'units' | 'perimeter';
+export type SkillId = 'digits' | 'compare' | 'brackets' | 'units' | 'perimeter' | 'problems' | 'polylines';
 
 export interface SkillCopy {
   meta: { title: string; description: string; keywords: string };
@@ -132,6 +132,56 @@ export const skillCopy: Record<Lang, Record<SkillId, SkillCopy>> = {
         pentagon: 'Пятиугольник',
         hexagon: 'Шестиугольник'
       }
+    },
+    problems: {
+      meta: {
+        title: 'Задачи — тренажёр',
+        description: 'Тренажёр по математике для 2 класса: текстовые задачи в одно и два действия — на сложение, вычитание, умножение и деление, цена, «в … раз», возраст, уравнивание.',
+        keywords: 'задачи, текстовые задачи, 2 класс, тренажёр, математика, цена, умножение, деление, Петерсон'
+      },
+      h1: 'Задачи',
+      sub: 'Текстовые задачи с картинкой и разбором в аккордеоне.',
+      rangeHint: 'Числа и ответы — до 100. Если задача не помещается в «до», числа уменьшатся автоматически.',
+      chips: [20, 50, 100],
+      tasks: {
+        total: 'Всего',
+        leftover: 'Осталось',
+        arriveLeave: 'Приехали и уехали',
+        reverse: 'Обратная',
+        difference: 'На сколько больше',
+        moreBy: 'На … больше',
+        lessBy: 'На … меньше',
+        twoGroups: 'Две группы',
+        diffTotal: 'Разница и сумма',
+        mulAdd: 'Умножение и плюс',
+        price: 'Цена',
+        mulTotal: 'По … в каждом',
+        share: 'Делёж поровну',
+        groups: 'Сколько групп',
+        timesMore: 'В … раз больше',
+        timesLess: 'В … раз меньше',
+        timesCompare: 'Во сколько раз',
+        sumDiff: 'Возраст',
+        equalize: 'Уравнять',
+        wasUnknown: 'Было сначала'
+      }
+    },
+    polylines: {
+      meta: {
+        title: 'Ломаные — тренажёр',
+        description: 'Тренажёр по математике для 2 класса: длина ломаной — сумма длин всех звеньев. В раздатке — начертить отрезок такой длины.',
+        keywords: 'ломаная, длина ломаной, звенья, 2 класс, тренажёр, математика, отрезок'
+      },
+      h1: 'Ломаные',
+      sub: 'Найди длину ломаной — сумму длин всех звеньев.',
+      rangeHint: 'Длины звеньев — от 1 до 20 см; по умолчанию до 10 см.',
+      chips: [5, 10, 20],
+      tasks: {
+        open3: '3 звена',
+        open4: '4 звена',
+        open5: '5 звеньев',
+        mixed: 'Разные'
+      }
     }
   },
   en: {
@@ -220,6 +270,56 @@ export const skillCopy: Record<Lang, Record<SkillId, SkillCopy>> = {
         square: 'Square',
         pentagon: 'Pentagon',
         hexagon: 'Hexagon'
+      }
+    },
+    problems: {
+      meta: {
+        title: 'Word problems — trainer',
+        description: 'Grade 2 math trainer: one- and two-step word problems — addition, subtraction, multiplication and division, price, “times as many”, ages, equalising.',
+        keywords: 'word problems, grade 2, math trainer, price, multiplication, division'
+      },
+      h1: 'Word problems',
+      sub: 'Word problems with a picture and a solution breakdown.',
+      rangeHint: 'Numbers and answers up to 100. If a problem does not fit the “to” limit, the numbers shrink automatically.',
+      chips: [20, 50, 100],
+      tasks: {
+        total: 'Total',
+        leftover: 'Left over',
+        arriveLeave: 'Arrived and left',
+        reverse: 'Reverse',
+        difference: 'How many more',
+        moreBy: 'More by',
+        lessBy: 'Fewer by',
+        twoGroups: 'Two groups',
+        diffTotal: 'Difference and total',
+        mulAdd: 'Multiply and add',
+        price: 'Price',
+        mulTotal: 'Equal groups',
+        share: 'Share equally',
+        groups: 'How many groups',
+        timesMore: 'Times as many',
+        timesLess: 'Times fewer',
+        timesCompare: 'How many times',
+        sumDiff: 'Ages',
+        equalize: 'Make equal',
+        wasUnknown: 'At first'
+      }
+    },
+    polylines: {
+      meta: {
+        title: 'Polylines — trainer',
+        description: 'Grade 2 math trainer: the length of a polyline is the sum of all its links. The worksheet asks to draw a segment of that length.',
+        keywords: 'polyline, length, links, grade 2, math trainer, segment'
+      },
+      h1: 'Polylines',
+      sub: 'Find the length of a polyline — the sum of all its links.',
+      rangeHint: 'Link lengths from 1 to 20 cm; default is up to 10 cm.',
+      chips: [5, 10, 20],
+      tasks: {
+        open3: '3 links',
+        open4: '4 links',
+        open5: '5 links',
+        mixed: 'Mixed'
       }
     }
   }

@@ -8,14 +8,14 @@ function esc(v){
 var $ = function(s){ return document.querySelector(s); };
 var ui = {
   type:$('#sheet-type'), rows:$('#rows'), cols:$('#cols'), pages:$('#pages'), from:$('#from'), limit:$('#limit'),
-  carry:$('#carry'), ops:$('#ops'), miss:$('#miss'), ans:$('#ans'), seed:$('#seed'),
+  carry:$('#carry'), star:$('#star'), ops:$('#ops'), miss:$('#miss'), ans:$('#ans'), write:$('#write'), seed:$('#seed'),
   again:$('#again'), print:$('#print'), sheets:$('#sheets'), rangeHint:$('#range-hint')
 };
 
-var TYPE_NAMES = ['examples', 'digits', 'compare', 'missing', 'brackets', 'units', 'perimeter'];
+var TYPE_NAMES = ['examples', 'digits', 'compare', 'missing', 'brackets', 'units', 'perimeter', 'problems', 'polylines'];
 var RANGE = {
   examples: [0, 100], digits: [10, 99], compare: [1, 100], missing: [1, 100],
-  brackets: [1, 100], units: [1, 10000], perimeter: [1, 20]
+  brackets: [1, 100], units: [1, 10000], perimeter: [1, 20], problems: [1, 100], polylines: [1, 20]
 };
 var DEFAULTS = {
   examples: { rows: 8, cols: 3, from: 0, to: 18, ops: ['add', 'sub'], miss: 'r' },
@@ -24,7 +24,9 @@ var DEFAULTS = {
   missing: { rows: 8, cols: 3, from: 1, to: 100, ops: ['add', 'sub'], miss: 'r' },
   brackets: { rows: 8, cols: 2, from: 1, to: 100, ops: ['add', 'sub', 'mul', 'div'] },
   units: { rows: 8, cols: 2, from: 1, to: 100 },
-  perimeter: { rows: 6, cols: 2, from: 1, to: 20 }
+  perimeter: { rows: 6, cols: 2, from: 1, to: 20 },
+  problems: { rows: 5, cols: 1, from: 10, to: 100, ops: ['add', 'sub'] },
+  polylines: { rows: 5, cols: 1, from: 1, to: 10 }
 };
 var current = 'examples';
 var memory = {};
@@ -66,12 +68,52 @@ function exHTML(item, mode, n){
 function keyHTML(item, n){
   return '<div><span class="kn">' + n + '.</span> ' + item.a + ' ' + item.op + ' ' + item.b + ' = ' + item.r + '</div>';
 }
-function taskHTML(item, n, mode){
+/* рабочее поле: пропуски для записи условия и решения или клетки под всю запись */
+var cellsSeq = 0;
+/* клетка школьной тетради — 5 мм; в SVG-паттерне 1 мм = 96/25.4 px */
+var CELL_PX = +(5 * 96 / 25.4).toFixed(3);
+function cellsHTML(){
+  var id = 'wp-cells-' + (++cellsSeq);
+  return '<span class="wp-work wp-work-hard"><svg class="wp-cells" aria-hidden="true">' +
+    '<defs><pattern id="' + id + '" width="' + CELL_PX + '" height="' + CELL_PX + '" patternUnits="userSpaceOnUse">' +
+    '<path d="M' + CELL_PX + ' 0H0V' + CELL_PX + '"/></pattern></defs>' +
+    '<rect width="100%" height="100%" fill="url(#' + id + ')"/>' +
+  '</svg></span>';
+}
+/* числа в поле «с условием и решением» ученик вписывает сам — остаются подписи, знаки и единицы */
+function blankNumbers(text){
+  return esc(String(text)).replace(/\d+|\?/g, '<span class="blank"></span>');
+}
+function workHTML(item, mode, write){
+  if(!item.work || write === 'none') return '';
+  if(write === 'hard') return cellsHTML();
+  var given = item.work.given.map(function(pair){
+    return '<span class="wp-gi"><span class="wp-gk">' + esc(pair[0]) + '</span> ' + blankNumbers(pair[1]) + '</span>';
+  }).join('');
+  var steps = item.work.steps.map(function(step, i){
+    if(step[1] === null) return '<span class="wp-step wp-step-note">' + blankNumbers(step[0]) + '</span>';
+    var result = mode === 'faint'
+      ? '<span class="ansv">' + esc(step[1]) + '</span>'
+      : '<span class="blank"></span>';
+    return '<span class="wp-step"><span class="wp-n">' + (i + 1) + ')</span>' +
+      '<span class="wp-eq">' + blankNumbers(step[0]) + ' = ' + result + '</span></span>';
+  }).join('');
+  return '<span class="wp-work">' +
+    '<span class="wp-work-h">' + tr('Краткая запись', 'Short note') + '</span>' +
+    '<span class="wp-given">' + given + '</span>' +
+    '<span class="wp-work-h">' + tr('Решение', 'Solution') + '</span>' +
+    '<span class="wp-steps">' + steps + '</span>' +
+  '</span>';
+}
+function taskHTML(item, n, mode, write){
   var answer = mode === 'faint'
     ? '<span class="ansv">' + esc(item.answer) + '</span>'
     : '<span class="blank' + (item.blank === 'sign' ? ' sign' : '') + '"></span>';
-  return '<div class="task"><span class="tn">' + n + '.</span>' +
-    '<span class="q">' + item.html.replace('{{b}}', answer) + '</span></div>';
+  var work = workHTML(item, mode, write);
+  var cls = (item.cls || '') + (work ? ' wp-worked' : '');
+  var html = item.html.replace('{{work}}', work).replace('{{b}}', answer);
+  return '<div class="task' + (cls ? ' ' + cls : '') + '"><span class="tn">' + n + '.</span>' +
+    '<span class="q">' + html + '</span></div>';
 }
 
 function radioValue(group, fallback){
@@ -87,6 +129,21 @@ function setRadio(group, value){
 }
 function missMode(){ return radioValue(ui.miss, 'r'); }
 function answerMode(){ return radioValue(ui.ans, 'none'); }
+function writeMode(){ return radioValue(ui.write, 'none'); }
+/* звезда: включает задачи со звёздочкой — они решаются повторным + или − */
+function starMode(){ return !!(ui.star && ui.star.classList.contains('on')); }
+function setStar(on){
+  if(!ui.star) return;
+  ui.star.classList.toggle('on', !!on);
+  ui.star.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+/* с полями условия и решения на лист помещается не больше четырёх задач */
+function fitWriteRows(){
+  if(current !== 'problems' || !ui.write) return;
+  var mode = writeMode();
+  ui.rows.max = mode === 'none' ? 10 : 4;
+  if(+ui.rows.value > +ui.rows.max) ui.rows.value = ui.rows.max;
+}
 
 function selectedOps(){
   if(!ui.ops) return ['add', 'sub'];
@@ -116,9 +173,38 @@ function taskInputs(type){
   var box = document.querySelector('[data-tasks="' + type + '"]');
   return box ? Array.prototype.slice.call(box.querySelectorAll('input[type="checkbox"]')) : [];
 }
+function taskAllowed(value){
+  if(current !== 'problems' || !window.MathProblems) return true;
+  return window.MathProblems.problemTypesForOps([value], selectedOps(), starMode()).length > 0;
+}
 function selectedTasks(type){
-  var all = taskInputs(type), out = all.filter(function(x){ return x.checked; }).map(function(x){ return x.value; });
-  return out.length ? out : all.map(function(x){ return x.value; });
+  var all = taskInputs(type);
+  var pool = type === 'problems' ? all.filter(function(x){ return taskAllowed(x.value); }) : all;
+  var out = pool.filter(function(x){ return x.checked; }).map(function(x){ return x.value; });
+  return out.length ? out : pool.map(function(x){ return x.value; });
+}
+var OPS_NAMES = { add: '+', sub: '−', mul: '×', div: '÷' };
+function syncTaskChips(){  if(current !== 'problems' || !window.MathProblems) return;
+  taskInputs('problems').forEach(function(inp){
+    var ok = window.MathProblems.problemTypesForOps([inp.value], selectedOps(), starMode()).length > 0;
+    var lab = inp.closest('label');
+    if(ok){
+      inp.disabled = false;
+      if(lab){ lab.classList.remove('off'); lab.removeAttribute('title'); }
+      return;
+    }
+    inp.checked = false;
+    inp.disabled = true;
+    if(lab){
+      lab.classList.add('off');
+      lab.title = window.MathProblems.problemIsStarred(inp.value)
+        ? tr('Включите ★', 'Turn on ★')
+        : tr('Нужно действие: ', 'Requires: ') + window.MathProblems.problemTypeNeeds(inp.value)
+          .map(function(route){
+            return route.map(function(o){ return OPS_NAMES[o]; }).join(' ');
+          }).join(tr(' или ', ' or '));
+    }
+  });
 }
 function allTasksMap(){
   var map = {};
@@ -131,7 +217,7 @@ function readState(){
   return {
     rows: ui.rows.value, cols: ui.cols.value, pages: ui.pages.value,
     from: ui.from.value, to: ui.limit.value,
-    ops: selectedOps(), miss: missMode(),
+    ops: selectedOps(), miss: missMode(), write: writeMode(), star: starMode(),
     tasks: (function(){
       var map = {};
       document.querySelectorAll('[data-tasks]').forEach(function(box){
@@ -155,16 +241,18 @@ function defaultsFor(type){
   var d = DEFAULTS[type] || DEFAULTS.examples;
   return {
     rows: d.rows, cols: d.cols, pages: 1, from: d.from, to: d.to,
-    ops: d.ops || ['add', 'sub'], miss: d.miss || 'r', tasks: allTasksMap()
+    ops: d.ops || ['add', 'sub'], miss: d.miss || 'r', write: 'none', star: false, tasks: allTasksMap()
   };
 }
 function applyState(st){
   var range = RANGE[current] || RANGE.examples;
   var def = DEFAULTS[current] || DEFAULTS.examples;
-  ui.rows.max = current === 'examples' ? 40 : 24;
-  ui.cols.max = current === 'examples' ? 10 : current === 'perimeter' ? 2 : 4;
+  var oneCol = current === 'problems' || current === 'polylines';
+  ui.rows.max = current === 'polylines' ? 5 : oneCol ? 10 : current === 'examples' ? 40 : 24;
+  ui.cols.min = oneCol ? 1 : 2;
+  ui.cols.max = oneCol ? 1 : current === 'examples' ? 10 : current === 'perimeter' ? 2 : 4;
   ui.rows.value = clampInt(st.rows, 2, +ui.rows.max, def.rows);
-  ui.cols.value = clampInt(st.cols, 2, +ui.cols.max, def.cols);
+  ui.cols.value = clampInt(st.cols, +ui.cols.min, +ui.cols.max, def.cols);
   ui.pages.value = clampInt(st.pages, 1, 12, 1);
   ui.from.min = range[0]; ui.from.max = range[1];
   ui.limit.min = Math.max(1, range[0]); ui.limit.max = range[1];
@@ -175,7 +263,11 @@ function applyState(st){
   ui.limit.value = to;
   setOps(st.ops || ['add', 'sub']);
   setRadio(ui.miss, st.miss || 'r');
+  setRadio(ui.write, st.write || 'none');
+  setStar(!!st.star);
   applyTaskSelections(st.tasks);
+  fitWriteRows();
+  syncTaskChips();
 }
 function applyVisibility(){
   document.querySelectorAll('[data-only]').forEach(function(el){
@@ -186,6 +278,9 @@ function applyVisibility(){
       el.hidden = el.getAttribute('data-for') !== current;
     });
   }
+  Array.prototype.slice.call(document.querySelectorAll('#ops .op')).forEach(function(el){
+    el.hidden = false;
+  });
   var radio = document.querySelector('input[name="sheet-type"][value="' + current + '"]');
   if(radio) radio.checked = true;
 }
@@ -238,7 +333,7 @@ function renderTasks(){
     kind: current,
     rows: ui.rows.value, cols: ui.cols.value, pages: ui.pages.value,
     from: ui.from.value, to: ui.limit.value,
-    tasks: selectedTasks(current), ops: selectedOps(), miss: missMode(),
+    tasks: selectedTasks(current), ops: selectedOps(), miss: missMode(), star: starMode(),
     carry: ui.carry.checked, seed: ui.seed.value
   });
   var total = variant.sheets.reduce(function(n, s){ return n + s.items.length; }, 0);
@@ -248,15 +343,17 @@ function renderTasks(){
   }
   var fs = WorksheetTasks.taskFontPt(current, variant.cols, variant.rows);
   var mode = answerMode();
-  var keyCols = variant.cols >= 3 ? 3 : 2;
+  var write = current === 'problems' ? writeMode() : 'none';
+  var keyCols = current === 'problems' ? 1 : variant.cols >= 3 ? 3 : 2;
+  var keyFs = current === 'problems' ? 9.5 : 10;
   var parts = [];
 
   variant.sheets.forEach(function(sheet, i){
     var nums = columnNumbers(sheet.items.length, variant.cols);
-    parts.push('<section class="sheet">' +
+    parts.push('<section class="sheet' + (write === 'hard' ? ' write-hard' : '') + '">' +
       headHTML(i, variant.pages, variant.seed) +
-      '<div class="grid tasks-grid" style="grid-template-columns:repeat(' + variant.cols + ',1fr);--fs:' + fs + 'pt">' +
-        sheet.items.map(function(it, j){ return taskHTML(it, nums[j], mode); }).join('') +
+      '<div class="grid tasks-grid' + (write === 'hard' ? ' write-hard' : '') + '" data-kind="' + current + '" style="grid-template-columns:repeat(' + variant.cols + ',1fr);--fs:' + fs + 'pt">' +
+        sheet.items.map(function(it, j){ return taskHTML(it, nums[j], mode, write); }).join('') +
       '</div>' +
     '</section>');
   });
@@ -265,7 +362,7 @@ function renderTasks(){
     variant.sheets.forEach(function(sheet, i){
       if(!sheet.items.length) return;
       var nums = columnNumbers(sheet.items.length, variant.cols);
-      parts.push('<section class="sheet key" style="--keycols:' + keyCols + ';--keyfs:10pt">' +
+      parts.push('<section class="sheet key" style="--keycols:' + keyCols + ';--keyfs:' + keyFs + 'pt">' +
         headHTML(i, variant.pages, variant.seed) +
         '<h2>' + tr('Ответы к варианту ', 'Answers for variant ') + variantLabel(variant.seed, i, variant.pages) + '</h2>' +
         '<div class="key-cols">' + sheet.items.map(function(it, j){
@@ -288,11 +385,32 @@ function render(){
 });
 ui.miss.addEventListener('change', render);
 ui.ans.addEventListener('change', render);
+if(ui.write) ui.write.addEventListener('change', function(){
+  fitWriteRows();
+  render();
+});
+/* звезда только переключает звёздные задачи, действия и галочки не меняет */
+function setStarGroup(on){
+  setStar(on);
+  /* включаем звёздочку — сразу подключаем весь звёздный набор задач */
+  if(on && window.MathProblems){
+    taskInputs('problems').forEach(function(inp){
+      if(window.MathProblems.problemIsStarred(inp.value)) inp.checked = true;
+    });
+  }
+}
+
+if(ui.star) ui.star.addEventListener('click', function(){
+  setStarGroup(!starMode());
+  syncTaskChips();
+  render();
+});
 ui.ops.addEventListener('change', function(e){
   if(!selectedOps().length){
     var boxes = Array.prototype.slice.call(ui.ops.querySelectorAll('input[type="checkbox"]'));
     boxes.forEach(function(x){ x.checked = x === e.target; });
   }
+  syncTaskChips();
   toggleCarry();
   render();
 });
@@ -381,6 +499,8 @@ if(helpBtn && helpPanel){
 
 /* настройки можно задать прямо в ссылке:
    ?type=digits&rows=8&cols=2&pages=2&tasks=tens,ones&from=10&to=99&ans=key&seed=1234
+   для задач: &write=easy — краткая запись и решение, &write=hard — пустые линейки,
+   &star=1 — включить задачи со звёздочкой (решение повторным + или −).
    Старые ссылки с ?type=add,sub и ?type=mix продолжают работать для примеров. */
 function parseQuery(){
   var q = {};
@@ -398,7 +518,9 @@ function applyUrlParams(q){
   if(q.to !== undefined && q.to !== '') ui.limit.value = q.to;
   if(q.miss !== undefined && q.miss !== '') setRadio(ui.miss, q.miss);
   if(q.ans !== undefined && q.ans !== '') setRadio(ui.ans, q.ans);
+  if(q.write !== undefined && q.write !== '') setRadio(ui.write, q.write);
   if(q.carry !== undefined && q.carry !== '') ui.carry.checked = !(q.carry === '0' || q.carry === 'false');
+  if(q.star !== undefined && q.star !== '') setStar(!(q.star === '0' || q.star === 'false'));
   if(q.ops !== undefined && q.ops !== '') setOps(MathSheet.normalizeOps(q.ops));
   else if(q.type !== undefined && q.type !== '' && TYPE_NAMES.indexOf(q.type) < 0) setOps(legacyOps(q.type));
   if(q.tasks !== undefined && q.tasks !== ''){
@@ -409,6 +531,11 @@ function applyUrlParams(q){
     }
   }
   applyState(readState());
+  /* ссылка со звёздочкой без списка задач — подключаем весь звёздный набор */
+  if((q.tasks === undefined || q.tasks === '') && starMode()){
+    setStarGroup(true);
+    syncTaskChips();
+  }
 }
 
 var q = parseQuery();

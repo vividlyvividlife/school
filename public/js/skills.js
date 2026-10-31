@@ -70,11 +70,12 @@ function pluralOk(n){
 
 var els = {
   setup: $('setup'), game: $('game'), results: $('results'),
+  playarea: document.querySelector('.playarea'),
   from: $('from'), to: $('to'), toChips: $('toChips'),
   types: document.querySelector('#setup .types-seg'),
   ops: document.querySelector('#setup .ops-seg'),
   timeRow: $('timeRow'), min: $('min'), sec: $('sec'),
-  carry: $('carry'), sound: $('sound'), soundTest: $('soundTest'),
+  carry: $('carry'), star: $('starBtn'), sound: $('sound'), soundTest: $('soundTest'),
   poolInfo: $('poolInfo'), startBtn: $('startBtn'),
   hardInfo: $('hardInfo'), hardList: $('hardList'), hardBtn: $('hardBtn'), clearHard: $('clearHard'),
   histList: $('histList'), clearHist: $('clearHist'),
@@ -100,6 +101,20 @@ function availableTypes(){
   return out;
 }
 
+var isProblems = SKILL === 'problems';
+function typeAllowed(t){
+  if(!isProblems || !window.MathProblems) return true;
+  return window.MathProblems.problemTypesForOps([t], S.ops, S.star).length > 0;
+}
+function activeTypes(){
+  if(!isProblems || !window.MathProblems) return S.types;
+  return window.MathProblems.problemTypesForOps(S.types, S.ops, S.star);
+}
+function visibleHard(){
+  if(!isProblems) return hardCache;
+  return hardCache.filter(function(x){ return typeAllowed(x.type); });
+}
+
 var S = {
   from: parseInt(els.from.value, 10) || 10,
   to: parseInt(els.to.value, 10) || 99,
@@ -107,6 +122,7 @@ var S = {
   ops: SKILL === 'brackets' ? ['add', 'sub', 'mul', 'div'] : ['add', 'sub'],
   miss: 'r',
   carry: false,
+  star: false,
   answer: 'type',
   mode: 'free',
   min: parseInt(els.min.value, 10) || 2,
@@ -130,6 +146,7 @@ function loadSettings(){
   }
   if(['r', 'a', 'b', 'ab', 'rab'].indexOf(v.miss) >= 0) S.miss = v.miss;
   if(typeof v.carry === 'boolean') S.carry = v.carry;
+  if(typeof v.star === 'boolean') S.star = v.star;
   if(['type', 'tiles6', 'tiles9', 'tiles12'].indexOf(v.answer) >= 0) S.answer = v.answer;
   if(['free', 'timed'].indexOf(v.mode) >= 0) S.mode = v.mode;
   if(v.min !== undefined) S.min = clampInt(v.min, 0, 300, 2);
@@ -141,7 +158,7 @@ function saveSettings(){ saveJSON(K_SET, S); }
 function limits(){
   if(SKILL === 'digits') return { min: 10, max: 99 };
   if(SKILL === 'units') return { min: 1, max: 10000 };
-  if(SKILL === 'perimeter') return { min: 1, max: 20 };
+  if(SKILL === 'perimeter' || SKILL === 'polylines') return { min: 1, max: 20 };
   return { min: 1, max: 100 };
 }
 function normalize(){
@@ -178,12 +195,34 @@ function syncSegs(){
     each(seg.querySelectorAll('button'), function(b){
       var v = b.getAttribute('data-v'), on;
       if(key === 'ops') on = S.ops.indexOf(v) >= 0;
-      else if(key === 'types') on = S.types.indexOf(v) >= 0;
+      else if(key === 'types'){
+        var ok = typeAllowed(v);
+        on = ok && S.types.indexOf(v) >= 0;
+        if(isProblems){
+          b.disabled = !ok;
+          b.setAttribute('aria-disabled', ok ? 'false' : 'true');
+          if(ok){
+            b.title = '';
+          } else if(window.MathProblems.problemIsStarred(v)){
+            b.title = tr('Включите ★', 'Turn on ★');
+          } else {
+            var opsNames = { add: '+', sub: '−', mul: '×', div: '÷' };
+            b.title = tr('Нужно включить: ', 'Requires: ') +
+              window.MathProblems.problemTypeNeeds(v).map(function(route){
+                return route.map(function(o){ return opsNames[o]; }).join(' ');
+              }).join(tr(' или ', ' or '));
+          }
+        }
+      }
       else on = String(S[key]) === v;
       b.classList.toggle('on', on);
     });
   });
   if(els.carry) els.carry.checked = S.carry;
+  if(els.star){
+    els.star.classList.toggle('on', S.star);
+    els.star.setAttribute('aria-pressed', S.star ? 'true' : 'false');
+  }
   if(els.sound) els.sound.checked = S.sound;
   if(els.timeRow) els.timeRow.hidden = S.mode !== 'timed';
 }
@@ -225,13 +264,23 @@ function poolCount(){
       if(t === 'square' || t === 'pentagon' || t === 'hexagon') n += m;
       else n += Math.max(1, m * m);
     });
+  } else if(window.MathProblems){
+    if(SKILL === 'problems') return window.MathProblems.problemPoolCount(activeTypes(), r.a, r.b);
+    if(SKILL === 'polylines') return window.MathProblems.polylinePoolCount(S.types, r.a, r.b);
   }
   return n;
 }
 function poolInfo(){
-  var noTasks = SKILL !== 'missing' && !S.types.length;
+  var noTasks = SKILL !== 'missing' && !(isProblems ? activeTypes() : S.types).length;
   if(noTasks){
-    els.poolInfo.textContent = tr('Выберите хотя бы одно задание', 'Choose at least one task');
+    var needStar = isProblems && !S.star && window.MathProblems && S.types.some(function(t){
+      return window.MathProblems.problemIsStarred(t);
+    });
+    els.poolInfo.textContent = needStar
+      ? tr('Включите ★: звёздные задачи решаются повторным сложением и вычитанием', 'Turn on ★: star tasks are solved by repeated addition and subtraction')
+      : isProblems && S.types.length
+        ? tr('Для выбранных действий задач нет. Включите действие или задание', 'No tasks match the selected operations. Enable an operation or a task')
+        : tr('Выберите хотя бы одно задание', 'Choose at least one task');
     els.startBtn.disabled = true;
     return;
   }
@@ -775,6 +824,7 @@ function perimeterGen(type){
 
 function genAny(){
   var types = S.types.length ? S.types : availableTypes();
+  if(isProblems) types = activeTypes().length ? activeTypes() : ['total'];
   if(SKILL === 'missing') return missingGen();
   for(var i = 0; i < 60; i++){
     var t = pick(types), e = null;
@@ -783,6 +833,8 @@ function genAny(){
     else if(SKILL === 'brackets') e = bracketsGen(t);
     else if(SKILL === 'units') e = unitsGen(t);
     else if(SKILL === 'perimeter') e = perimeterGen(t);
+    else if(SKILL === 'problems' && window.MathProblems) e = window.MathProblems.generateProblem(t, Math.random, { from: S.from, to: S.to, star: S.star });
+    else if(SKILL === 'polylines' && window.MathProblems) e = window.MathProblems.generatePolyline(t, Math.random, { from: S.from, to: S.to });
     if(!e) continue;
     if(run && run.recent.indexOf(e.id) >= 0) continue;
     if(run){
@@ -796,6 +848,8 @@ function genAny(){
   if(SKILL === 'brackets') return bracketsGen(types[0]);
   if(SKILL === 'units') return unitsGen(types[0]);
   if(SKILL === 'perimeter') return perimeterGen(types[0]);
+  if(SKILL === 'problems' && window.MathProblems) return window.MathProblems.generateProblem(types[0], Math.random, { from: S.from, to: S.to, star: S.star });
+  if(SKILL === 'polylines' && window.MathProblems) return window.MathProblems.generatePolyline(types[0], Math.random, { from: S.from, to: S.to });
   return missingGen();
 }
 
@@ -871,9 +925,10 @@ function loadHard(){
 }
 function saveHard(){ saveJSON(K_HARD, hardCache); }
 function renderHard(){
-  var n = hardCache.length;
+  var list = visibleHard();
+  var n = list.length;
   els.hardList.innerHTML = n
-    ? hardCache.map(function(x){ return '<span class="ex">' + x.text + '</span>'; }).join('')
+    ? list.map(function(x){ return '<span class="ex">' + x.text + '</span>'; }).join('')
     : '';
   els.hardList.hidden = !n;
   els.hardBtn.disabled = !n;
@@ -913,8 +968,9 @@ function summaryText(){
     });
     S.ops.forEach(function(o){ tasks.push(brNames[o]); });
   } else if(els.types){
+    var chosen = isProblems ? activeTypes() : S.types;
     each(els.types.querySelectorAll('button'), function(b){
-      if(S.types.indexOf(b.getAttribute('data-v')) >= 0) tasks.push(b.textContent.trim());
+      if(chosen.indexOf(b.getAttribute('data-v')) >= 0) tasks.push(b.textContent.trim());
     });
   }
   return S.from + '–' + S.to + ' · ' + tasks.join(', ');
@@ -994,6 +1050,12 @@ function startRun(list, kind){
   if(kind === 'hard'){
     run.queue = shuffle(list.slice());
     run.hardRemaining = list.slice();
+    run.hardHidden = hardCache.filter(function(x){
+      for(var i = 0; i < list.length; i++){
+        if(list[i].id === x.id) return false;
+      }
+      return true;
+    });
     run.summary = tr('повторение', 'review');
   } else if(kind === 'fluency'){
     run.queue = shuffle(list.slice());
@@ -1028,6 +1090,7 @@ function nextExercise(){
 }
 function renderCurrent(){
   var e = run.cur;
+  if(e.long && els.playarea) els.playarea.scrollTop = 0;
   els.eqw.classList.remove('ok', 'bad');
   els.cap.className = 'cap';
   els.cap.textContent = '';
@@ -1147,7 +1210,7 @@ function submitValue(val, btn){
     if(!dup) run.mistakes.push({ ex: e, ua: val });
     els.eqw.classList.add('bad');
     els.cap.className = 'cap bad';
-    els.cap.textContent = tr('Правильно: ', 'Correct answer: ') + e.need;
+    els.cap.textContent = tr('Правильно: ', 'Correct answer: ') + (e.answerText || e.need);
     if(btn) btn.classList.add('wrong');
     playWrong();
     if(run.listKind === 'hard' || run.listKind === 'fluency' || run.listKind === 'retry') run.queue.push(e);
@@ -1156,7 +1219,7 @@ function submitValue(val, btn){
   els.scoreBad.textContent = run.bad;
   run.advanceTimer = setTimeout(function(){
     if(run && !run.done) next();
-  }, ok ? 420 : 1500);
+  }, e.long ? (ok ? 1300 : 2600) : (ok ? 420 : 1500));
 }
 function markUnsolved(){
   if(!run.cur || run.locked || !run.tN) return;
@@ -1198,7 +1261,7 @@ function finish(reason){
     addHard(run.mistakes.map(function(m){ return m.ex; }).concat(run.unsolved));
   }
   if(run.hardMode){
-    hardCache = run.hardRemaining.slice();
+    hardCache = run.hardRemaining.concat(run.hardHidden || []).slice(0, 16);
     saveHard();
   }
   run.slow = run.listKind === 'normal' ? collectSlow() : [];
@@ -1277,7 +1340,10 @@ function showResults(reason, durSec){
     els.misList.innerHTML = '<div class="none">' + tr('Ошибок нет', 'No mistakes') + '</div>';
   } else {
     els.misList.innerHTML = run.mistakes.map(function(m){
-      return '<div class="mrow">' + m.ex.text + '<span class="ua">' + tr('вы: ', 'you: ') + m.ua + '</span></div>';
+      return '<div class="mrow">' + m.ex.text +
+        '<span class="ua">' + tr('вы: ', 'you: ') + m.ua + '</span>' +
+        (m.ex.answerText ? '<span class="ua ok">' + tr('верно: ', 'correct: ') + m.ex.answerText + '</span>' : '') +
+        '</div>';
     }).join('');
   }
   els.unsolvedCard.hidden = !run.unsolved.length;
@@ -1383,6 +1449,11 @@ if(els.types){
     });
   });
 }
+/* звезда переключает звёздные задачи — решение повторным сложением/вычитанием */
+function setStarGroup(on){
+  S.star = !!on;
+}
+
 if(els.ops){
   each(els.ops.querySelectorAll('button'), function(b){
     b.addEventListener('click', function(){
@@ -1393,8 +1464,18 @@ if(els.ops){
         S.ops.push(v);
       }
       syncSegs();
+      if(isProblems){ poolInfo(); renderHard(); }
       saveSettings();
     });
+  });
+}
+if(els.star){
+  els.star.addEventListener('click', function(){
+    setStarGroup(!S.star);
+    syncSegs();
+    poolInfo();
+    renderHard();
+    saveSettings();
   });
 }
 each(document.querySelectorAll('#setup .seg[data-key="miss"] button'), function(b){
@@ -1458,7 +1539,8 @@ els.startBtn.addEventListener('click', function(){
   startRun(null, 'normal');
 });
 els.hardBtn.addEventListener('click', function(){
-  if(hardCache.length) startRun(hardCache.slice(), 'hard');
+  var list = visibleHard();
+  if(list.length) startRun(list.slice(), 'hard');
 });
 els.clearHard.addEventListener('click', function(){
   hardCache = [];

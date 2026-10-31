@@ -18,11 +18,15 @@
 .eq.compare .slot,.eq.expr .slot{min-width:1.2em}
 .eq.compare .slot{color:var(--blue)}
 
-.types-seg{grid-template-columns:repeat(2,minmax(0,1fr));container-type:inline-size}
+.types-seg{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));justify-content:center;container-type:inline-size}
 .tile .types-seg button{
   font-size:clamp(11px,5.1cqw,13px);
   padding:8px 6px;
   overflow-wrap:anywhere;
+}
+.tile .types-seg button:disabled{opacity:.4;cursor:not-allowed}
+@media (hover:hover){
+  .tile .types-seg button:disabled:hover{transform:none;border-color:var(--line-strong);background:var(--surface-2);color:var(--text-soft)}
 }
 .miss-seg button[data-v="rab"]{grid-column:span 2}
 
@@ -37,11 +41,12 @@
 .answer-tile .sign-legend{flex:1 1 auto;min-height:72px}
 .answer-tile .hint{flex:0 0 auto}
 
-#setup .setup-grid .start-tile{grid-column:1/-1}
+#setup .setup-grid{align-items:stretch}
+#setup .setup-grid .tasks-tile{order:-1}
+#setup .tasks-tile .tile-body{flex:0 0 auto}
 
-.setup-grid{container-type:inline-size}
-@container (min-width:490px){
-  .setup-grid .sound-tile{grid-column:span 2}
+.sound-tile{container-type:inline-size}
+@container (min-width:560px){
   .sound-tile .tile-body{
     display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);
     align-items:center;column-gap:16px;row-gap:8px;
@@ -92,3 +97,63 @@
 html[data-theme="dark"] .stat{background:var(--surface)}
 html[data-theme="dark"] .mrow{border-bottom-color:var(--line-soft)}
 html[data-theme="dark"] .sk-fig text{stroke:var(--surface)}
+
+/* ---------- текстовые задачи ---------- */
+.eqwrap:has(.eq.word){width:100%;align-items:stretch}
+.eq.word{
+  display:block;width:100%;max-width:620px;
+  font-size:clamp(15px,min(4.1vw,2.5dvh),20px);
+  line-height:1.45;font-weight:500;text-align:left;white-space:normal;
+}
+.wp{display:grid;grid-template-columns:minmax(92px,33%) minmax(0,1fr);gap:8px 14px;align-items:start;width:100%}
+.wp-fig{
+  margin:0;border-radius:12px;overflow:hidden;background:var(--surface-2);
+  aspect-ratio:3/2;box-shadow:inset 0 0 0 1px var(--line-soft);
+}
+.wp-img{display:block;width:100%;height:100%;object-fit:cover}
+.wp-text{min-width:0}
+.wp-text b{color:var(--blue);font-weight:700}
+.wp-answer{
+  grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.4em;
+  font-size:1.24em;font-weight:700;margin-top:.1em;
+}
+.wp-answer-label{font-weight:600;color:var(--muted);font-size:.9em}
+.wp-answer .unit{font-size:.62em;color:var(--muted);font-weight:600;margin-left:.15em}
+.wp-answer .slot{min-width:1.9em}
+.wp-help{grid-column:1/-1;border-top:1px dashed var(--line-strong);padding-top:4px;justify-self:stretch}
+.wp-help summary{
+  list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  font-size:.78em;font-weight:600;color:var(--blue);padding:4px 8px;border-radius:8px;
+}
+.wp-help summary::-webkit-details-marker{display:none}
+.wp-help summary::before{content:"▸";font-size:.9em;line-height:1;transition:transform .15s}
+.wp-help[open] summary::before{transform:rotate(90deg)}
+.wp-help summary:hover{background:var(--surface-2)}
+.wp-help-body{padding:2px 6px 4px;font-size:.82em;line-height:1.5;color:var(--text-soft)}
+.wp-help-body p{margin:.25em 0}
+.wp-eq{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);margin:.1em 0}
+.wp-eq b{color:var(--blue)}
+
+/* ---------- ломаные ---------- */
+.wp.wp-poly{grid-template-columns:1fr}
+.wp.wp-poly .poly-fig{grid-column:1/-1;margin:0;border-radius:12px;overflow:hidden}
+.poly-svg{display:block;width:100%;height:auto;max-height:min(34dvh,240px)}
+.poly-bg{fill:var(--surface-2)}
+.poly-paper{opacity:.5}
+.poly-grid{fill:none;stroke:var(--line);stroke-width:1}
+.poly-line{fill:none;stroke:var(--blue);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.poly-dot{fill:var(--blue)}
+.poly-label{
+  fill:var(--ink);font:600 13px "Work Sans","Segoe UI",Roboto,Arial,sans-serif;
+  paint-order:stroke;stroke:var(--surface-2);stroke-width:3.5px;stroke-linejoin:round;
+}
+
+#setup[data-skill="problems"] .types-seg button,
+#setup[data-skill="polylines"] .types-seg button{font-size:clamp(10.5px,4.6cqw,12px);padding:7px 4px}
+
+@media (max-width:430px){
+  .wp{grid-template-columns:minmax(76px,30%) minmax(0,1fr);gap:6px 10px}
+}
+
+.playgroup:has(.eq.word) .pad button{height:clamp(44px,7.8dvh,64px);font-size:clamp(19px,4.2dvh,29px)}
+.playgroup:has(.eq.word){gap:clamp(6px,1.4dvh,14px)}

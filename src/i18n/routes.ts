@@ -15,6 +15,8 @@ export const pagePairs: PagePair[] = [
   { kind: 'skill', ru: '/2-class/matematika/skobki/', en: '/en/grade-2/math/brackets/' },
   { kind: 'skill', ru: '/2-class/matematika/velichiny/', en: '/en/grade-2/math/units/' },
   { kind: 'skill', ru: '/2-class/matematika/perimetr/', en: '/en/grade-2/math/perimeter/' },
+  { kind: 'skill', ru: '/2-class/matematika/zadachi/', en: '/en/grade-2/math/word-problems/' },
+  { kind: 'skill', ru: '/2-class/matematika/lomanye/', en: '/en/grade-2/math/polylines/' },
   { kind: 'reading', ru: '/2-class/belaruskaya-mova/pazaklasnae-chytanne/', en: '/en/grade-2/belarusian/extracurricular-reading/' },
   { kind: 'reading', ru: '/2-class/belaruskaya-mova/zima/', en: '/en/grade-2/belarusian/winter/' },
   { kind: 'reading', ru: '/2-class/belaruskaya-mova/viasna/', en: '/en/grade-2/belarusian/spring/' },

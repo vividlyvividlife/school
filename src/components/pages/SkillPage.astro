@@ -20,22 +20,28 @@ const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+
 const jsVersion = Date.now().toString(36);
 const isCompare = skill === 'compare';
 const isBrackets = skill === 'brackets';
+const isProblems = skill === 'problems';
+const hasOps = isBrackets || isProblems;
 const defaults: Record<SkillId, { from: number; to: number }> = {
   digits: { from: 10, to: 99 },
   compare: { from: 1, to: 100 },
   brackets: { from: 1, to: 100 },
   units: { from: 1, to: 100 },
-  perimeter: { from: 1, to: 20 }
+  perimeter: { from: 1, to: 20 },
+  problems: { from: 10, to: 100 },
+  polylines: { from: 1, to: 10 }
 };
 const d = defaults[skill];
-const toMax = skill === 'digits' ? 99 : skill === 'perimeter' ? 20 : skill === 'units' ? 10000 : 100;
+const toMax = skill === 'digits' ? 99 : (skill === 'perimeter' || skill === 'polylines') ? 20 : skill === 'units' ? 10000 : 100;
 const slugRu: Record<SkillId, string> = {
   digits: 'razryady', compare: 'sravnenie',
-  brackets: 'skobki', units: 'velichiny', perimeter: 'perimetr'
+  brackets: 'skobki', units: 'velichiny', perimeter: 'perimetr',
+  problems: 'zadachi', polylines: 'lomanye'
 };
 const slugEn: Record<SkillId, string> = {
   digits: 'place-value', compare: 'comparison',
-  brackets: 'brackets', units: 'units', perimeter: 'perimeter'
+  brackets: 'brackets', units: 'units', perimeter: 'perimeter',
+  problems: 'word-problems', polylines: 'polylines'
 };
 const slug = lang === 'en' ? slugEn[skill] : slugRu[skill];
 const offlineFile = lang === 'en' ? `offline/en-${slug}.html` : `offline/${slug}.html`;
@@ -66,7 +72,7 @@ const taskEntries = Object.entries(p.tasks);
       </div>
 
       {taskEntries.length > 0 && (
-        <div class="tile">
+        <div class="tile tasks-tile">
           <div class="tile-title">{sc.tasksTitle}</div>
           <div class="tile-body">
             <div class="seg multi types-seg" data-key="types">
@@ -77,9 +83,9 @@ const taskEntries = Object.entries(p.tasks);
         </div>
       )}
 
-      {isBrackets && (
+      {hasOps && (
         <div class="tile">
-          <div class="tile-title">{t.actions}</div>
+          <div class="tile-title">{isProblems ? t.actionsProblems : t.actions}</div>
           <div class="tile-body">
             <div class="seg multi ops-seg" data-key="ops" data-multi="1">
               <button type="button" data-v="add" title={t.addTitle}>+</button>
@@ -87,7 +93,16 @@ const taskEntries = Object.entries(p.tasks);
               <button type="button" data-v="mul" title={t.mulTitle}>×</button>
               <button type="button" data-v="div" title={t.divTitle}>÷</button>
             </div>
-            <div class="hint">{t.actionsHint}</div>
+            <div class="hint">{isProblems ? t.actionsHintProblems : t.actionsHint}</div>
+            {isProblems && (
+              <div class="star-row">
+                <button type="button" id="starBtn" class="star-toggle" aria-pressed="false" title={t.starTitle}>
+                  <svg class="star-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.98 6.04 6.66.97-4.82 4.7 1.14 6.63L12 17.8l-5.96 3.14 1.14-6.63-4.82-4.7 6.66-.97z"/></svg>
+                  <span>{t.starLabel}</span>
+                </button>
+                <div class="hint">{t.starHint}</div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -269,5 +284,6 @@ const taskEntries = Object.entries(p.tasks);
     </div>
   </div>
 </section>
+<script is:inline src={asset('js/math-problems.js') + '?v=' + jsVersion}></script>
 <script is:inline src={asset('js/skills.js') + '?v=' + jsVersion}></script>
 </BaseLayout>

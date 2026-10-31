@@ -23,7 +23,9 @@ const typeEntries: [string, string][] = [
   ['missing', p.typeMissing],
   ['brackets', p.typeBrackets],
   ['units', p.typeUnits],
-  ['perimeter', p.typePerimeter]
+  ['perimeter', p.typePerimeter],
+  ['problems', p.typeProblems],
+  ['polylines', p.typePolylines]
 ];
 const rangeHints: Record<string, string> = {
   examples: p.rangeHintExamples,
@@ -32,14 +34,18 @@ const rangeHints: Record<string, string> = {
   missing: p.rangeHintMissing,
   brackets: p.rangeHintBrackets,
   units: p.rangeHintUnits,
-  perimeter: p.rangeHintPerimeter
+  perimeter: p.rangeHintPerimeter,
+  problems: p.rangeHintProblems,
+  polylines: p.rangeHintPolylines
 };
 const taskEntries: [string, [string, string][]][] = [
   ['digits', Object.entries(skillCopy[lang].digits.tasks)],
   ['compare', Object.entries(skillCopy[lang].compare.tasks)],
   ['brackets', Object.entries(skillCopy[lang].brackets.tasks)],
   ['units', Object.entries(skillCopy[lang].units.tasks)],
-  ['perimeter', Object.entries(skillCopy[lang].perimeter.tasks)]
+  ['perimeter', Object.entries(skillCopy[lang].perimeter.tasks)],
+  ['problems', Object.entries(skillCopy[lang].problems.tasks)],
+  ['polylines', Object.entries(skillCopy[lang].polylines.tasks)]
 ];
 const missingEntries: [string, string][] = [
   ['r', p.missR],
@@ -54,6 +60,11 @@ const answerEntries: [string, string][] = [
   ['none', p.ansNone],
   ['faint', p.ansFaint],
   ['key', p.ansKey]
+];
+const writeEntries: [string, string][] = [
+  ['none', p.writeNone],
+  ['easy', p.writeEasy],
+  ['hard', p.writeHard]
 ];
 ---
 
@@ -95,7 +106,7 @@ const answerEntries: [string, string][] = [
         </div>
       </section>
 
-      <section class="tgroup" data-only="examples missing brackets" aria-labelledby="tg-actions">
+      <section class="tgroup" data-only="examples missing brackets problems" aria-labelledby="tg-actions">
         <div class="tgroup-title" id="tg-actions">{p.actions}</div>
         <div class="tgroup-body">
           <div class="ops" id="ops" role="group" aria-label={p.actions}>
@@ -103,6 +114,14 @@ const answerEntries: [string, string][] = [
             <label class="op" title={p.subtraction}><input type="checkbox" value="sub" checked aria-label={p.subtraction}><span aria-hidden="true">−</span></label>
             <label class="op" title={p.multiplication}><input type="checkbox" value="mul" aria-label={p.multiplication}><span aria-hidden="true">×</span></label>
             <label class="op" title={p.division}><input type="checkbox" value="div" aria-label={p.division}><span aria-hidden="true">÷</span></label>
+          </div>
+          <div class="hint" data-only="problems">{c.trainer.actionsHintProblems}</div>
+          <div class="star-row" data-only="problems" hidden>
+            <button type="button" id="star" class="star-toggle" aria-pressed="false" title={c.trainer.starTitle}>
+              <svg class="star-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.98 6.04 6.66.97-4.82 4.7 1.14 6.63L12 17.8l-5.96 3.14 1.14-6.63-4.82-4.7 6.66-.97z"></path></svg>
+              <span>{c.trainer.starLabel}</span>
+            </button>
+            <div class="hint">{c.trainer.starHint}</div>
           </div>
         </div>
       </section>
@@ -133,7 +152,7 @@ const answerEntries: [string, string][] = [
       </section>
 
       {taskEntries.map(([forType, entries]) => (
-        <section class="tgroup" data-only={forType} hidden>
+        <section class="tgroup tgroup-tasks" data-only={forType} hidden>
           <div class="tgroup-title">{p.tasksTitle}</div>
           <div class="tgroup-body">
             <div class="chips" data-tasks={forType}>
@@ -145,6 +164,21 @@ const answerEntries: [string, string][] = [
           </div>
         </section>
       ))}
+
+      <section class="tgroup" data-only="problems" aria-labelledby="tg-write" hidden>
+        <div class="tgroup-title" id="tg-write">{p.writeTitle}</div>
+        <div class="tgroup-body">
+          <div class="seg seg-write" id="write" role="radiogroup" aria-label={p.writeTitle}>
+            {writeEntries.map(([key, label]) => (
+              <label>
+                <input type="radio" name="write-mode" value={key} checked={key === 'none'}>
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+          <div class="hint">{p.writeHint}</div>
+        </div>
+      </section>
 
       <section class="tgroup" aria-labelledby="tg-answers">
         <div class="tgroup-title" id="tg-answers">{p.answers}</div>
@@ -182,6 +216,7 @@ const answerEntries: [string, string][] = [
         <p>{p.help1}</p>
         <p>{p.help2}</p>
         <p>{p.help3}</p>
+        <p>{p.help4}</p>
       </div>
     </div>
   </div>
@@ -189,6 +224,7 @@ const answerEntries: [string, string][] = [
 
 <div id="sheets"></div>
 <script is:inline src={asset('js/examples-logic.js') + '?v=' + jsVersion}></script>
+<script is:inline src={asset('js/math-problems.js') + '?v=' + jsVersion}></script>
 <script is:inline src={asset('js/worksheet-tasks.js') + '?v=' + jsVersion}></script>
 <script is:inline src={asset('js/examples-ui.js') + '?v=' + jsVersion}></script>
 </BaseLayout>

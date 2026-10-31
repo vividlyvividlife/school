@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { existsSync, readdirSync } from 'node:fs';
 
 const root = process.cwd();
 const dist = path.join(root, 'dist');
@@ -20,8 +21,24 @@ const pages = [
   ['en/grade-2/math/comparison/index.html', 'offline/en-comparison.html'],
   ['en/grade-2/math/brackets/index.html', 'offline/en-brackets.html'],
   ['en/grade-2/math/units/index.html', 'offline/en-units.html'],
-  ['en/grade-2/math/perimeter/index.html', 'offline/en-perimeter.html']
+  ['en/grade-2/math/perimeter/index.html', 'offline/en-perimeter.html'],
+  ['2-class/matematika/zadachi/index.html', 'offline/zadachi.html'],
+  ['2-class/matematika/lomanye/index.html', 'offline/lomanye.html'],
+  ['en/grade-2/math/word-problems/index.html', 'offline/en-word-problems.html'],
+  ['en/grade-2/math/polylines/index.html', 'offline/en-polylines.html']
 ];
+
+const problemsImgDir = path.join(publicDir, 'img', 'problems');
+let problemsImgScript = '';
+if (existsSync(problemsImgDir)) {
+  const files = readdirSync(problemsImgDir).filter((f) => f.endsWith('.webp'));
+  const map = {};
+  for (const file of files) {
+    const data = await readFile(path.join(problemsImgDir, file));
+    map[file.replace(/\.webp$/, '')] = `data:image/webp;base64,${data.toString('base64')}`;
+  }
+  problemsImgScript = `<script>window.__PROBLEM_IMG__=${JSON.stringify(map)}</script>`;
+}
 
 function localFile(url) {
   if (!url || /^(?:[a-z]+:)?\/\//i.test(url)) return null;
@@ -61,7 +78,7 @@ async function inlinePage(html) {
     .replace(/<meta\b[^>]*\bname="(?:robots|googlebot|yandex|bingbot)"[^>]*>/gi, '')
     .replace(/<link\b[^>]*href="https:\/\/fonts\.(?:googleapis|gstatic)\.com[^"]*"[^>]*>/gi, '')
     .replace(/<link\b[^>]*rel="icon"[^>]*>/gi, '')
-    .replace('</head>', '<meta name="robots" content="noindex, nofollow"><style>.site-nav,.site-top,.site-scrim{display:none!important}</style></head>');
+    .replace('</head>', problemsImgScript + '<meta name="robots" content="noindex, nofollow"><style>.site-nav,.site-top,.site-scrim{display:none!important}</style></head>');
 }
 
 for (const [src, out] of pages) {

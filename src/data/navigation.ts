@@ -65,6 +65,18 @@ const navigationRu: NavItem[] = [
             page: 'trainer',
             desc: 'Периметр фигур',
           },
+          {
+            label: 'Задачи',
+            path: '/2-class/matematika/zadachi/',
+            page: 'trainer',
+            desc: 'Текстовые задачи с разбором',
+          },
+          {
+            label: 'Ломаные',
+            path: '/2-class/matematika/lomanye/',
+            page: 'trainer',
+            desc: 'Длина ломаной по звеньям',
+          },
         ],
       },
       {
@@ -168,6 +180,18 @@ const navigationEn: NavItem[] = [
             path: '/en/grade-2/math/perimeter/',
             page: 'trainer',
             desc: 'Perimeter of shapes',
+          },
+          {
+            label: 'Word problems',
+            path: '/en/grade-2/math/word-problems/',
+            page: 'trainer',
+            desc: 'Word problems with a breakdown',
+          },
+          {
+            label: 'Polylines',
+            path: '/en/grade-2/math/polylines/',
+            page: 'trainer',
+            desc: 'Length of a polyline',
           },
         ],
       },
