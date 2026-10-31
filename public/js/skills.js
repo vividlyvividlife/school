@@ -158,7 +158,10 @@ function saveSettings(){ saveJSON(K_SET, S); }
 function limits(){
   if(SKILL === 'digits') return { min: 10, max: 99 };
   if(SKILL === 'units') return { min: 1, max: 10000 };
-  if(SKILL === 'perimeter' || SKILL === 'polylines') return { min: 1, max: 20 };
+  if(SKILL === 'thousand') return { min: 100, max: 999 };
+  if(SKILL === 'round') return { min: 1, max: 99 };
+  if(SKILL === 'tree') return { min: 2, max: 6 };
+  if(SKILL === 'geometry' || SKILL === 'perimeter' || SKILL === 'polylines' || SKILL === 'area') return { min: 1, max: 20 };
   return { min: 1, max: 100 };
 }
 function normalize(){
@@ -257,12 +260,37 @@ function poolCount(){
     S.types.forEach(function(){ n += Math.max(1, Math.floor(m * m / 2)); });
   } else if(SKILL === 'units'){
     S.types.forEach(function(t){
-      n += t === 'convert' ? unitsConvCount(r.a, r.b) : unitsCalcCount(r.a, r.b);
+      if(t === 'millimeters' || t === 'kilometers') n += 16;
+      else n += t === 'convert' ? unitsConvCount(r.a, r.b) : unitsCalcCount(r.a, r.b);
     });
   } else if(SKILL === 'perimeter'){
     S.types.forEach(function(t){
       if(t === 'square' || t === 'pentagon' || t === 'hexagon') n += m;
       else n += Math.max(1, m * m);
+    });
+  } else if(SKILL === 'equations'){
+    n = Math.max(1, m * S.types.length);
+  } else if(SKILL === 'remainders'){
+    n = Math.max(1, m * S.types.length);
+  } else if(SKILL === 'area'){
+    S.types.forEach(function(t){
+      n += t === 'volume' ? Math.max(1, m * m * Math.min(m, 10)) : Math.max(1, m * m);
+    });
+  } else if(SKILL === 'operations'){
+    S.types.forEach(function(t){
+      n += t === 'result1' || t === 'start1' ? Math.max(1, m * 4) : Math.max(1, m * m);
+    });
+  } else if(SKILL === 'divisibility'){
+    n = Math.max(1, m * S.types.length);
+  } else if(SKILL === 'geometry'){
+    S.types.forEach(function(t){
+      n += t === 'segments' || t === 'rays' ? 3 : t === 'intersections' ? 4 : m;
+    });
+  } else if(SKILL === 'thousand' || SKILL === 'round'){
+    n = Math.max(1, m * S.types.length);
+  } else if(SKILL === 'tree'){
+    S.types.forEach(function(t){
+      n += t === 'digits' ? 24 : Math.max(1, m * m);
     });
   } else if(window.MathProblems){
     if(SKILL === 'problems') return window.MathProblems.problemPoolCount(activeTypes(), r.a, r.b);
@@ -629,6 +657,7 @@ function bracketsGen(type){
 function unitsGen(type){
   var r = bounds(), a = r.a, b = r.b;
   var M = tr('м', 'm'), DM = tr('дм', 'dm'), CM = tr('см', 'cm');
+  var MM = tr('мм', 'mm'), KM = tr('км', 'km');
 
   function uEx(id, leftHtml, leftText, ansUnit, need){
     return ex(id, leftHtml + '<span class="op">=</span>{{slot}}<span class="unit">' + ansUnit + '</span>',
@@ -636,6 +665,21 @@ function unitsGen(type){
   }
   function num(v, u){ return '<span>' + v + '</span><span class="unit">' + u + '</span>'; }
   function op(s){ return '<span class="op">' + s + '</span>'; }
+
+  if(type === 'millimeters'){
+    var mm = ri(2, 9);
+    if(ri(1, 2) === 1){
+      return uEx('un:mm:cm:' + mm, num(mm, CM), mm + ' ' + CM, MM, mm * 10);
+    }
+    return uEx('un:mm:mm:' + (mm * 10), num(mm * 10, MM), (mm * 10) + ' ' + MM, CM, mm);
+  }
+  if(type === 'kilometers'){
+    var km = ri(2, 9);
+    if(ri(1, 2) === 1){
+      return uEx('un:km:m:' + km, num(km, KM), km + ' ' + KM, M, km * 1000);
+    }
+    return uEx('un:km:km:' + (km * 1000), num(km * 1000, M), (km * 1000) + ' ' + M, KM, km);
+  }
   function parts(v){
     return { m: Math.floor(v / 100), d: Math.floor((v % 100) / 10), c: v % 10 };
   }
@@ -835,6 +879,15 @@ function genAny(){
     else if(SKILL === 'perimeter') e = perimeterGen(t);
     else if(SKILL === 'problems' && window.MathProblems) e = window.MathProblems.generateProblem(t, Math.random, { from: S.from, to: S.to, star: S.star });
     else if(SKILL === 'polylines' && window.MathProblems) e = window.MathProblems.generatePolyline(t, Math.random, { from: S.from, to: S.to });
+    else if(SKILL === 'equations') e = equationsGen(t);
+    else if(SKILL === 'remainders') e = remainderGen(t);
+    else if(SKILL === 'area') e = areaGen(t);
+    else if(SKILL === 'operations') e = operationsGen(t);
+    else if(SKILL === 'divisibility') e = divisibilityGen(t);
+    else if(SKILL === 'geometry') e = geometryGen(t);
+    else if(SKILL === 'thousand') e = thousandGen(t);
+    else if(SKILL === 'round') e = roundGen(t);
+    else if(SKILL === 'tree') e = treeGen(t);
     if(!e) continue;
     if(run && run.recent.indexOf(e.id) >= 0) continue;
     if(run){
@@ -850,7 +903,451 @@ function genAny(){
   if(SKILL === 'perimeter') return perimeterGen(types[0]);
   if(SKILL === 'problems' && window.MathProblems) return window.MathProblems.generateProblem(types[0], Math.random, { from: S.from, to: S.to, star: S.star });
   if(SKILL === 'polylines' && window.MathProblems) return window.MathProblems.generatePolyline(types[0], Math.random, { from: S.from, to: S.to });
+  if(SKILL === 'equations') return equationsGen(types[0]);
+  if(SKILL === 'remainders') return remainderGen(types[0]);
+  if(SKILL === 'area') return areaGen(types[0]);
+  if(SKILL === 'operations') return operationsGen(types[0]);
+  if(SKILL === 'divisibility') return divisibilityGen(types[0]);
+  if(SKILL === 'geometry') return geometryGen(types[0]);
+  if(SKILL === 'thousand') return thousandGen(types[0]);
+  if(SKILL === 'round') return roundGen(types[0]);
+  if(SKILL === 'tree') return treeGen(types[0]);
   return missingGen();
+}
+
+/* ---------- уравнения ---------- */
+function eqEx(id, html, plain, need, max){
+  return ex(id, html, plain, need, 'number', 'expr', max || 100, { long: plain.length > 12 });
+}
+function equationsGen(type){
+  var r = bounds();
+  var hi = Math.max(3, Math.min(100, r.b));
+  var lo = Math.max(1, Math.min(r.a, hi - 1));
+  function num(v){ return '<span>' + v + '</span>'; }
+  function op(s){ return '<span class="op">' + s + '</span>'; }
+  function eqn(html, plain, need, id){
+    return eqEx(id, html, plain, need, 100);
+  }
+  if(type === 'plus'){
+    var b = ri(Math.max(2, lo), hi), a = ri(1, b - 1), x = b - a;
+    return eqn(num('{{slot}}') + op('+') + num(a) + op('=') + num(b), '? + ' + a + ' = ' + b, x, 'eq:plus:' + a + ':' + b);
+  }
+  if(type === 'minus'){
+    var m = ri(Math.max(2, lo), hi), s = ri(1, m - 1), d = m - s;
+    return eqn(num('{{slot}}') + op('−') + num(s) + op('=') + num(d), '? − ' + s + ' = ' + d, m, 'eq:minus:' + s + ':' + d);
+  }
+  if(type === 'subFrom'){
+    var a2 = ri(Math.max(2, lo), hi), s2 = ri(1, a2 - 1), d2 = a2 - s2;
+    return eqn(num(a2) + op('−') + num('{{slot}}') + op('=') + num(d2), a2 + ' − ? = ' + d2, s2, 'eq:sub:' + a2 + ':' + d2);
+  }
+  if(type === 'times'){
+    var f = ri(2, 10), x2 = ri(2, 10), p = f * x2;
+    if(p > hi){ x2 = Math.max(2, Math.floor(hi / f)); p = f * x2; }
+    return eqn(num('{{slot}}') + op('×') + num(f) + op('=') + num(p), '? × ' + f + ' = ' + p, x2, 'eq:mul:' + f + ':' + p);
+  }
+  if(type === 'divide'){
+    var dv = ri(2, 10), q = ri(2, 10), dd = dv * q;
+    if(dd > hi){ q = Math.max(2, Math.floor(hi / dv)); dd = dv * q; }
+    return eqn(num('{{slot}}') + op('÷') + num(dv) + op('=') + num(q), '? ÷ ' + dv + ' = ' + q, dd, 'eq:div:' + dv + ':' + q);
+  }
+  var b3 = ri(2, 10), q3 = ri(2, 10), a3 = b3 * q3;
+  if(a3 > hi){ q3 = Math.max(2, Math.floor(hi / b3)); a3 = b3 * q3; }
+  return eqn(num(a3) + op('÷') + num('{{slot}}') + op('=') + num(q3), a3 + ' ÷ ? = ' + q3, b3, 'eq:divby:' + a3 + ':' + q3);
+}
+
+/* ---------- деление с остатком ---------- */
+function remainderGen(type){
+  var r = bounds();
+  var hi = Math.max(5, Math.min(100, r.b));
+  var lo = Math.max(1, Math.min(r.a, hi));
+  var b = 3, q = 3, rem = 1, a = 10, i;
+  for(i = 0; i < 400; i++){
+    b = ri(2, 9); q = ri(2, 10); rem = ri(1, b - 1); a = b * q + rem;
+    if(a <= hi && a >= lo) break;
+  }
+  if(a > hi || a < lo){
+    b = 3; q = 2; rem = 2; a = 8;
+    if(a > hi){ b = 2; q = 2; rem = 0; a = 4; }
+  }
+  var OST = tr('ост.', 'r.');
+  function num(v){ return '<span>' + v + '</span>'; }
+  function op(s){ return '<span class="op">' + s + '</span>'; }
+  var base = num(a) + op('÷') + num(b) + op('=');
+  var tail = ' (' + OST + ' ' + rem + ')';
+  if(type === 'quotient'){
+    return ex('rm:q:' + a + ':' + b,
+      base + '{{slot}}' + '<span class="unit">' + tail + '</span>',
+      a + ' ÷ ' + b + ' = ?' + tail, q, 'number', 'expr', 100, { long: true });
+  }
+  if(type === 'remainder'){
+    return ex('rm:r:' + a + ':' + b,
+      base + num(q) + '<span class="unit"> (' + OST + ' {{slot}})</span>',
+      a + ' ÷ ' + b + ' = ' + q + ' (ост. ?)', rem, 'number', 'expr', 100, { long: true });
+  }
+  if(type === 'dividend'){
+    return ex('rm:a:' + b + ':' + q + ':' + rem,
+      '{{slot}}' + op('÷') + num(b) + op('=') + num(q) + '<span class="unit">' + tail + '</span>',
+      '? ÷ ' + b + ' = ' + q + tail, a, 'number', 'expr', 100, { long: true });
+  }
+  return ex('rm:b:' + a + ':' + q + ':' + rem,
+    num(a) + op('÷') + '{{slot}}' + op('=') + num(q) + '<span class="unit">' + tail + '</span>',
+    a + ' ÷ ? = ' + q + tail, b, 'number', 'expr', 100, { long: true });
+}
+
+/* ---------- площадь и объём ---------- */
+function areaGen(type){
+  var r = bounds();
+  var lo = Math.max(1, r.a), hi = Math.max(lo, Math.min(20, r.b));
+  var w = ri(lo, hi), h = ri(lo, hi), s = ri(lo, hi);
+  var CM = tr('см', 'cm'), CM2 = tr('см²', 'cm²'), CM3 = tr('см³', 'cm³');
+  function num(v){ return '<span>' + v + '</span>'; }
+  function answer(unit){
+    return '<div class="sk-answer">{{slot}}<span class="unit">' + unit + '</span></div>';
+  }
+  function ask(q){ return '<div class="sk-q">' + q + '</div>'; }
+  if(type === 'rectangle'){
+    return ex('ar:rect:' + w + ':' + h,
+      ask(tr('Прямоугольник со сторонами ', 'A rectangle with sides ') + w + ' ' + CM + tr(' и ', ' and ') + h + ' ' + CM + tr('. Найди площадь.', '. Find the area.')) + answer(CM2),
+      tr('Прямоугольник ', 'Rectangle ') + w + ' × ' + h + ' ' + CM, w * h, 'number', 'text', 400,
+      { figure: { kind: 'rectangle', sides: [w, h] } });
+  }
+  if(type === 'square'){
+    return ex('ar:sq:' + s,
+      ask(tr('Квадрат со стороной ', 'A square with a side of ') + s + ' ' + CM + tr('. Найди площадь.', '. Find the area.')) + answer(CM2),
+      tr('Квадрат ', 'Square ') + s + ' ' + CM, s * s, 'number', 'text', 400,
+      { figure: { kind: 'square', sides: [s] } });
+  }
+  if(type === 'side'){
+    var area = w * h;
+    return ex('ar:side:' + w + ':' + h,
+      ask(tr('Площадь прямоугольника — ', 'The area of a rectangle is ') + area + ' ' + CM2 + tr(', одна сторона — ', ', one side is ') + w + ' ' + CM + tr('. Найди другую сторону.', '. Find the other side.')) + answer(CM),
+      tr('S = ', 'S = ') + area + ' ' + CM2 + ', a = ' + w + ' ' + CM, h, 'number', 'text', 20);
+  }
+  var c = ri(lo, Math.min(hi, 10));
+  return ex('ar:vol:' + w + ':' + h + ':' + c,
+    ask(tr('Коробка: ', 'A box: ') + w + ' ' + CM + ', ' + h + ' ' + CM + ', ' + c + ' ' + CM + tr('. Найди объём.', '. Find the volume.')) + answer(CM3),
+    tr('Коробка ', 'Box ') + w + ' × ' + h + ' × ' + c + ' ' + CM, w * h * c, 'number', 'text', 8000,
+    { figure: { kind: 'box', a: w, b: h, c: c } });
+}
+
+/* ---------- операции и алгоритмы ---------- */
+function opToken(op, n){
+  return (op === 'add' ? '+' : op === 'sub' ? '−' : op === 'mul' ? '×' : '÷') + n;
+}
+function applyNum(x, op, y){
+  if(op === 'add') return x + y;
+  if(op === 'sub') return x >= y ? x - y : null;
+  if(op === 'mul') return (x <= 10 && y <= 10) ? x * y : null;
+  return (y !== 0 && x % y === 0) ? x / y : null;
+}
+function operationsGen(type){
+  var r = bounds();
+  var hi = Math.max(4, Math.min(100, r.b));
+  var lo = Math.max(1, Math.min(r.a, hi - 1));
+  var ops = (S.ops && S.ops.length ? S.ops : ['add', 'sub']);
+  function num(v){ return '<span>' + v + '</span>'; }
+  function arrow(){ return '<span class="op">→</span>'; }
+  function token(op, n){ return '<span class="op">' + opToken(op, n) + '</span>'; }
+  function trialChain(len){
+    for(var i = 0; i < 500; i++){
+      var x = ri(lo, hi), vals = [x], cur = x, ok = true;
+      for(var k = 0; k < len; k++){
+        var op = pick(ops), b = ri(1, Math.min(10, hi));
+        var y = applyNum(cur, op, b);
+        if(y === null || y < 0 || y > hi){ ok = false; break; }
+        vals.push({ op: op, b: b, v: y });
+        cur = y;
+      }
+      if(ok && cur >= 0) return { start: x, steps: vals.slice(1) };
+    }
+    return null;
+  }
+  if(type === 'result1'){
+    var one = trialChain(1) || { start: lo, steps: [{ op: 'add', b: 1, v: lo + 1 }] };
+    var st = one.steps[0];
+    var stSym = st.op === 'add' ? '+' : st.op === 'sub' ? '−' : st.op === 'mul' ? '×' : '÷';
+    return ex('op:r1:' + one.start + ':' + st.op + ':' + st.b,
+      num(one.start) + '<span class="op">' + stSym + '</span>' + num(st.b) + '<span class="op">=</span>{{slot}}',
+      one.start + ' ' + stSym + ' ' + st.b + ' = ?', st.v, 'number', 'expr', 100);
+  }
+  if(type === 'result2'){
+    var two = trialChain(2) || { start: lo, steps: [{ op: 'add', b: 1, v: lo + 1 }, { op: 'add', b: 1, v: lo + 2 }] };
+    var h = num(two.start), p = String(two.start);
+    two.steps.forEach(function(s){
+      h += arrow() + token(s.op, s.b);
+      p += ' → ' + opToken(s.op, s.b);
+    });
+    return ex('op:r2:' + p,
+      h + arrow() + '{{slot}}', p + ' → ?', two.steps[1].v, 'number', 'expr', 100, { long: true });
+  }
+  if(type === 'result3'){
+    var three = trialChain(3) || { start: lo, steps: [{ op: 'add', b: 1, v: lo + 1 }, { op: 'add', b: 1, v: lo + 2 }, { op: 'add', b: 1, v: lo + 3 }] };
+    var h3 = num(three.start), p3 = String(three.start);
+    three.steps.forEach(function(s){
+      h3 += arrow() + token(s.op, s.b);
+      p3 += ' → ' + opToken(s.op, s.b);
+    });
+    return ex('op:r3:' + p3,
+      h3 + arrow() + '{{slot}}', p3 + ' → ?', three.steps[2].v, 'number', 'expr', 100, { long: true });
+  }
+  if(type === 'start1'){
+    var s1 = trialChain(1) || { start: lo, steps: [{ op: 'add', b: 1, v: lo + 1 }] };
+    var last = s1.steps[0];
+    return ex('op:s1:' + s1.start + ':' + last.op + ':' + last.b,
+      '{{slot}}' + arrow() + token(last.op, last.b) + arrow() + num(last.v),
+      '? → ' + opToken(last.op, last.b) + ' → ' + last.v, s1.start, 'number', 'expr', 100);
+  }
+  if(type === 'start3'){
+    var st3 = trialChain(3) || { start: lo, steps: [{ op: 'add', b: 1, v: lo + 1 }, { op: 'add', b: 1, v: lo + 2 }, { op: 'add', b: 1, v: lo + 3 }] };
+    var hs = '{{slot}}', ps = '?';
+    st3.steps.forEach(function(s){
+      hs += arrow() + token(s.op, s.b);
+      ps += ' → ' + opToken(s.op, s.b);
+    });
+    return ex('op:s3:' + ps,
+      hs + arrow() + num(st3.steps[2].v),
+      ps + ' → ' + st3.steps[2].v, st3.start, 'number', 'expr', 100, { long: true });
+  }
+  var s2 = trialChain(2) || { start: lo, steps: [{ op: 'add', b: 1, v: lo + 1 }, { op: 'add', b: 1, v: lo + 2 }] };
+  var html = '{{slot}}', plain = '?';
+  s2.steps.forEach(function(s){
+    html += arrow() + token(s.op, s.b);
+    plain += ' → ' + opToken(s.op, s.b);
+  });
+  return ex('op:s2:' + plain,
+    html + arrow() + num(s2.steps[1].v),
+    plain + ' → ' + s2.steps[1].v, s2.start, 'number', 'expr', 100, { long: true });
+}
+
+/* ---------- чётные, нечётные, кратные ---------- */
+function divisibilityGen(type){
+  var r = bounds();
+  var lo = Math.max(1, r.a), hi = Math.max(lo + 1, Math.min(100, r.b));
+  function ask(html, plain, need, id, max){
+    return ex(id, '<div class="sk-q">' + html + '</div><div class="sk-answer">{{slot}}</div>', plain, need, 'number', 'text', max || 100);
+  }
+  var n, ans, k, a, b, i;
+  if(type === 'nextEven' || type === 'nextOdd'){
+    var wantOdd = type === 'nextOdd';
+    for(i = 0; i < 200; i++){
+      n = ri(lo, hi - 1);
+      ans = n + 1;
+      if((ans % 2 === 0) === !wantOdd && ans <= hi) break;
+      ans = n + 2;
+      if((ans % 2 === 0) === !wantOdd && ans <= hi) break;
+    }
+    if(!ans || ans > hi) ans = wantOdd ? (hi % 2 ? hi : hi - 1) : (hi % 2 ? hi - 1 : hi);
+    if(wantOdd){
+      return ask(tr('Запиши следующее нечётное число после ', 'Write the next odd number after ') + n + '.',
+        'next odd after ' + n, ans, 'dv:no:' + n);
+    }
+    return ask(tr('Запиши следующее чётное число после ', 'Write the next even number after ') + n + '.',
+      'next even after ' + n, ans, 'dv:ne:' + n);
+  }
+  if(type === 'prevEven' || type === 'prevOdd'){
+    var prevOdd = type === 'prevOdd';
+    for(i = 0; i < 200; i++){
+      n = ri(lo + 1, hi);
+      ans = n - 1;
+      if((ans % 2 === 0) === !prevOdd && ans >= lo) break;
+      ans = n - 2;
+      if((ans % 2 === 0) === !prevOdd && ans >= lo) break;
+    }
+    if(!ans || ans < lo) ans = prevOdd ? (lo % 2 ? lo : lo + 1) : (lo % 2 ? lo + 1 : lo);
+    if(prevOdd){
+      return ask(tr('Запиши предыдущее нечётное число перед ', 'Write the previous odd number before ') + n + '.',
+        'previous odd before ' + n, ans, 'dv:po:' + n);
+    }
+    return ask(tr('Запиши предыдущее чётное число перед ', 'Write the previous even number before ') + n + '.',
+      'previous even before ' + n, ans, 'dv:pe:' + n);
+  }
+  if(type === 'multipleNext'){
+    for(i = 0; i < 200; i++){
+      k = ri(2, 9); n = ri(lo, hi - 1);
+      ans = Math.ceil((n + 1) / k) * k;
+      if(ans <= hi) break;
+    }
+    if(!ans || ans > hi){ k = 2; ans = n + (n % 2 ? 1 : 2); }
+    return ask(tr('Наименьшее число, кратное ', 'The smallest multiple of ') + k + tr(', больше ', ' greater than ') + n + '.',
+      'next multiple of ' + k + ' after ' + n, ans, 'dv:mn:' + k + ':' + n);
+  }
+  if(type === 'multiplePrev'){
+    for(i = 0; i < 200; i++){
+      k = ri(2, 9); n = ri(lo + 1, hi);
+      ans = Math.floor((n - 1) / k) * k;
+      if(ans >= lo && ans > 0) break;
+    }
+    if(!ans || ans < lo){ k = 2; ans = Math.max(lo, n - 2); }
+    return ask(tr('Наибольшее число, кратное ', 'The greatest multiple of ') + k + tr(', меньше ', ' less than ') + n + '.',
+      'previous multiple of ' + k + ' before ' + n, ans, 'dv:mp:' + k + ':' + n);
+  }
+  a = ri(lo, Math.max(lo, hi - 2));
+  b = ri(a + 1, Math.min(hi, a + 9));
+  ans = Math.floor(b / 2) - Math.floor((a - 1) / 2);
+  return ask(tr('Сколько чётных чисел от ', 'How many even numbers from ') + a + tr(' до ', ' to ') + b + '?',
+    'even count ' + a + '..' + b, ans, 'dv:ce:' + a + ':' + b, 10);
+}
+
+/* ---------- геометрия ---------- */
+function geometryGen(type){
+  var hi = Math.max(2, Math.min(20, bounds().b));
+  function ask(html, plain, need, max, fig, unit, id){
+    return ex('geo:' + id,
+      '<div class="sk-q">' + html + '</div><div class="sk-answer">{{slot}}' +
+        (unit ? '<span class="unit">' + unit + '</span>' : '') + '</div>',
+      plain, need, 'number', 'text', max, { figure: { kind: 'geometry', shape: fig.shape, n: fig.n, layout: fig.layout, value: fig.value }, long: true });
+  }
+  var CM = tr('см', 'cm');
+  if(type === 'segments'){
+    var n = ri(3, 5), ans = n * (n - 1) / 2;
+    return ask(tr('На прямой отмечены точки. Сколько отрезков с концами в этих точках?', 'Points are marked on a line. How many segments have their ends at these points?'),
+      'segments on a line', ans, 20, { shape: 'points', n: n }, '', 'seg:' + n);
+  }
+  if(type === 'rays'){
+    var m = ri(3, 5);
+    return ask(tr('Из точки O проведены лучи. Сколько лучей на рисунке?', 'Rays start at point O. How many rays are in the picture?'),
+      'rays from a point', m, 20, { shape: 'rays', n: m }, '', 'ray:' + m);
+  }
+  if(type === 'intersections'){
+    var layout = ri(0, 3), count = layout === 0 ? 1 : layout === 1 ? 2 : layout === 2 ? 3 : 0;
+    return ask(tr('Сколько точек пересечения на рисунке?', 'How many intersection points are in the picture?'),
+      'intersection points', count, 20, { shape: 'intersections', layout: layout }, '', 'int:' + layout);
+  }
+  if(type === 'diameter'){
+    var r = ri(2, hi), d = r * 2;
+    return ask(tr('Радиус окружности — ', 'The radius of the circle is ') + r + ' ' + CM + tr('. Найди диаметр.', '. Find the diameter.'),
+      'radius ' + r, d, 40, { shape: 'radius', value: r }, CM, 'dia:' + r);
+  }
+  var rr = ri(2, hi), dd = rr * 2;
+  return ask(tr('Диаметр окружности — ', 'The diameter of the circle is ') + dd + ' ' + CM + tr('. Найди радиус.', '. Find the radius.'),
+    'diameter ' + dd, rr, 20, { shape: 'diameter', value: dd }, CM, 'rad:' + dd);
+}
+
+/* ---------- тысяча и трёхзначные числа ---------- */
+function thousandGen(type){
+  var r = bounds();
+  var lo = Math.max(100, Math.min(999, r.a)), hi = Math.max(lo, Math.min(999, r.b));
+  var n = ri(lo, hi), h = Math.floor(n / 100), t = Math.floor(n / 10) % 10, o = n % 10;
+  var guard = 0;
+  while((t === 0 || o === 0) && guard++ < 40){
+    n = ri(lo, hi); h = Math.floor(n / 100); t = Math.floor(n / 10) % 10; o = n % 10;
+  }
+  function ask(html, plain, need, id, max){
+    return ex('th:' + id + ':' + n, '<div class="sk-q">' + html + '</div><div class="sk-answer">{{slot}}</div>',
+      plain, need, 'number', 'text', max || 999);
+  }
+  var de = tr('дес.', 'tens'), ed = tr('ед.', 'ones'), sot = tr('сот.', 'hundreds');
+  if(type === 'hundreds'){
+    return ask(tr('Сколько сотен в числе ', 'How many hundreds are in ') + '<b>' + n + '</b>?',
+      'hundreds in ' + n, h, 'h');
+  }
+  if(type === 'tens'){
+    return ask(tr('Сколько всего десятков в числе ', 'How many tens in total are in ') + '<b>' + n + '</b>?',
+      'tens in total in ' + n, Math.floor(n / 10), 't');
+  }
+  if(type === 'ones'){
+    return ask(tr('Сколько единиц в числе ', 'How many ones are in ') + '<b>' + n + '</b>?',
+      'ones in ' + n, o, 'o');
+  }
+  if(type === 'build'){
+    return ask(tr('Запиши число: ', 'Write the number: ') + '<b>' + h + ' ' + sot + ' ' + t + ' ' + de + ' ' + o + ' ' + ed + '</b>',
+      'build ' + h + '-' + t + '-' + o, n, 'b');
+  }
+  if(type === 'expand'){
+    return ex('th:x:' + n,
+      '<span>' + n + '</span><span class="op">=</span><span>' + (h * 100) + '</span><span class="op">+</span><span>' + (t * 10) + '</span><span class="op">+</span>{{slot}}',
+      n + ' = ' + (h * 100) + ' + ' + (t * 10) + ' + ?', o, 'number', 'expr', 999, { long: true });
+  }
+  if(type === 'roundAdd'){
+    var a = ri(1, 9) * 100, b = ri(1, 9) * 10;
+    return ex('th:add:' + a + ':' + b,
+      '<span>' + a + '</span><span class="op">+</span><span>' + b + '</span><span class="op">=</span>{{slot}}',
+      a + ' + ' + b + ' = ?', a + b, 'number', 'expr', 999);
+  }
+  var s = ri(2, 9) * 100, sub = ri(1, 9) * 10;
+  return ex('th:sub:' + s + ':' + sub,
+    '<span>' + s + '</span><span class="op">−</span><span>' + sub + '</span><span class="op">=</span>{{slot}}',
+    s + ' − ' + sub + ' = ?', s - sub, 'number', 'expr', 999);
+}
+
+/* ---------- умножение и деление на 10 и 100, круглые числа ---------- */
+function roundGen(type){
+  var r = bounds();
+  var lo = Math.max(1, Math.min(99, r.a)), hi = Math.max(lo, Math.min(99, r.b));
+  function expr(a, sym, b, need, id, max){
+    return ex('rd:' + id,
+      '<span>' + a + '</span><span class="op">' + sym + '</span><span>' + b + '</span><span class="op">=</span>{{slot}}',
+      a + ' ' + sym + ' ' + b + ' = ?', need, 'number', 'expr', max);
+  }
+  var n, a, b, q;
+  if(type === 'timesTen'){
+    n = ri(lo, hi);
+    return expr(n, '×', 10, n * 10, 'mt:' + n, 999);
+  }
+  if(type === 'divTen'){
+    n = ri(lo, hi);
+    return expr(n * 10, '÷', 10, n, 'dt:' + n, 99);
+  }
+  if(type === 'timesHundred'){
+    n = ri(1, 9);
+    return expr(n, '×', 100, n * 100, 'mh:' + n, 999);
+  }
+  if(type === 'divHundred'){
+    n = ri(1, 9);
+    return expr(n * 100, '÷', 100, n, 'dh:' + n, 99);
+  }
+  if(type === 'roundMul'){
+    a = ri(2, 9) * 10; b = ri(2, 5);
+    return expr(a, '×', b, a * b, 'rm:' + a + ':' + b, 450);
+  }
+  b = ri(2, 9) * 10; q = ri(2, 9);
+  return expr(b * q, '÷', b, q, 'rd:' + b + ':' + q, 99);
+}
+
+/* ---------- дерево возможностей ---------- */
+var TREE_PAIR = [
+  ['Красных кубиков — {a}, синих — {b}. Сколько разных пар «красный + синий» можно составить?',
+   'There are {a} red bricks and {b} blue bricks. How many different red + blue pairs can be made?'],
+  ['Книг о животных — {a}, книг о путешествиях — {b}. Сколько разных пар, по одной книге из каждой группы, можно выбрать?',
+   'There are {a} animal books and {b} travel books. How many different pairs, one from each group, can be chosen?'],
+  ['Машинок — {a}, прицепов — {b}. Сколько разных сцепок «машинка + прицеп» можно получить?',
+   'There are {a} toy cars and {b} trailers. How many different car + trailer combinations can be made?']
+];
+function fillTree(text, vals){
+  return text.replace(/\{([abc])\}/g, function(_, k){ return vals[k]; });
+}
+function treeGen(type){
+  var r = bounds();
+  var lo = Math.max(2, Math.min(6, r.a)), hi = Math.max(lo, Math.min(6, r.b));
+  var m = ri(lo, hi), n = ri(lo, hi), k = ri(2, 3);
+  function ask(html, plain, need, id, fig){
+    return ex('tr:' + id, '<div class="sk-q">' + html + '</div><div class="sk-answer">{{slot}}</div>',
+      plain, need, 'number', 'text', 100, fig ? { figure: fig, long: true } : { long: true });
+  }
+  if(type === 'pairs'){
+    var c = pick(TREE_PAIR);
+    var html = fillTree(tr(c[0], c[1]), { a: m, b: n });
+    return ask(html, 'pairs ' + m + '×' + n, m * n, 'p:' + m + ':' + n, m * n <= 12 ? { kind: 'geometry', shape: 'tree', a: m, b: n } : null);
+  }
+  if(type === 'three'){
+    var html3 = tr(
+      'В кафе есть сок, печенье и фрукты нескольких видов: {a}, {b} и {c}. Сколько разных наборов из сока, печенья и фрукта можно составить?',
+      'A cafe offers {a} kinds of juice, {b} kinds of cookies and {c} kinds of fruit. How many different sets of juice, cookies and fruit can be made?'
+    );
+    return ask(fillTree(html3, { a: m, b: n, c: k }), 'sets ' + m + '×' + n + '×' + k, m * n * k, 't:' + m + ':' + n + ':' + k);
+  }
+  if(type === 'paths'){
+    var htmlp = tr(
+      'Дорог от дома до моста — {a}, от моста до школы — {b}. Сколько разных путей от дома до школы через мост?',
+      'There are {a} roads from home to the bridge and {b} roads from the bridge to school. How many different routes from home to school go through the bridge?'
+    );
+    return ask(fillTree(htmlp, { a: m, b: n }), 'routes ' + m + '×' + n, m * n, 'w:' + m + ':' + n, m * n <= 12 ? { kind: 'geometry', shape: 'tree', a: m, b: n } : null);
+  }
+  var count = ri(3, 4), nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]).slice(0, count);
+  var list = nums.join(', ');
+  return ask(tr('Сколько двузначных чисел можно составить из цифр ', 'How many two-digit numbers can be made from the digits ') + list +
+    tr(', если цифры в числе не повторяются?', ', if a digit cannot repeat in a number?'),
+    'two-digit numbers from ' + list, count * (count - 1), 'd:' + list);
 }
 
 /* ---------- фигура к периметру ---------- */
@@ -870,6 +1367,23 @@ function fitPts(pts, W, H, pad){
 }
 function svgShape(fig){
   var kind = fig.kind, sides = fig.sides || [], pts, labels;
+  if(kind === 'geometry' && window.MathProblems && window.MathProblems.geometryFigure){
+    return window.MathProblems.geometryFigure(fig, false);
+  }
+  if(kind === 'box'){
+    var W = 116, H = 62, dx = 44, dy = 28, ox = 40, oy = 56;
+    var front = [[ox, oy], [ox + W, oy], [ox + W, oy + H], [ox, oy + H]];
+    var top = [[ox, oy], [ox + dx, oy - dy], [ox + W + dx, oy - dy], [ox + W, oy]];
+    var side = [[ox + W, oy], [ox + W + dx, oy - dy], [ox + W + dx, oy + H - dy], [ox + W, oy + H]];
+    function poly(a){
+      return '<polygon class="fshape" points="' + a.map(function(pt){ return pt[0].toFixed(1) + ',' + pt[1].toFixed(1); }).join(' ') + '"/>';
+    }
+    var svg = '<svg viewBox="0 0 260 186" role="img" aria-hidden="true">' + poly(front) + poly(top) + poly(side);
+    svg += '<text class="fside" x="' + (ox + W / 2) + '" y="' + (oy + H + 18) + '" text-anchor="middle">' + fig.a + '</text>';
+    svg += '<text class="fside" x="' + (ox - 14) + '" y="' + (oy + H / 2) + '" text-anchor="middle">' + fig.b + '</text>';
+    svg += '<text class="fside" x="' + (ox + W + dx / 2) + '" y="' + (oy - dy - 8) + '" text-anchor="middle">' + fig.c + '</text>';
+    return svg + '</svg>';
+  }
   if(kind === 'square'){
     var v = sides[0];
     pts = [[0, 0], [v, 0], [v, v], [0, v]];
@@ -1099,7 +1613,7 @@ function renderCurrent(){
   els.eq.innerHTML = e.prompt.replace('{{slot}}', '<span class="slot empty" id="skSlot"></span>');
   if(e.figure && e.figure.kind){
     els.figWrap.hidden = false;
-    els.figWrap.open = false;
+    els.figWrap.open = SKILL === 'geometry' || SKILL === 'tree';
     els.figSummary.textContent = tr('Показать фигуру', 'Show the shape');
     els.fig.innerHTML = svgShape(e.figure);
   } else {

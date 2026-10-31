@@ -12,10 +12,13 @@ var ui = {
   again:$('#again'), print:$('#print'), sheets:$('#sheets'), rangeHint:$('#range-hint')
 };
 
-var TYPE_NAMES = ['examples', 'digits', 'compare', 'missing', 'brackets', 'units', 'perimeter', 'problems', 'polylines'];
+var TYPE_NAMES = ['examples', 'digits', 'compare', 'missing', 'brackets', 'units', 'perimeter', 'problems', 'polylines',
+  'equations', 'remainders', 'area', 'operations', 'divisibility', 'geometry', 'thousand', 'round', 'tree'];
 var RANGE = {
   examples: [0, 100], digits: [10, 99], compare: [1, 100], missing: [1, 100],
-  brackets: [1, 100], units: [1, 10000], perimeter: [1, 20], problems: [1, 100], polylines: [1, 20]
+  brackets: [1, 100], units: [1, 10000], perimeter: [1, 20], problems: [1, 100], polylines: [1, 20],
+  equations: [1, 100], remainders: [1, 100], area: [1, 20], operations: [1, 100], divisibility: [1, 100],
+  geometry: [1, 20], thousand: [100, 999], round: [1, 99], tree: [2, 6]
 };
 var DEFAULTS = {
   examples: { rows: 8, cols: 3, from: 0, to: 18, ops: ['add', 'sub'], miss: 'r' },
@@ -26,7 +29,16 @@ var DEFAULTS = {
   units: { rows: 8, cols: 2, from: 1, to: 100 },
   perimeter: { rows: 6, cols: 2, from: 1, to: 20 },
   problems: { rows: 5, cols: 1, from: 10, to: 100, ops: ['add', 'sub'] },
-  polylines: { rows: 5, cols: 1, from: 1, to: 10 }
+  polylines: { rows: 5, cols: 1, from: 1, to: 10 },
+  equations: { rows: 8, cols: 3, from: 1, to: 100 },
+  remainders: { rows: 8, cols: 3, from: 10, to: 100 },
+  area: { rows: 6, cols: 2, from: 1, to: 10 },
+  operations: { rows: 6, cols: 2, from: 1, to: 20, ops: ['add', 'sub'] },
+  divisibility: { rows: 8, cols: 3, from: 1, to: 50 },
+  geometry: { rows: 5, cols: 2, from: 1, to: 20 },
+  thousand: { rows: 8, cols: 3, from: 100, to: 999 },
+  round: { rows: 8, cols: 3, from: 1, to: 50 },
+  tree: { rows: 6, cols: 2, from: 2, to: 5 }
 };
 var current = 'examples';
 var memory = {};
@@ -250,7 +262,7 @@ function applyState(st){
   var oneCol = current === 'problems' || current === 'polylines';
   ui.rows.max = current === 'polylines' ? 5 : oneCol ? 10 : current === 'examples' ? 40 : 24;
   ui.cols.min = oneCol ? 1 : 2;
-  ui.cols.max = oneCol ? 1 : current === 'examples' ? 10 : current === 'perimeter' ? 2 : 4;
+  ui.cols.max = oneCol ? 1 : current === 'examples' ? 10 : (current === 'perimeter' || current === 'area' || current === 'operations' || current === 'geometry') ? 2 : 4;
   ui.rows.value = clampInt(st.rows, 2, +ui.rows.max, def.rows);
   ui.cols.value = clampInt(st.cols, +ui.cols.min, +ui.cols.max, def.cols);
   ui.pages.value = clampInt(st.pages, 1, 12, 1);

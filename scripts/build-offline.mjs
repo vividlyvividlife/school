@@ -25,7 +25,25 @@ const pages = [
   ['2-class/matematika/zadachi/index.html', 'offline/zadachi.html'],
   ['2-class/matematika/lomanye/index.html', 'offline/lomanye.html'],
   ['en/grade-2/math/word-problems/index.html', 'offline/en-word-problems.html'],
-  ['en/grade-2/math/polylines/index.html', 'offline/en-polylines.html']
+  ['en/grade-2/math/polylines/index.html', 'offline/en-polylines.html'],
+  ['2-class/matematika/uravneniya/index.html', 'offline/uravneniya.html'],
+  ['2-class/matematika/delenie-s-ostatkom/index.html', 'offline/delenie-s-ostatkom.html'],
+  ['2-class/matematika/ploshchad-i-obem/index.html', 'offline/ploshchad-i-obem.html'],
+  ['2-class/matematika/operacii-i-algoritmy/index.html', 'offline/operacii-i-algoritmy.html'],
+  ['2-class/matematika/delimost/index.html', 'offline/delimost.html'],
+  ['2-class/matematika/geometriya/index.html', 'offline/geometriya.html'],
+  ['2-class/matematika/tysyacha/index.html', 'offline/tysyacha.html'],
+  ['2-class/matematika/kruglye-chisla/index.html', 'offline/kruglye-chisla.html'],
+  ['2-class/matematika/derevo-vozmozhnostey/index.html', 'offline/derevo-vozmozhnostey.html'],
+  ['en/grade-2/math/equations/index.html', 'offline/en-equations.html'],
+  ['en/grade-2/math/remainders/index.html', 'offline/en-remainders.html'],
+  ['en/grade-2/math/area-and-volume/index.html', 'offline/en-area-and-volume.html'],
+  ['en/grade-2/math/operations-and-algorithms/index.html', 'offline/en-operations-and-algorithms.html'],
+  ['en/grade-2/math/divisibility/index.html', 'offline/en-divisibility.html'],
+  ['en/grade-2/math/geometry/index.html', 'offline/en-geometry.html'],
+  ['en/grade-2/math/three-digit-numbers/index.html', 'offline/en-three-digit-numbers.html'],
+  ['en/grade-2/math/round-numbers/index.html', 'offline/en-round-numbers.html'],
+  ['en/grade-2/math/tree-of-possibilities/index.html', 'offline/en-tree-of-possibilities.html']
 ];
 
 const problemsImgDir = path.join(publicDir, 'img', 'problems');

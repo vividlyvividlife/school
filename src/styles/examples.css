@@ -406,6 +406,16 @@ html[data-theme="dark"] .btn.primary:hover{ color:#052e2b; }
   grid-column:1/-1;grid-row:3;display:block;height:11mm;margin-top:.5mm;
   border:1px dashed #aab2bd;border-radius:2mm;background:#fff;
 }
+
+/* ---------- геометрия на листе ---------- */
+.task.geo-task{align-items:center;line-height:1.3}
+.geo-task .q{display:flex;gap:2mm;align-items:center;min-width:0}
+.geo-task .geo-fig{flex:none;display:block;width:38mm}
+.geo-task .geo-fig svg{display:block;width:100%;height:auto}
+.geo-task .geo-q{min-width:0}
+@media print{
+  .geo-task .geo-fig{width:36mm}
+}
 @media print{
   .wp-sheet-img{border-color:#c7ccd4}
   .poly-draw{border-color:#666}

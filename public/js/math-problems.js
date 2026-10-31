@@ -920,6 +920,88 @@ function generatePolyline(type, rnd, opts){
   };
 }
 
+function geoFigureSvg(fig, inline){
+  var shape = fig.shape || 'points';
+  var line = inline
+    ? ' style="fill:none;stroke:#2b6f66;stroke-width:2.2;stroke-linecap:round"'
+    : ' class="fline"';
+  var dot = inline ? ' style="fill:#2b6f66;stroke:none"' : ' class="fpoint"';
+  var txt = inline
+    ? ' style="fill:#1f2937;font:600 13px sans-serif"'
+    : ' class="ftext"';
+  var circle = inline
+    ? ' style="fill:none;stroke:#2b6f66;stroke-width:2.2"'
+    : ' class="fline"';
+  var svg = '<svg viewBox="0 0 260 186" role="img" aria-hidden="true"' +
+    (inline ? ' width="170" height="122"' : '') + '>';
+  var i, x, y, pts = [];
+  if(shape === 'points'){
+    var n = fig.n || 4;
+    svg += '<line x1="34" y1="104" x2="226" y2="104"' + line + '/>';
+    for(i = 0; i < n; i++){
+      x = 46 + i * (168 / (n - 1));
+      svg += '<circle cx="' + x.toFixed(1) + '" cy="104" r="4.4"' + dot + '/>';
+      svg += '<text x="' + x.toFixed(1) + '" y="126" text-anchor="middle"' + txt + '>' + String.fromCharCode(65 + i) + '</text>';
+    }
+  } else if(shape === 'rays'){
+    var m = fig.n || 4, cx = 55, cy = 96;
+    var spread = 110, start = -spread / 2;
+    for(i = 0; i < m; i++){
+      var ang = (start + (m === 1 ? 0 : i * spread / (m - 1))) * Math.PI / 180;
+      var ex = cx + Math.cos(ang) * 150, ey = cy + Math.sin(ang) * 150;
+      svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + ex.toFixed(1) + '" y2="' + ey.toFixed(1) + '"' + line + '/>';
+      var ux = Math.cos(ang), uy = Math.sin(ang);
+      var bx = ex - ux * 10, by = ey - uy * 10;
+      svg += '<polygon points="' + ex.toFixed(1) + ',' + ey.toFixed(1) + ' ' +
+        (bx - uy * 4.2).toFixed(1) + ',' + (by + ux * 4.2).toFixed(1) + ' ' +
+        (bx + uy * 4.2).toFixed(1) + ',' + (by - ux * 4.2).toFixed(1) + '"' + dot + '/>';
+    }
+    svg += '<circle cx="' + cx + '" cy="' + cy + '" r="4.6"' + dot + '/>';
+    svg += '<text x="' + (cx - 4) + '" y="' + (cy + 22) + '" text-anchor="middle"' + txt + '>O</text>';
+  } else if(shape === 'intersections'){
+    var layout = fig.layout || 0;
+    function seg(a, b, c, d){ svg += '<line x1="' + a + '" y1="' + b + '" x2="' + c + '" y2="' + d + '"' + line + '/>'; }
+    if(layout === 1){
+      seg(40, 62, 220, 62); seg(40, 126, 220, 126); seg(100, 30, 160, 158);
+    } else if(layout === 2){
+      seg(40, 60, 220, 120); seg(40, 140, 200, 30); seg(120, 20, 210, 160);
+    } else if(layout === 3){
+      seg(44, 58, 216, 92); seg(44, 118, 216, 152);
+    } else {
+      seg(40, 60, 220, 126); seg(40, 126, 220, 60);
+    }
+  } else if(shape === 'tree'){
+    var a = fig.a || 2, b = fig.b || 2, ai, bi;
+    var totalLeaves = a * b;
+    for(ai = 0; ai < a; ai++){
+      var y1 = a > 1 ? 24 + ai * (138 / (a - 1)) : 93;
+      svg += '<line x1="32" y1="93" x2="124" y2="' + y1.toFixed(1) + '"' + line + '/>';
+      svg += '<circle cx="124" cy="' + y1.toFixed(1) + '" r="3.2"' + dot + '/>';
+      for(bi = 0; bi < b; bi++){
+        var idx = ai * b + bi;
+        var y2 = totalLeaves > 1 ? 20 + idx * (146 / (totalLeaves - 1)) : 93;
+        svg += '<line x1="124" y1="' + y1.toFixed(1) + '" x2="226" y2="' + y2.toFixed(1) + '"' + line + '/>';
+        svg += '<circle cx="226" cy="' + y2.toFixed(1) + '" r="2.8"' + dot + '/>';
+      }
+    }
+    svg += '<circle cx="32" cy="93" r="4"' + dot + '/>';
+  } else if(shape === 'radius' || shape === 'diameter'){
+    var ccx = 130, ccy = 94, r = 56;
+    svg += '<circle cx="' + ccx + '" cy="' + ccy + '" r="' + r + '"' + circle + '/>';
+    if(shape === 'radius'){
+      svg += '<line x1="' + ccx + '" y1="' + ccy + '" x2="' + (ccx + 40) + '" y2="' + (ccy - 40) + '"' + line + '/>';
+      svg += '<circle cx="' + ccx + '" cy="' + ccy + '" r="3.6"' + dot + '/>';
+      svg += '<text x="' + ccx + '" y="' + (ccy + r + 20) + '" text-anchor="middle"' + txt + '>' + fig.value + ' ' + tr('см', 'cm') + '</text>';
+    } else {
+      svg += '<line x1="' + (ccx - 40) + '" y1="' + (ccy + 40) + '" x2="' + (ccx + 40) + '" y2="' + (ccy - 40) + '"' + line + '/>';
+      svg += '<text x="' + ccx + '" y="' + (ccy + r + 20) + '" text-anchor="middle"' + txt + '>' + fig.value + ' ' + tr('см', 'cm') + '</text>';
+    }
+    svg += '<circle cx="' + (ccx - 40) + '" cy="' + (ccy + 40) + '" r="3.4"' + dot + '/>';
+    svg += '<circle cx="' + (ccx + 40) + '" cy="' + (ccy - 40) + '" r="3.4"' + dot + '/>';
+  }
+  return svg + '</svg>';
+}
+
 function problemPoolCount(types, from, to){
   var lo = Math.max(1, parseInt(from, 10) || 1);
   var hi = Math.max(lo, parseInt(to, 10) || 100);
@@ -952,6 +1034,7 @@ global.MathProblems = {
   polylinePoolCount: polylinePoolCount,
   pluralUnit: unitText,
   sceneUrl: sceneUrl,
+  geometryFigure: geoFigureSvg,
   strip: strip
 };
 

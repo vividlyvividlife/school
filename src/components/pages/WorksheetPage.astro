@@ -25,7 +25,16 @@ const typeEntries: [string, string][] = [
   ['units', p.typeUnits],
   ['perimeter', p.typePerimeter],
   ['problems', p.typeProblems],
-  ['polylines', p.typePolylines]
+  ['polylines', p.typePolylines],
+  ['equations', p.typeEquations],
+  ['remainders', p.typeRemainders],
+  ['area', p.typeArea],
+  ['operations', p.typeOperations],
+  ['divisibility', p.typeDivisibility],
+  ['geometry', p.typeGeometry],
+  ['thousand', p.typeThousand],
+  ['round', p.typeRound],
+  ['tree', p.typeTree]
 ];
 const rangeHints: Record<string, string> = {
   examples: p.rangeHintExamples,
@@ -36,7 +45,16 @@ const rangeHints: Record<string, string> = {
   units: p.rangeHintUnits,
   perimeter: p.rangeHintPerimeter,
   problems: p.rangeHintProblems,
-  polylines: p.rangeHintPolylines
+  polylines: p.rangeHintPolylines,
+  equations: p.rangeHintEquations,
+  remainders: p.rangeHintRemainders,
+  area: p.rangeHintArea,
+  operations: p.rangeHintOperations,
+  divisibility: p.rangeHintDivisibility,
+  geometry: p.rangeHintGeometry,
+  thousand: p.rangeHintThousand,
+  round: p.rangeHintRound,
+  tree: p.rangeHintTree
 };
 const taskEntries: [string, [string, string][]][] = [
   ['digits', Object.entries(skillCopy[lang].digits.tasks)],
@@ -45,7 +63,16 @@ const taskEntries: [string, [string, string][]][] = [
   ['units', Object.entries(skillCopy[lang].units.tasks)],
   ['perimeter', Object.entries(skillCopy[lang].perimeter.tasks)],
   ['problems', Object.entries(skillCopy[lang].problems.tasks)],
-  ['polylines', Object.entries(skillCopy[lang].polylines.tasks)]
+  ['polylines', Object.entries(skillCopy[lang].polylines.tasks)],
+  ['equations', Object.entries(skillCopy[lang].equations.tasks)],
+  ['remainders', Object.entries(skillCopy[lang].remainders.tasks)],
+  ['area', Object.entries(skillCopy[lang].area.tasks)],
+  ['operations', Object.entries(skillCopy[lang].operations.tasks)],
+  ['divisibility', Object.entries(skillCopy[lang].divisibility.tasks)],
+  ['geometry', Object.entries(skillCopy[lang].geometry.tasks)],
+  ['thousand', Object.entries(skillCopy[lang].thousand.tasks)],
+  ['round', Object.entries(skillCopy[lang].round.tasks)],
+  ['tree', Object.entries(skillCopy[lang].tree.tasks)]
 ];
 const missingEntries: [string, string][] = [
   ['r', p.missR],
@@ -106,7 +133,7 @@ const writeEntries: [string, string][] = [
         </div>
       </section>
 
-      <section class="tgroup" data-only="examples missing brackets problems" aria-labelledby="tg-actions">
+      <section class="tgroup" data-only="examples missing brackets problems operations" aria-labelledby="tg-actions">
         <div class="tgroup-title" id="tg-actions">{p.actions}</div>
         <div class="tgroup-body">
           <div class="ops" id="ops" role="group" aria-label={p.actions}>

@@ -21,7 +21,8 @@ const jsVersion = Date.now().toString(36);
 const isCompare = skill === 'compare';
 const isBrackets = skill === 'brackets';
 const isProblems = skill === 'problems';
-const hasOps = isBrackets || isProblems;
+const isOperations = skill === 'operations';
+const hasOps = isBrackets || isProblems || isOperations;
 const defaults: Record<SkillId, { from: number; to: number }> = {
   digits: { from: 10, to: 99 },
   compare: { from: 1, to: 100 },
@@ -29,19 +30,39 @@ const defaults: Record<SkillId, { from: number; to: number }> = {
   units: { from: 1, to: 100 },
   perimeter: { from: 1, to: 20 },
   problems: { from: 10, to: 100 },
-  polylines: { from: 1, to: 10 }
+  polylines: { from: 1, to: 10 },
+  equations: { from: 1, to: 100 },
+  remainders: { from: 10, to: 100 },
+  area: { from: 1, to: 10 },
+  operations: { from: 1, to: 20 },
+  divisibility: { from: 1, to: 50 },
+  geometry: { from: 1, to: 20 },
+  thousand: { from: 100, to: 999 },
+  round: { from: 1, to: 50 },
+  tree: { from: 2, to: 5 }
 };
 const d = defaults[skill];
-const toMax = skill === 'digits' ? 99 : (skill === 'perimeter' || skill === 'polylines') ? 20 : skill === 'units' ? 10000 : 100;
+const toMax = skill === 'digits' ? 99 : (skill === 'perimeter' || skill === 'polylines' || skill === 'area' || skill === 'geometry') ? 20
+  : skill === 'units' ? 10000 : skill === 'thousand' ? 999 : skill === 'round' ? 99 : skill === 'tree' ? 6 : 100;
 const slugRu: Record<SkillId, string> = {
   digits: 'razryady', compare: 'sravnenie',
   brackets: 'skobki', units: 'velichiny', perimeter: 'perimetr',
-  problems: 'zadachi', polylines: 'lomanye'
+  problems: 'zadachi', polylines: 'lomanye',
+  equations: 'uravneniya', remainders: 'delenie-s-ostatkom',
+  area: 'ploshchad-i-obem', operations: 'operacii-i-algoritmy',
+  divisibility: 'delimost',
+  geometry: 'geometriya', thousand: 'tysyacha',
+  round: 'kruglye-chisla', tree: 'derevo-vozmozhnostey'
 };
 const slugEn: Record<SkillId, string> = {
   digits: 'place-value', compare: 'comparison',
   brackets: 'brackets', units: 'units', perimeter: 'perimeter',
-  problems: 'word-problems', polylines: 'polylines'
+  problems: 'word-problems', polylines: 'polylines',
+  equations: 'equations', remainders: 'remainders',
+  area: 'area-and-volume', operations: 'operations-and-algorithms',
+  divisibility: 'divisibility',
+  geometry: 'geometry', thousand: 'three-digit-numbers',
+  round: 'round-numbers', tree: 'tree-of-possibilities'
 };
 const slug = lang === 'en' ? slugEn[skill] : slugRu[skill];
 const offlineFile = lang === 'en' ? `offline/en-${slug}.html` : `offline/${slug}.html`;
