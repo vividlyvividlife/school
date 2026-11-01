@@ -1307,47 +1307,90 @@ function roundGen(type){
 /* ---------- дерево возможностей ---------- */
 var TREE_PAIR = [
   ['Красных кубиков — {a}, синих — {b}. Сколько разных пар «красный + синий» можно составить?',
-   'There are {a} red bricks and {b} blue bricks. How many different red + blue pairs can be made?'],
+   'There are {a} red bricks and {b} blue bricks. How many different red + blue pairs can be made?',
+   ['красные', 'red'], ['синие', 'blue']],
   ['Книг о животных — {a}, книг о путешествиях — {b}. Сколько разных пар, по одной книге из каждой группы, можно выбрать?',
-   'There are {a} animal books and {b} travel books. How many different pairs, one from each group, can be chosen?'],
+   'There are {a} animal books and {b} travel books. How many different pairs, one from each group, can be chosen?',
+   ['животные', 'animals'], ['путешествия', 'travel']],
   ['Машинок — {a}, прицепов — {b}. Сколько разных сцепок «машинка + прицеп» можно получить?',
-   'There are {a} toy cars and {b} trailers. How many different car + trailer combinations can be made?']
+   'There are {a} toy cars and {b} trailers. How many different car + trailer combinations can be made?',
+   ['машинки', 'cars'], ['прицепы', 'trailers']]
 ];
 function fillTree(text, vals){
   return text.replace(/\{([abc])\}/g, function(_, k){ return vals[k]; });
 }
+function treeHint(text, vals){
+  return '<details class="wp-help"><summary>' + tr('Разбор', 'How to solve') + '</summary>' +
+    '<div class="wp-help-body">' + fillTree(text, vals) + '</div></details>';
+}
+var TREE_HINTS = {
+  pairs: [
+    '<p>Строй дерево: от каждого предмета первой группы проведи стрелки ко всем предметам второй группы.</p>' +
+      '<p>Каждый конец дерева — одна пара, поэтому вариантов будет {a} · {b}.</p>',
+    '<p>Build a tree: draw an arrow from each item in the first group to every item in the second.</p>' +
+      '<p>Every end of the tree is one pair, so multiply the group sizes: {a} × {b}.</p>'
+  ],
+  three: [
+    '<p>Дерево строят по уровням: сок → печенье → фрукт.</p>' +
+      '<p>От каждого сока идёт ветка к каждому печенью, а от каждого печенья — к каждому фрукту. Число концов: {a} · {b} · {c}.</p>',
+    '<p>Build the tree level by level: juice → cookies → fruit.</p>' +
+      '<p>Each juice connects to every cookie, and each cookie to every fruit. The number of ends: {a} × {b} × {c}.</p>'
+  ],
+  paths: [
+    '<p>Из дома к мосту ведут дороги — их {a}. С каждой из них можно перейти на любую из {b} дорог к школе.</p>' +
+      '<p>Нарисуй дерево путей: его концы — все разные маршруты, {a} · {b}.</p>',
+    '<p>There are {a} roads from home to the bridge. From each one you can take any of the {b} roads to school.</p>' +
+      '<p>The ends of the route tree are all the different routes: {a} × {b}.</p>'
+  ],
+  digits: [
+    '<p>На первое место можно поставить любую из {a} цифр. Для каждой первой цифры на второе место берут любую из оставшихся.</p>' +
+      '<p>Дерево покажет все числа без повторов: {a} · {b}.</p>',
+    '<p>Any of the {a} digits can go first. For each first digit, the second place takes one of the remaining digits.</p>' +
+      '<p>The tree lists every number without repeats: {a} × {b}.</p>'
+  ]
+};
 function treeGen(type){
   var r = bounds();
   var lo = Math.max(2, Math.min(6, r.a)), hi = Math.max(lo, Math.min(6, r.b));
   var m = ri(lo, hi), n = ri(lo, hi), k = ri(2, 3);
-  function ask(html, plain, need, id, fig){
-    return ex('tr:' + id, '<div class="sk-q">' + html + '</div><div class="sk-answer">{{slot}}</div>',
+  function ask(html, plain, need, id, fig, hint){
+    return ex('tr:' + id, '<div class="sk-q">' + html + '</div><div class="sk-answer">{{slot}}</div>' + (hint || ''),
       plain, need, 'number', 'text', 100, fig ? { figure: fig, long: true } : { long: true });
   }
   if(type === 'pairs'){
     var c = pick(TREE_PAIR);
     var html = fillTree(tr(c[0], c[1]), { a: m, b: n });
-    return ask(html, 'pairs ' + m + '×' + n, m * n, 'p:' + m + ':' + n, m * n <= 12 ? { kind: 'geometry', shape: 'tree', a: m, b: n } : null);
+    return ask(html, 'pairs ' + m + '×' + n, m * n, 'p:' + m + ':' + n,
+      { kind: 'geometry', shape: 'tree', levels: [m, n], labels: [c[2], c[3]] },
+      treeHint(tr(TREE_HINTS.pairs[0], TREE_HINTS.pairs[1]), { a: m, b: n }));
   }
   if(type === 'three'){
     var html3 = tr(
       'В кафе есть сок, печенье и фрукты нескольких видов: {a}, {b} и {c}. Сколько разных наборов из сока, печенья и фрукта можно составить?',
       'A cafe offers {a} kinds of juice, {b} kinds of cookies and {c} kinds of fruit. How many different sets of juice, cookies and fruit can be made?'
     );
-    return ask(fillTree(html3, { a: m, b: n, c: k }), 'sets ' + m + '×' + n + '×' + k, m * n * k, 't:' + m + ':' + n + ':' + k);
+    return ask(fillTree(html3, { a: m, b: n, c: k }), 'sets ' + m + '×' + n + '×' + k, m * n * k, 't:' + m + ':' + n + ':' + k,
+      { kind: 'geometry', shape: 'tree', levels: [m, n, k],
+        labels: [['сок', 'juice'], ['печенье', 'cookies'], ['фрукт', 'fruit']] },
+      treeHint(tr(TREE_HINTS.three[0], TREE_HINTS.three[1]), { a: m, b: n, c: k }));
   }
   if(type === 'paths'){
     var htmlp = tr(
       'Дорог от дома до моста — {a}, от моста до школы — {b}. Сколько разных путей от дома до школы через мост?',
       'There are {a} roads from home to the bridge and {b} roads from the bridge to school. How many different routes from home to school go through the bridge?'
     );
-    return ask(fillTree(htmlp, { a: m, b: n }), 'routes ' + m + '×' + n, m * n, 'w:' + m + ':' + n, m * n <= 12 ? { kind: 'geometry', shape: 'tree', a: m, b: n } : null);
+    return ask(fillTree(htmlp, { a: m, b: n }), 'routes ' + m + '×' + n, m * n, 'w:' + m + ':' + n,
+      { kind: 'geometry', shape: 'tree', levels: [m, n], labels: [['до моста', 'to the bridge'], ['к школе', 'to school']] },
+      treeHint(tr(TREE_HINTS.paths[0], TREE_HINTS.paths[1]), { a: m, b: n }));
   }
   var count = ri(3, 4), nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]).slice(0, count);
   var list = nums.join(', ');
   return ask(tr('Сколько двузначных чисел можно составить из цифр ', 'How many two-digit numbers can be made from the digits ') + list +
     tr(', если цифры в числе не повторяются?', ', if a digit cannot repeat in a number?'),
-    'two-digit numbers from ' + list, count * (count - 1), 'd:' + list);
+    'two-digit numbers from ' + list, count * (count - 1), 'd:' + list,
+    { kind: 'geometry', shape: 'tree', levels: [count, count - 1],
+      labels: [['первая цифра', 'first digit'], ['вторая цифра', 'second digit']] },
+    treeHint(tr(TREE_HINTS.digits[0], TREE_HINTS.digits[1]), { a: count, b: count - 1 }));
 }
 
 /* ---------- фигура к периметру ---------- */

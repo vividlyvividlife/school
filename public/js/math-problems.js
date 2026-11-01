@@ -932,7 +932,17 @@ function geoFigureSvg(fig, inline){
   var circle = inline
     ? ' style="fill:none;stroke:#2b6f66;stroke-width:2.2"'
     : ' class="fline"';
-  var svg = '<svg viewBox="0 0 260 186" role="img" aria-hidden="true"' +
+  var levels = shape === 'tree' ? (fig.levels || [fig.a || 2, fig.b || 2]) : null;
+  var treeTotal = 1, li;
+  if(shape === 'tree'){
+    for(li = 0; li < levels.length; li++) treeTotal *= levels[li];
+  }
+  var treeGap = treeTotal <= 12 ? 11 : treeTotal <= 24 ? 8 : 6;
+  var treeSpan = shape === 'tree' ? (treeTotal - 1) * treeGap : 0;
+  var vbW = shape === 'tree' ? (levels.length > 2 ? 330 : 300) : 260;
+  var vbH = shape === 'tree' ? Math.max(186, treeSpan + 62) : 186;
+  var svg = '<svg' + (shape === 'tree' && vbH > 200 ? ' class="ftree-tall"' : '') +
+    ' viewBox="0 0 ' + vbW + ' ' + vbH + '" role="img" aria-hidden="true"' +
     (inline ? ' width="170" height="122"' : '') + '>';
   var i, x, y, pts = [];
   if(shape === 'points'){
@@ -971,20 +981,59 @@ function geoFigureSvg(fig, inline){
       seg(40, 60, 220, 126); seg(40, 126, 220, 60);
     }
   } else if(shape === 'tree'){
-    var a = fig.a || 2, b = fig.b || 2, ai, bi;
-    var totalLeaves = a * b;
-    for(ai = 0; ai < a; ai++){
-      var y1 = a > 1 ? 24 + ai * (138 / (a - 1)) : 93;
-      svg += '<line x1="32" y1="93" x2="124" y2="' + y1.toFixed(1) + '"' + line + '/>';
-      svg += '<circle cx="124" cy="' + y1.toFixed(1) + '" r="3.2"' + dot + '/>';
-      for(bi = 0; bi < b; bi++){
-        var idx = ai * b + bi;
-        var y2 = totalLeaves > 1 ? 20 + idx * (146 / (totalLeaves - 1)) : 93;
-        svg += '<line x1="124" y1="' + y1.toFixed(1) + '" x2="226" y2="' + y2.toFixed(1) + '"' + line + '/>';
-        svg += '<circle cx="226" cy="' + y2.toFixed(1) + '" r="2.8"' + dot + '/>';
+    var labels = fig.labels || [['красные', 'red'], ['синие', 'blue']];
+    var nLev = levels.length;
+    var cols = nLev > 2 ? [42, 128, 214, 300] : [50, 152, 252];
+    var topY = Math.max(34, Math.floor((vbH - treeSpan) / 2));
+    var radius = Math.max(2.4, Math.min(3.2, treeGap * 0.4));
+    var leafYs = [], yDepth = [], qi, qj;
+    for(qi = 0; qi < treeTotal; qi++) leafYs.push(topY + qi * treeGap);
+    yDepth[nLev] = leafYs;
+    for(qi = nLev - 1; qi >= 1; qi--){
+      var per = levels[qi];
+      var childYs = yDepth[qi + 1], parentYs = [];
+      for(qj = 0; qj < childYs.length; qj += per){
+        var sum = 0;
+        for(var qk = 0; qk < per; qk++) sum += childYs[qj + qk];
+        parentYs.push(sum / per);
+      }
+      yDepth[qi] = parentYs;
+    }
+    var rootY = 0;
+    for(qi = 0; qi < yDepth[1].length; qi++) rootY += yDepth[1][qi];
+    rootY /= yDepth[1].length;
+    function treeColor(depth){
+      return depth === 1 ? '#d24a3a' : depth === 2 ? '#2563eb' : '#16a34a';
+    }
+    svg += '<text x="' + cols[0] + '" y="14" text-anchor="middle"' +
+      (inline ? ' style="fill:#6b7280;font:600 12px sans-serif"' : ' class="ftree-label"') + '>' +
+      tr('начало', 'start') + '</text>';
+    for(qi = 0; qi < nLev; qi++){
+      var head = labels[qi][LANG === 'en' ? 1 : 0];
+      svg += '<text x="' + cols[qi + 1] + '" y="14" text-anchor="middle"' +
+        (inline ? ' style="fill:' + treeColor(qi + 1) + ';font:600 12px sans-serif"'
+                : ' class="ftree-label ' + (qi === 0 ? 'fa' : qi === 1 ? 'fb' : 'fc') + '"') + '>' +
+        head + '</text>';
+    }
+    for(qi = 1; qi <= nLev; qi++){
+      var parYs = qi === 1 ? [rootY] : yDepth[qi - 1];
+      var chYs = yDepth[qi];
+      var kids = levels[qi - 1];
+      var dotCls = qi === 1 ? 'fa' : qi === 2 ? 'fb' : 'fc';
+      var dotFill = treeColor(qi);
+      var dotR = (qi === nLev ? radius : Math.min(3.2, radius + 0.3)).toFixed(1);
+      for(qj = 0; qj < parYs.length; qj++){
+        for(var qc = 0; qc < kids; qc++){
+          var nodeY = chYs[qj * kids + qc];
+          svg += '<line x1="' + cols[qi - 1] + '" y1="' + parYs[qj].toFixed(1) +
+            '" x2="' + cols[qi] + '" y2="' + nodeY.toFixed(1) + '"' + line + '/>';
+          svg += '<circle cx="' + cols[qi] + '" cy="' + nodeY.toFixed(1) + '" r="' + dotR + '"' +
+            (inline ? ' style="fill:' + dotFill + '"' : ' class="fpoint ' + dotCls + '"') + '/>';
+        }
       }
     }
-    svg += '<circle cx="32" cy="93" r="4"' + dot + '/>';
+    svg += '<circle cx="' + cols[0] + '" cy="' + rootY.toFixed(1) + '" r="3.8"' +
+      (inline ? ' style="fill:#6b7280"' : ' class="fpoint froot"') + '/>';
   } else if(shape === 'radius' || shape === 'diameter'){
     var ccx = 130, ccy = 94, r = 56;
     svg += '<circle cx="' + ccx + '" cy="' + ccy + '" r="' + r + '"' + circle + '/>';
