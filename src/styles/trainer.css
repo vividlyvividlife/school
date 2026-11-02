@@ -238,6 +238,20 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-align:c
 .pad.tiles.dense button.cannot{flex:1 1 22%;font-size:clamp(11px,2.3dvh,15px)}
 .pad button.correct{background:var(--green-bg);border-color:var(--green);color:var(--green-ink)}
 .pad button.wrong{background:var(--red-bg);border-color:var(--red);color:var(--red-ink)}
+.seg button:disabled{opacity:.42;cursor:not-allowed}
+.dict{display:flex;flex-direction:column;align-items:center;gap:10px}
+.dict-play{position:relative;display:flex;align-items:center;justify-content:center;width:clamp(84px,17dvh,124px);height:clamp(84px,17dvh,124px);border:0;border-radius:50%;background:var(--blue);color:#fff;box-shadow:0 10px 24px rgba(15,118,110,.26);transition:transform .15s,box-shadow .2s}
+.dict-play:active{transform:scale(.96)}
+.dict-play:disabled{background:var(--line-strong);color:var(--surface);box-shadow:none;cursor:not-allowed}
+.dict-play svg{width:54%;height:54%}
+.dict-play.playing{animation:dictPulse 1.05s ease-in-out infinite}
+.dict-badge{position:absolute;top:3px;right:3px;display:flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 7px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--blue-d);font-size:15px;font-weight:700}
+.dict-play:disabled .dict-badge{color:var(--muted)}
+.dict-answer{min-height:1.2em;font-size:clamp(26px,5.4dvh,42px);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.dict-answer:empty::after{content:"—";color:var(--muted)}
+.dict-label{font-size:clamp(17px,3.4dvh,23px);font-weight:600}
+.dict-note{min-height:1.2em;font-size:13px;color:var(--muted);text-align:center}
+@keyframes dictPulse{50%{box-shadow:0 0 0 12px rgba(15,118,110,.10),0 10px 24px rgba(15,118,110,.26)}}
 [hidden]{display:none !important}
 
 .verdict{border-radius:14px;padding:14px 16px;font-size:15.5px;font-weight:600;line-height:1.45;margin:0 0 14px;box-shadow:var(--shadow-card);background:var(--surface)}
@@ -284,4 +298,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-align:c
 @media (max-height:600px){
   .playgroup{gap:8px}
   .eqwrap{gap:4px}
+  .dict{gap:6px}
+  .dict-note{display:none}
+  .pad button{height:clamp(42px,8.4dvh,70px)}
 }

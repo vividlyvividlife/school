@@ -99,6 +99,19 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
         </div>
       </div>
 
+      {lang === 'ru' && (
+        <div class="tile">
+          <div class="tile-title">{p.format}</div>
+          <div class="tile-body">
+            <div class="seg format-seg" data-key="format">
+              <button type="button" data-v="visual">{p.formatVisual}</button>
+              <button type="button" data-v="dictation">{p.formatDictation}</button>
+            </div>
+            <div class="hint" id="formatHint">{p.formatHint}</div>
+          </div>
+        </div>
+      )}
+
       <div class="tile">
         <div class="tile-title">{p.mode}</div>
         <div class="tile-body">
@@ -177,6 +190,18 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
     <div class="playgroup">
       <div class="eqwrap" id="eqw">
         <div class="eq" id="eq"></div>
+        <div class="dict" id="dict" hidden>
+          <button class="dict-play" id="dictRepeat" type="button" aria-label={p.dictRepeatAria}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 9.2v5.6h3.6L13 19V5L7.6 9.2H4z" fill="currentColor"/>
+              <path d="M16.3 8.4a5 5 0 010 7.2M18.9 5.8a8.6 8.6 0 010 12.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span class="dict-badge" id="dictLeft">1</span>
+          </button>
+          <div class="dict-answer" id="dictAnswer"></div>
+          <div class="dict-label" id="dictLabel">{p.dictListen}</div>
+          <div class="dict-note" id="dictNote">{p.dictNote}</div>
+        </div>
         <div class="cap" id="cap"></div>
         <div class="pairinfo" id="pairInfo" hidden></div>
       </div>
@@ -251,5 +276,13 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
     </div>
   </div>
 </section>
+{lang === 'ru' && (
+  <>
+    <script is:inline define:vars={{ dictAudio: asset('audio/dictation/ru-v5-baya.mp3'), dictTimings: asset('audio/dictation/ru-v5-baya.json') }}>
+      window.__DICTATION__ = { audio: dictAudio, timings: dictTimings };
+    </script>
+    <script is:inline src={asset('js/dictation.js') + '?v=' + jsVersion}></script>
+  </>
+)}
 <script is:inline src={asset('js/trainer.js') + '?v=' + jsVersion}></script>
 </BaseLayout>

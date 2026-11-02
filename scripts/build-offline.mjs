@@ -58,6 +58,15 @@ if (existsSync(problemsImgDir)) {
   problemsImgScript = `<script>window.__PROBLEM_IMG__=${JSON.stringify(map)}</script>`;
 }
 
+const dictAudioPath = path.join(publicDir, 'audio', 'dictation', 'ru-v5-baya.mp3');
+const dictJsonPath = path.join(publicDir, 'audio', 'dictation', 'ru-v5-baya.json');
+let dictDataScript = '';
+if (existsSync(dictAudioPath) && existsSync(dictJsonPath)) {
+  const timings = JSON.parse(await readFile(dictJsonPath, 'utf8'));
+  const audio = await readFile(dictAudioPath);
+  dictDataScript = `<script>window.__DICTATION_DATA__={timings:${JSON.stringify(timings)},audio:"data:audio/mpeg;base64,${audio.toString('base64')}"}</script>`;
+}
+
 function localFile(url) {
   if (!url || /^(?:[a-z]+:)?\/\//i.test(url)) return null;
   let p = url.split(/[?#]/)[0];
@@ -96,7 +105,7 @@ async function inlinePage(html) {
     .replace(/<meta\b[^>]*\bname="(?:robots|googlebot|yandex|bingbot)"[^>]*>/gi, '')
     .replace(/<link\b[^>]*href="https:\/\/fonts\.(?:googleapis|gstatic)\.com[^"]*"[^>]*>/gi, '')
     .replace(/<link\b[^>]*rel="icon"[^>]*>/gi, '')
-    .replace('</head>', problemsImgScript + '<meta name="robots" content="noindex, nofollow"><style>.site-nav,.site-top,.site-scrim{display:none!important}</style></head>');
+    .replace('</head>', (/__DICTATION__/.test(html) ? dictDataScript : '') + problemsImgScript + '<meta name="robots" content="noindex, nofollow"><style>.site-nav,.site-top,.site-scrim{display:none!important}</style></head>');
 }
 
 for (const [src, out] of pages) {
