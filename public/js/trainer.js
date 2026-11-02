@@ -135,7 +135,17 @@ function poolFor(op){
 }
 function hasAddSub(ops){ ops = ops || S.ops; return ops.indexOf('add') >= 0 || ops.indexOf('sub') >= 0; }
 function hasMulDiv(ops){ ops = ops || S.ops; return ops.indexOf('mul') >= 0 || ops.indexOf('div') >= 0; }
-function trickActive(){ return !!(S.trickZero && S.miss === 'r' && S.ops.indexOf('div') >= 0); }
+function trickActive(){ return !!(S.trickZero && S.ops.indexOf('div') >= 0); }
+function cannotEnabled(){
+  return !!(run && !run.hardMode && S.trickZero && run.ops.indexOf('div') >= 0);
+}
+function cannotRoll(op){
+  return !!(cannotEnabled() && (!op || op === '÷') && Math.random() < 0.5);
+}
+function setCannot(show){
+  els.cannotBtn.hidden = !cannotEnabled();
+  els.cannotBtn.style.visibility = show ? '' : 'hidden';
+}
 function effectiveOps(){
   return S.ops.slice();
 }
@@ -392,11 +402,11 @@ function updateHints(){
   }
   els.rangeHint.hidden = !parts.length;
   els.rangeHint.textContent = parts.join(' ');
-  var canTrick = S.ops.indexOf('div') >= 0 && S.miss === 'r';
+  var canTrick = S.ops.indexOf('div') >= 0;
   els.trickZero.disabled = !canTrick;
   els.trickHint.hidden = !canTrick && !S.trickZero;
   els.trickHint.textContent = !canTrick
-    ? tr('Доступно при делении, если пропущен ответ.', 'Available for division when the answer is missing.')
+    ? tr('Доступно при делении.', 'Available when division is selected.')
     : S.trickZero
       ? tr('Иногда в примерах встретится деление на 0. Верный ответ — «Нельзя».', 'Occasionally a problem will divide by zero. The correct answer is “Undefined”.')
       : '';
@@ -622,7 +632,6 @@ function nextExercise(){
   }
   var base = drawBase();
   if(!base){ finish('done'); return; }
-  els.cannotBtn.hidden = (S.miss === 'all' && !run.hardMode);
   els.pad.hidden = isTiles();
   els.tiles.hidden = !isTiles();
   els.tiles.innerHTML = '';
@@ -650,7 +659,9 @@ function nextExercise(){
       var cm = base.op === '+' || base.op === '×';
       sols = [cm ? [Math.min(base.a, base.b), Math.max(base.a, base.b)] : [base.a, base.b]];
     }
-    run.cur = { a: base.a, b: base.b, r: base.r, op: base.op, miss: 'all',
+    var showCannot = cannotRoll(base.op);
+    setCannot(showCannot);
+    run.cur = { a: base.a, b: base.b, r: base.r, op: base.op, miss: 'all', cannot: showCannot,
       sols: sols, found: [], slots: ['', ''], active: 0, mistakeLogged: false };
     renderAll();
     return;
@@ -661,7 +672,9 @@ function nextExercise(){
   var miss = S.miss === 'all' ? 'r' : S.miss;
   if(miss === 'rab') miss = ['r','a','b'][Math.floor(Math.random() * 3)];
   else if(miss === 'ab') miss = Math.random() < 0.5 ? 'a' : 'b';
-  run.cur = { a: base.a, b: base.b, r: base.r, op: base.op, miss: miss };
+  var showCannot = cannotRoll(base.op);
+  setCannot(showCannot);
+  run.cur = { a: base.a, b: base.b, r: base.r, op: base.op, miss: miss, cannot: showCannot };
   renderEq();
   if(isTiles()) buildTiles();
 }
@@ -673,7 +686,7 @@ function startTrick(){
   run.typed = '';
   run.curDone = false;
   run.shownAt = Date.now();
-  run.cur = { a: a, b: 0, r: null, op: '÷', miss: 'r', trick: true };
+  run.cur = { a: a, b: 0, r: null, op: '÷', miss: 'r', trick: true, cannot: true };
   els.eqw.className = 'eqwrap';
   els.cap.textContent = '';
   els.cap.className = 'cap';
@@ -682,6 +695,7 @@ function startTrick(){
   els.eq.innerHTML = '<span class="opd">' + a + '</span><span class="op">÷</span><span class="opd">0</span>' +
     '<span class="op">=</span><span class="slot empty" id="slot"></span>';
   els.cannotBtn.hidden = false;
+  els.cannotBtn.style.visibility = '';
   if(isTiles()){
     els.pad.hidden = true;
     els.tiles.hidden = false;
@@ -910,7 +924,8 @@ function press(k){
   unlockAudio();
   if(k === 'none'){
     if(run.cur.trick) judgeTrick('none', null);
-    else if(run.cur.miss !== 'all') judge('none', null);
+    else if(run.cur.miss === 'all') judgeAllNone();
+    else judge('none', null);
     return;
   }
   if(run.cur.trick){
@@ -945,8 +960,9 @@ function tileCount(){
 function buildTiles(){
   var c = run.cur;
   var correct = c.miss === 'r' ? c.r : c.miss === 'a' ? c.a : c.b;
-  var n = tileCount(), numerics = n - 1;
-  var max = Math.max(run.vmax, n - 1, correct);
+  var withCannot = !!c.cannot;
+  var n = tileCount(), numerics = n - (withCannot ? 1 : 0);
+  var max = Math.max(run.vmax, numerics, correct);
   var opts = [correct];
   var cands = shuffle([correct - 1, correct + 1, correct - 2, correct + 2, correct - 10, correct + 10, 0, 1, 2, 3]);
   var i, guard;
@@ -959,7 +975,7 @@ function buildTiles(){
     if(opts.indexOf(v) < 0) opts.push(v);
   }
   opts.sort(function(x, y){ return x - y; });
-  opts.push('none');
+  if(withCannot) opts.push('none');
   els.tiles.classList.toggle('dense', n >= 10);
   els.tiles.innerHTML = opts.map(function(v){
     return '<button type="button" data-v="' + v + '"' + (v === 'none' ? ' class="cannot"' : '') + '>' +
@@ -1049,6 +1065,34 @@ function judge(val, tileBtn){
     }, 1500);
   }
   updateScore();
+}
+
+function judgeAllNone(){
+  if(!run || run.locked || run.done || !run.cur) return;
+  var cur = run.cur, dt = Date.now() - run.shownAt;
+  run.locked = true;
+  run.tok++;
+  run.curDone = true;
+  run.tSum += dt;
+  run.tN++;
+  if(!run.minMs || dt < run.minMs) run.minMs = dt;
+  if(dt > run.maxMs) run.maxMs = dt;
+  run.bad++;
+  run.records.push({ a: cur.a, b: cur.b, op: cur.op, ms: dt, ok: false });
+  if(!cur.mistakeLogged){
+    cur.mistakeLogged = true;
+    run.mistakes.push({ q: '□ ' + cur.op + ' □ = ' + cur.r, ua: answerText('none'), miss: 'all' });
+  }
+  playWrong();
+  if(navigator.vibrate){ try{ navigator.vibrate(80); }catch(e){} }
+  els.eqw.classList.add('bad');
+  els.cap.textContent = tr('Неверно', 'Incorrect');
+  els.cap.className = 'cap bad';
+  updateScore();
+  var tok = run.tok;
+  setTimeout(function(){
+    if(run && run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
+  }, 1500);
 }
 
 function collectErrors(){
