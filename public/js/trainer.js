@@ -265,12 +265,14 @@ function loadSettings(){
   if(v.sec !== undefined) S.sec = clampInt(v.sec, 0, 59, 0);
   if(typeof v.sound === 'boolean') S.sound = v.sound;
   if(typeof v.trickZero === 'boolean') S.trickZero = v.trickZero;
-  if(v.format === 'visual' || v.format === 'dictation') S.format = v.format;
+  if(v.format === 'visual' || v.format === 'dictation' || v.format === 'dictation-full') S.format = v.format;
   enforceDictation();
 }
 function saveSettings(){ saveJSON(K_SET, S); }
 var dictAllowed = !!document.querySelector('.format-seg');
-function isDictation(){ return dictAllowed && S.format === 'dictation'; }
+function isDictation(){ return dictAllowed && (S.format === 'dictation' || S.format === 'dictation-full'); }
+function isFullDictation(){ return dictAllowed && S.format === 'dictation-full'; }
+function dictBank(){ return isFullDictation() ? 'full' : 'light'; }
 function enforceDictation(){
   if(!isDictation()) return;
   S.miss = 'r';
@@ -382,7 +384,7 @@ function applyUrl(){
   if(p.has('sec')) S.sec = clampInt(p.get('sec'), 0, 59, 0);
   if(p.has('sound')) S.sound = p.get('sound') !== '0';
   if(p.has('trick')) S.trickZero = p.get('trick') !== '0';
-  if(p.get('format') === 'visual' || p.get('format') === 'dictation') S.format = p.get('format');
+  if(p.get('format') === 'visual' || p.get('format') === 'dictation' || p.get('format') === 'dictation-full') S.format = p.get('format');
   enforceDictation();
 }
 
@@ -480,7 +482,7 @@ function syncDictationUI(){
   });
   els.timeRow.style.display = (on || S.mode !== 'timed') ? 'none' : '';
   if(els.formatHint) els.formatHint.hidden = false;
-  if(on && window.DictationAudio) DictationAudio.load().catch(function(){});
+  if(on && window.DictationAudio) DictationAudio.load(dictBank()).catch(function(){});
 }
 
 function rangeLabel(){ return (S.from > 0 ? tr('от ', 'from ') + S.from + tr(' до ', ' to ') + S.limit : tr('до ', 'up to ') + S.limit); }
@@ -500,11 +502,11 @@ function start(){
         els.poolInfo.textContent = tr('Браузер не поддерживает звук', 'This browser does not support audio');
         return;
       }
-      if(!DictationAudio.isReady()){
+      if(!DictationAudio.isReady(dictBank())){
         startWaiting = true;
         els.startBtn.disabled = true;
         els.startBtn.textContent = tr('Загрузка озвучки…', 'Loading audio…');
-        DictationAudio.load().then(function(){
+        DictationAudio.load(dictBank()).then(function(){
           startWaiting = false;
           els.startBtn.disabled = false;
           els.startBtn.textContent = tr('Начать', 'Start');
@@ -555,7 +557,9 @@ function start(){
 
   els.gInfo.textContent = rangeLabel() + ' · ' + opsLabel(S.ops) +
     (S.carry && hasAddSub() ? tr(' · с переходом', ' · with carry') + (hasMulDiv() ? ' (+, −)' : '') : '') +
-    (isDictation() ? tr(' · диктант', ' · dictation') : '');
+    (isFullDictation()
+      ? tr(' · математический диктант', ' · math dictation')
+      : isDictation() ? tr(' · диктант', ' · dictation') : '');
   els.pad.hidden = isTiles();
   els.tiles.hidden = !isTiles();
   els.tiles.innerHTML = '';
@@ -571,7 +575,7 @@ function startHardList(h, track, kind){
   unlockAudio();
   if(isDictation() && window.DictationAudio){
     DictationAudio.unlock();
-    DictationAudio.load().catch(function(){});
+    DictationAudio.load(dictBank()).catch(function(){});
   }
   if(!h.length){ hardInfo(); return; }
   kind = kind === 'fluency' ? 'fluency' : 'review';
@@ -605,7 +609,9 @@ function startHardList(h, track, kind){
   els.gInfo.textContent = (kind === 'fluency' ? tr('беглость', 'fluency') : tr('ошибки', 'mistakes')) +
     ' · ' + items.length + ' ' + pluralEx(items.length) +
     ' · ' + (S.mode === 'timed' ? tr('на время', 'timed') : tr('тренировка', 'practice')) +
-    (isDictation() ? tr(' · диктант', ' · dictation') : '');
+    (isFullDictation()
+      ? tr(' · математический диктант', ' · math dictation')
+      : isDictation() ? tr(' · диктант', ' · dictation') : '');
   els.pad.hidden = isTiles();
   els.tiles.hidden = !isTiles();
   els.tiles.innerHTML = '';
@@ -721,7 +727,7 @@ function nextExercise(){
   els.cap.textContent = '';
   els.cap.className = 'cap';
   run.exCount++;
-  if(isDictation()){ run.dictLeft = 1; dictStop(); }
+  if(isDictation()){ run.dictLeft = 1; run.dictKeys = null; dictStop(); }
 
 
   if(S.miss === 'all' && !run.hardMode){
@@ -868,7 +874,12 @@ function renderEq(){
   if(els.dict){
     els.eq.hidden = isDictation();
     els.dict.hidden = !isDictation();
-    if(isDictation()) els.dictNote.textContent = tr('Нажми на динамик, чтобы повторить один раз', 'Tap the speaker to listen once more');
+    if(isDictation()){
+      els.dictNote.textContent = tr('Нажми на динамик, чтобы повторить один раз', 'Tap the speaker to listen once more');
+      els.dictLabel.textContent = isFullDictation()
+        ? tr('Слушай диктант', 'Listen to the dictation')
+        : tr('Слушай пример', 'Listen to the example');
+    }
   }
   updateDictUI();
 }
@@ -897,6 +908,40 @@ function updateDictAnswer(){
   els.dictAnswer.hidden = false;
   els.dictAnswer.textContent = run && run.typed ? run.typed : '';
 }
+function fullSequence(c){
+  var a = c.a, b = c.b, variants;
+  if(c.op === '+'){
+    variants = [
+      ['p_sum_find','m'+a,'i'+b],
+      ['p_sum_calc','m'+a,'i'+b],
+      ['p_term1','m'+a,'p_term2','m'+b,'p_sum_short']
+    ];
+  } else if(c.op === '−'){
+    variants = [
+      ['p_diff_find','m'+a,'i'+b],
+      ['p_diff_calc','m'+a,'i'+b],
+      ['p_minuend','m'+a,'p_subtrahend','m'+b,'p_diff_short']
+    ];
+    if(a > b){
+      variants.push(['p_howmuch','m'+a,'p_more','q'+b]);
+      variants.push(['p_howmuch','m'+b,'p_less','q'+a]);
+    }
+  } else if(c.op === '×'){
+    variants = [
+      ['p_prod_find','m'+a,'i'+b],
+      ['p_prod_calc','m'+a,'i'+b],
+      ['p_factor1','m'+a,'p_factor2','m'+b,'p_prod_short']
+    ];
+  } else {
+    variants = [
+      ['p_quot_find','m'+a,'i'+b],
+      ['p_quot_calc','m'+a,'i'+b],
+      ['p_dividend','m'+a,'p_divisor','m'+b,'p_quot_short']
+    ];
+    if(a > b) variants.push(['p_howmany','m'+a,'p_more','q'+b]);
+  }
+  return variants[Math.floor(Math.random() * variants.length)];
+}
 function speakCurrent(repeat){
   if(!isDictation() || !run || !run.cur || run.curDone || run.done) return;
   if(repeat && (!run.dictLeft || run.dictLeft <= 0)) return;
@@ -904,7 +949,9 @@ function speakCurrent(repeat){
   var cur = run.cur, tok = run.tok;
   function playIt(){
     if(!isDictation() || !run || run.tok !== tok || run.curDone || run.done) return;
-    var info = DictationAudio.play(cur.a, cur.op, cur.b);
+    var info = isFullDictation()
+      ? DictationAudio.playKeys(run.dictKeys || (run.dictKeys = fullSequence(cur)), 'full')
+      : DictationAudio.play(cur.a, cur.op, cur.b);
     if(!info) return;
     if(repeat){
       run.dictLeft = Math.max(0, run.dictLeft - 1);
@@ -918,9 +965,9 @@ function speakCurrent(repeat){
       if(run && run.cur === cur && run.dictPlayTok === pt) els.dict.classList.remove('playing');
     }, Math.round(info.duration * 1000) + 60);
   }
-  if(DictationAudio.isReady()){ playIt(); return; }
+  if(DictationAudio.isReady(dictBank())){ playIt(); return; }
   els.dict.classList.add('playing');
-  DictationAudio.load().then(function(){
+  DictationAudio.load(dictBank()).then(function(){
     els.dict.classList.remove('playing');
     playIt();
   }, function(){
@@ -1780,7 +1827,7 @@ function saveSession(durSec, hardEx){
   var hex = (hardEx || []).slice(0, 20).map(function(x){ return { a: x.a, b: x.b, op: x.op }; });
   h.unshift({
     t: Date.now(), mode: S.mode, limit: S.limit, from: S.from, ops: S.ops, carry: S.carry, hard: !!run.hardMode,
-    fmt: isDictation() ? 'dictation' : 'visual',
+    fmt: isDictation() ? (isFullDictation() ? 'full' : 'dictation') : 'visual',
     kind: run.listKind || 'review',
     dur: durSec, ok: run.ok, bad: run.bad, psec: S.min * 60 + S.sec, hardEx: hex
   });
@@ -1803,7 +1850,9 @@ function renderHistory(){
     var desc = r.hard
       ? (r.kind === 'fluency' ? tr('беглость', 'fluency practice') : tr('проработка ошибок', 'mistake review'))
       : (r.from > 0 ? tr('от ', 'from ') + r.from + tr(' до ', ' to ') + r.limit : tr('до ', 'up to ') + r.limit) + ' · ' + opsLabel(r.ops);
-    desc += r.fmt === 'dictation' ? ' · ' + tr('диктант', 'dictation') : '';
+    desc += r.fmt === 'full'
+      ? ' · ' + tr('математический диктант', 'math dictation')
+      : r.fmt === 'dictation' ? ' · ' + tr('диктант', 'dictation') : '';
     var html = '<div class="hrow">' + fmtDate(r.t) + ' · ' + desc +
       ' · ' + mode + ' · ' + tr('верно ', 'correct ') + r.ok + ', ' + r.bad + ' ' + pluralErr(r.bad) +
       ' · ' + acc;

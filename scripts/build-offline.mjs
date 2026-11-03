@@ -58,14 +58,21 @@ if (existsSync(problemsImgDir)) {
   problemsImgScript = `<script>window.__PROBLEM_IMG__=${JSON.stringify(map)}</script>`;
 }
 
-const dictAudioPath = path.join(publicDir, 'audio', 'dictation', 'ru-v5-baya.mp3');
-const dictJsonPath = path.join(publicDir, 'audio', 'dictation', 'ru-v5-baya.json');
-let dictDataScript = '';
-if (existsSync(dictAudioPath) && existsSync(dictJsonPath)) {
-  const timings = JSON.parse(await readFile(dictJsonPath, 'utf8'));
-  const audio = await readFile(dictAudioPath);
-  dictDataScript = `<script>window.__DICTATION_DATA__={timings:${JSON.stringify(timings)},audio:"data:audio/mpeg;base64,${audio.toString('base64')}"}</script>`;
+const dictAudioDir = path.join(publicDir, 'audio', 'dictation');
+const dictBanks = [['light', 'ru-v5-baya'], ['full', 'ru-v5-baya-full']];
+const dictData = {};
+for (const [name, file] of dictBanks) {
+  const audioPath = path.join(dictAudioDir, file + '.mp3');
+  const jsonPath = path.join(dictAudioDir, file + '.json');
+  if (!existsSync(audioPath) || !existsSync(jsonPath)) continue;
+  dictData[name] = {
+    timings: JSON.parse(await readFile(jsonPath, 'utf8')),
+    audio: `data:audio/mpeg;base64,${(await readFile(audioPath)).toString('base64')}`
+  };
 }
+const dictDataScript = Object.keys(dictData).length
+  ? `<script>window.__DICTATION_DATA__=${JSON.stringify(dictData)}</script>`
+  : '';
 
 function localFile(url) {
   if (!url || /^(?:[a-z]+:)?\/\//i.test(url)) return null;

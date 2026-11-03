@@ -1,15 +1,17 @@
-"""Build the voice bank for the math dictation trainer.
+"""Build the voice banks for the math dictation trainer.
 
 Run with the local TTS venv:
-    .tts/Scripts/python.exe scripts/make-dictation-audio.py
+    .tts/Scripts/python.exe scripts/make-dictation-audio.py [light|full|all]
 
 The script needs Silero v5 (ru, baya), numpy and lameenc in .tts.
-It writes public/audio/dictation/ru-v5-baya.{mp3,json} and a preview
-to .tts/out/bank_preview.wav.
+It writes public/audio/dictation/ru-v5-baya.{mp3,json} for the light
+dictation, public/audio/dictation/ru-v5-baya-full.{mp3,json} for the
+full math dictation, and previews to .tts/out/.
 """
 
 import json
 import os
+import sys
 import wave
 
 import lameenc
@@ -34,6 +36,33 @@ TENS = ["", "", "двадцать", "тридцать", "сорок", "пять�
         "шестьдесят", "семьдесят", "восемьдесят", "девяносто"]
 OPS = [("add", "плюс"), ("sub", "минус"), ("mul", "умножить на"), ("div", "разделить на")]
 
+FULL_PHRASES = {
+    "p_sum_find": "Найди сумму чисел,",
+    "p_sum_calc": "Вычисли сумму чисел,",
+    "p_term1": "Первое слагаемое,",
+    "p_term2": "второе слагаемое,",
+    "p_sum_short": "Найди сумму.",
+    "p_diff_find": "Найди разность чисел,",
+    "p_diff_calc": "Вычисли разность чисел,",
+    "p_minuend": "Уменьшаемое,",
+    "p_subtrahend": "вычитаемое,",
+    "p_diff_short": "Найди разность.",
+    "p_prod_find": "Найди произведение чисел,",
+    "p_prod_calc": "Вычисли произведение чисел,",
+    "p_factor1": "Первый множитель,",
+    "p_factor2": "второй множитель,",
+    "p_prod_short": "Найди произведение.",
+    "p_quot_find": "Найди частное чисел,",
+    "p_quot_calc": "Вычисли частное чисел,",
+    "p_dividend": "Делимое,",
+    "p_divisor": "делитель,",
+    "p_quot_short": "Найди частное.",
+    "p_howmuch": "На сколько,",
+    "p_howmany": "Во сколько раз,",
+    "p_more": "больше,",
+    "p_less": "меньше,",
+}
+
 
 def ru_number(n):
     if n < 10:
@@ -46,12 +75,21 @@ def ru_number(n):
     return TENS[tens] + (" " + ONES[ones] if ones else "")
 
 
-def clip_texts():
+def light_texts():
     texts = {}
     for n in range(101):
         texts["n%d" % n] = ru_number(n) + "."
         for key, word in OPS:
             texts["%s%d" % (key, n)] = ru_number(n) + " " + word
+    return texts
+
+
+def full_texts():
+    texts = dict(FULL_PHRASES)
+    for n in range(101):
+        texts["m%d" % n] = ru_number(n) + ","
+        texts["i%d" % n] = "и " + ru_number(n) + "."
+        texts["q%d" % n] = ru_number(n) + "?"
     return texts
 
 
@@ -68,14 +106,15 @@ def trim(audio):
     return seg
 
 
-def main():
-    os.makedirs(OUT_DIR, exist_ok=True)
-    os.makedirs(PREVIEW_DIR, exist_ok=True)
+def write_wav(path, pcm):
+    with wave.open(path, "wb") as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(SR)
+        f.writeframes((np.clip(pcm, -1, 1) * 32767).astype(np.int16).tobytes())
 
-    model, _ = silero_tts(language="ru", speaker="v5_ru")
-    model.to(torch.device("cpu"))
 
-    texts = clip_texts()
+def build_bank(model, name, texts, gap, bitrate, previews):
     keys = list(texts)
     clips = {}
     pcm_parts = []
@@ -93,50 +132,70 @@ def main():
         pcm_parts.append(piece)
         cursor += len(piece)
         if (i + 1) % 25 == 0 or i + 1 == len(keys):
-            print("generated %d/%d" % (i + 1, len(keys)), flush=True)
+            print("%s: generated %d/%d" % (name, i + 1, len(keys)), flush=True)
 
     pcm = np.concatenate(pcm_parts)
     pcm16 = (np.clip(pcm, -1, 1) * 32767).astype(np.int16)
 
     enc = lameenc.Encoder()
-    enc.set_bit_rate(BITRATE)
+    enc.set_bit_rate(bitrate)
     enc.set_in_sample_rate(SR)
     enc.set_channels(1)
     enc.set_quality(2)
     mp3 = enc.encode(pcm16.tobytes()) + enc.flush()
 
-    mp3_path = os.path.join(OUT_DIR, "ru-v5-baya.mp3")
-    with open(mp3_path, "wb") as f:
+    base = "ru-v5-baya" if name == "light" else "ru-v5-baya-" + name
+    with open(os.path.join(OUT_DIR, base + ".mp3"), "wb") as f:
         f.write(mp3)
 
     meta = {
         "version": 1,
         "voice": "v5-baya",
         "sampleRate": SR,
-        "gap": 0.06,
+        "gap": gap,
         "clips": clips,
     }
-    with open(os.path.join(OUT_DIR, "ru-v5-baya.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(OUT_DIR, base + ".json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, separators=(",", ":"))
 
-    print("mp3: %.2f MB, %.1f s" % (len(mp3) / 1048576, len(pcm) / SR))
+    print("%s: mp3 %.2f MB, %.1f s" % (name, len(mp3) / 1048576, len(pcm) / SR), flush=True)
 
-    preview = [("add", 54, 27), ("sub", 63, 28), ("mul", 7, 8),
-               ("div", 81, 9), ("sub", 100, 47), ("add", 12, 9), ("sub", 95, 7)]
-    gap = np.zeros(int(0.06 * SR), dtype=np.float32)
+    gap_pcm = np.zeros(int(gap * SR), dtype=np.float32)
+    sentence_gap = np.zeros(int(0.45 * SR), dtype=np.float32)
     parts = []
-    for op, a, b in preview:
-        head = pcm_parts[keys.index("%s%d" % (op, a))]
-        tail_clip = pcm_parts[keys.index("n%d" % b)]
-        parts.extend([head, gap, tail_clip, np.zeros(int(0.45 * SR), dtype=np.float32)])
-    preview_pcm = np.concatenate(parts)
-    preview_path = os.path.join(PREVIEW_DIR, "bank_preview.wav")
-    with wave.open(preview_path, "wb") as f:
-        f.setnchannels(1)
-        f.setsampwidth(2)
-        f.setframerate(SR)
-        f.writeframes((np.clip(preview_pcm, -1, 1) * 32767).astype(np.int16).tobytes())
-    print("preview:", preview_path)
+    for seq in previews:
+        for j, key in enumerate(seq):
+            parts.append(pcm_parts[keys.index(key)])
+            if j + 1 < len(seq):
+                parts.append(gap_pcm)
+        parts.append(sentence_gap)
+    write_wav(os.path.join(PREVIEW_DIR, base + "-preview.wav"), np.concatenate(parts))
+    print("preview:", os.path.join(PREVIEW_DIR, base + "-preview.wav"), flush=True)
+
+
+def main():
+    which = sys.argv[1] if len(sys.argv) > 1 else "all"
+    os.makedirs(OUT_DIR, exist_ok=True)
+    os.makedirs(PREVIEW_DIR, exist_ok=True)
+
+    model, _ = silero_tts(language="ru", speaker="v5_ru")
+    model.to(torch.device("cpu"))
+
+    if which in ("light", "all"):
+        build_bank(model, "light", light_texts(), 0.06, BITRATE, [
+            ["add54", "n27"], ["sub63", "n28"], ["mul7", "n8"],
+            ["div81", "n9"], ["sub100", "n47"], ["add12", "n9"], ["sub95", "n7"],
+        ])
+
+    if which in ("full", "all"):
+        build_bank(model, "full", full_texts(), 0.18, BITRATE, [
+            ["p_minuend", "m63", "p_subtrahend", "m28", "p_diff_short"],
+            ["p_sum_find", "m54", "i27"],
+            ["p_factor1", "m7", "p_factor2", "m8", "p_prod_short"],
+            ["p_dividend", "m81", "p_divisor", "m9", "p_quot_short"],
+            ["p_howmuch", "m54", "p_more", "q27"],
+            ["p_howmany", "m56", "p_more", "q7"],
+        ])
 
 
 if __name__ == "__main__":

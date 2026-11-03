@@ -3,8 +3,9 @@
 
 var cfg = global.__DICTATION__ || {};
 var offline = global.__DICTATION_DATA__ || null;
-var ctx = null, gain = null, buffer = null, meta = null, loading = null;
+var ctx = null, gain = null;
 var sources = [];
+var banks = {};
 var OP_KEY = { '+':'add', '−':'sub', '-':'sub', '×':'mul', '*':'mul', '÷':'div', '/':'div' };
 
 function ensureCtx(){
@@ -27,16 +28,31 @@ function decode(ab){
   });
 }
 
-function getTimings(){
-  if(offline && offline.timings) return Promise.resolve(offline.timings);
-  return fetch(cfg.timings).then(function(r){
+function cfgFor(name){
+  if(cfg[name]) return cfg[name];
+  return name === 'light' ? cfg : null;
+}
+
+function offlineFor(name){
+  if(!offline) return null;
+  if(offline[name]) return offline[name];
+  return name === 'light' && offline.timings ? offline : null;
+}
+
+function getTimings(name){
+  var off = offlineFor(name);
+  if(off && off.timings) return Promise.resolve(off.timings);
+  var c = cfgFor(name);
+  if(!c || !c.timings) return Promise.reject(new Error('no timings'));
+  return fetch(c.timings).then(function(r){
     if(!r.ok) throw new Error('timings ' + r.status);
     return r.json();
   });
 }
 
-function getAudio(){
-  var url = (offline && offline.audio) || cfg.audio;
+function getAudio(name){
+  var off = offlineFor(name);
+  var url = (off && off.audio) || (cfgFor(name) || {}).audio;
   if(!url) return Promise.reject(new Error('no audio url'));
   return fetch(url).then(function(r){
     if(!r.ok) throw new Error('audio ' + r.status);
@@ -44,22 +60,24 @@ function getAudio(){
   });
 }
 
-function load(){
-  if(buffer && meta) return Promise.resolve(true);
-  if(loading) return loading;
-  loading = Promise.all([getTimings(), getAudio()]).then(function(res){
-    meta = res[0];
+function load(name){
+  name = name || 'light';
+  var b = banks[name] || (banks[name] = {});
+  if(b.buffer && b.meta) return Promise.resolve(true);
+  if(b.loading) return b.loading;
+  b.loading = Promise.all([getTimings(name), getAudio(name)]).then(function(res){
+    b.meta = res[0];
     return decode(res[1]);
   }).then(function(buf){
-    buffer = buf;
+    b.buffer = buf;
     return true;
   }).catch(function(err){
-    loading = null;
-    meta = null;
-    buffer = null;
+    b.loading = null;
+    b.meta = null;
+    b.buffer = null;
     throw err;
   });
-  return loading;
+  return b.loading;
 }
 
 function unlock(){
@@ -74,36 +92,42 @@ function stop(){
   sources = [];
 }
 
-function play(a, op, b){
+function playKeys(keys, name){
+  name = name || 'light';
+  var b = banks[name];
   var c = ensureCtx();
-  if(!c || !buffer || !meta) return null;
+  if(!c || !b || !b.buffer || !b.meta) return null;
   if(c.state === 'suspended' && c.resume) c.resume();
   stop();
-  var opKey = OP_KEY[op];
-  if(!opKey) return null;
-  var keys = [opKey + a, 'n' + b];
-  var clips = meta.clips;
+  var clips = b.meta.clips, gap = b.meta.gap || 0.06;
   var t = c.currentTime + 0.1;
   var startedAt = t;
   for(var i = 0; i < keys.length; i++){
     var clip = clips[keys[i]];
     if(!clip) return null;
     var src = c.createBufferSource();
-    src.buffer = buffer;
+    src.buffer = b.buffer;
     src.connect(gain);
     src.start(t, clip[0], clip[1]);
     sources.push(src);
-    t += clip[1] + (meta.gap || 0.06);
+    t += clip[1] + gap;
   }
   return { duration: t - startedAt, keys: keys };
+}
+
+function play(a, op, b){
+  var opKey = OP_KEY[op];
+  if(!opKey) return null;
+  return playKeys([opKey + a, 'n' + b], 'light');
 }
 
 global.DictationAudio = {
   load: load,
   unlock: unlock,
-  isReady: function(){ return !!(buffer && meta); },
+  isReady: function(name){ var b = banks[name || 'light']; return !!(b && b.buffer && b.meta); },
   isSupported: function(){ return !!(global.AudioContext || global.webkitAudioContext); },
   play: play,
+  playKeys: playKeys,
   stop: stop
 };
 })(typeof window !== 'undefined' ? window : globalThis);

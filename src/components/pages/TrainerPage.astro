@@ -106,6 +106,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
             <div class="seg format-seg" data-key="format">
               <button type="button" data-v="visual">{p.formatVisual}</button>
               <button type="button" data-v="dictation">{p.formatDictation}</button>
+              <button type="button" data-v="dictation-full">{p.formatDictationFull}</button>
             </div>
             <div class="hint" id="formatHint">{p.formatHint}</div>
           </div>
@@ -278,8 +279,11 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 </section>
 {lang === 'ru' && (
   <>
-    <script is:inline define:vars={{ dictAudio: asset('audio/dictation/ru-v5-baya.mp3'), dictTimings: asset('audio/dictation/ru-v5-baya.json') }}>
-      window.__DICTATION__ = { audio: dictAudio, timings: dictTimings };
+    <script is:inline define:vars={{ dictAudio: asset('audio/dictation/ru-v5-baya.mp3'), dictTimings: asset('audio/dictation/ru-v5-baya.json'), fullAudio: asset('audio/dictation/ru-v5-baya-full.mp3'), fullTimings: asset('audio/dictation/ru-v5-baya-full.json') }}>
+      window.__DICTATION__ = {
+        light: { audio: dictAudio, timings: dictTimings },
+        full: { audio: fullAudio, timings: fullTimings }
+      };
     </script>
     <script is:inline src={asset('js/dictation.js') + '?v=' + jsVersion}></script>
   </>
