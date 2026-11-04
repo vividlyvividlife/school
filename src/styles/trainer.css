@@ -67,7 +67,7 @@ h2{font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif;font-size:clamp(18px
 .ops-seg{grid-template-columns:repeat(4,minmax(0,1fr))}
 .ops-seg button{font-size:17px;padding:7px 0}
 .miss-seg{grid-template-columns:repeat(3,minmax(0,1fr))}
-.answer-seg,.mode-seg{grid-template-columns:repeat(2,minmax(0,1fr))}
+.answer-seg,.mode-seg,.voice-seg{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (max-width:767px){ .miss-seg{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (hover:hover){
   .tile .seg button:not(.on):hover,

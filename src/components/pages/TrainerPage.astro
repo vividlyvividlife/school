@@ -13,6 +13,30 @@ const p = c.trainer;
 const B = import.meta.env.BASE_URL;
 const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
 const jsVersion = Date.now().toString(36);
+/* bump when regenerating the dictation audio banks */
+const dictBankVersion = '8';
+const dictBanks = {
+  light: {
+    f: {
+      audio: asset('audio/dictation/f5-xenia.mp3') + '?v=' + dictBankVersion,
+      timings: asset('audio/dictation/f5-xenia.json') + '?v=' + dictBankVersion
+    },
+    m: {
+      audio: asset('audio/dictation/f5-aidar.mp3') + '?v=' + dictBankVersion,
+      timings: asset('audio/dictation/f5-aidar.json') + '?v=' + dictBankVersion
+    }
+  },
+  full: {
+    f: {
+      audio: asset('audio/dictation/f5-xenia-full.mp3') + '?v=' + dictBankVersion,
+      timings: asset('audio/dictation/f5-xenia-full.json') + '?v=' + dictBankVersion
+    },
+    m: {
+      audio: asset('audio/dictation/f5-aidar-full.mp3') + '?v=' + dictBankVersion,
+      timings: asset('audio/dictation/f5-aidar-full.json') + '?v=' + dictBankVersion
+    }
+  }
+};
 const offlineFile = lang === 'en' ? 'offline/en-practice.html' : 'offline/primery.html';
 const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 ---
@@ -109,6 +133,19 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
               <button type="button" data-v="dictation-full">{p.formatDictationFull}</button>
             </div>
             <div class="hint" id="formatHint">{p.formatHint}</div>
+          </div>
+        </div>
+      )}
+
+      {lang === 'ru' && (
+        <div class="tile">
+          <div class="tile-title">{p.voice}</div>
+          <div class="tile-body">
+            <div class="seg voice-seg" data-key="voice">
+              <button type="button" data-v="f">{p.voiceFemale}</button>
+              <button type="button" data-v="m">{p.voiceMale}</button>
+            </div>
+            <div class="hint">{p.voiceHint}</div>
           </div>
         </div>
       )}
@@ -279,11 +316,8 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 </section>
 {lang === 'ru' && (
   <>
-    <script is:inline define:vars={{ dictAudio: asset('audio/dictation/ru-v5-baya.mp3'), dictTimings: asset('audio/dictation/ru-v5-baya.json'), fullAudio: asset('audio/dictation/ru-v5-baya-full.mp3'), fullTimings: asset('audio/dictation/ru-v5-baya-full.json') }}>
-      window.__DICTATION__ = {
-        light: { audio: dictAudio, timings: dictTimings },
-        full: { audio: fullAudio, timings: fullTimings }
-      };
+    <script is:inline define:vars={{ dictBanks }}>
+      window.__DICTATION__ = dictBanks;
     </script>
     <script is:inline src={asset('js/dictation.js') + '?v=' + jsVersion}></script>
   </>

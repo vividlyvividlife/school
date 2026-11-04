@@ -6,6 +6,7 @@ var offline = global.__DICTATION_DATA__ || null;
 var ctx = null, gain = null;
 var sources = [];
 var banks = {};
+var voice = 'f';
 var OP_KEY = { '+':'add', '−':'sub', '-':'sub', '×':'mul', '*':'mul', '÷':'div', '/':'div' };
 
 function ensureCtx(){
@@ -28,16 +29,19 @@ function decode(ab){
   });
 }
 
-function cfgFor(name){
-  if(cfg[name]) return cfg[name];
-  return name === 'light' ? cfg : null;
+function pick(src, name){
+  if(!src) return null;
+  var node = src[name];
+  if(node && node.audio) return node;
+  if(node && node[voice]) return node[voice];
+  var flat = src[name + '_' + voice];
+  if(flat) return flat;
+  return name === 'light' && src.timings ? src : null;
 }
 
-function offlineFor(name){
-  if(!offline) return null;
-  if(offline[name]) return offline[name];
-  return name === 'light' && offline.timings ? offline : null;
-}
+function cfgFor(name){ return pick(cfg, name); }
+
+function offlineFor(name){ return pick(offline, name); }
 
 function getTimings(name){
   var off = offlineFor(name);
@@ -62,7 +66,8 @@ function getAudio(name){
 
 function load(name){
   name = name || 'light';
-  var b = banks[name] || (banks[name] = {});
+  var key = name + ':' + voice;
+  var b = banks[key] || (banks[key] = {});
   if(b.buffer && b.meta) return Promise.resolve(true);
   if(b.loading) return b.loading;
   b.loading = Promise.all([getTimings(name), getAudio(name)]).then(function(res){
@@ -94,7 +99,7 @@ function stop(){
 
 function playKeys(keys, name){
   name = name || 'light';
-  var b = banks[name];
+  var b = banks[name + ':' + voice];
   var c = ensureCtx();
   if(!c || !b || !b.buffer || !b.meta) return null;
   if(c.state === 'suspended' && c.resume) c.resume();
@@ -118,13 +123,22 @@ function playKeys(keys, name){
 function play(a, op, b){
   var opKey = OP_KEY[op];
   if(!opKey) return null;
-  return playKeys([opKey + a, 'n' + b], 'light');
+  return playKeys(['c' + a, 'o_' + opKey, 'n' + b], 'light');
+}
+
+function setVoice(v){
+  v = v === 'm' ? 'm' : 'f';
+  if(v === voice) return;
+  voice = v;
+  stop();
 }
 
 global.DictationAudio = {
   load: load,
   unlock: unlock,
-  isReady: function(name){ var b = banks[name || 'light']; return !!(b && b.buffer && b.meta); },
+  setVoice: setVoice,
+  getVoice: function(){ return voice; },
+  isReady: function(name){ var b = banks[(name || 'light') + ':' + voice]; return !!(b && b.buffer && b.meta); },
   isSupported: function(){ return !!(global.AudioContext || global.webkitAudioContext); },
   play: play,
   playKeys: playKeys,

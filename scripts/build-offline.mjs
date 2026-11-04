@@ -59,13 +59,19 @@ if (existsSync(problemsImgDir)) {
 }
 
 const dictAudioDir = path.join(publicDir, 'audio', 'dictation');
-const dictBanks = [['light', 'ru-v5-baya'], ['full', 'ru-v5-baya-full']];
+const dictBanks = [
+  ['light', 'f', 'f5-xenia'],
+  ['light', 'm', 'f5-aidar'],
+  ['full', 'f', 'f5-xenia-full'],
+  ['full', 'm', 'f5-aidar-full']
+];
 const dictData = {};
-for (const [name, file] of dictBanks) {
+for (const [name, voice, file] of dictBanks) {
   const audioPath = path.join(dictAudioDir, file + '.mp3');
   const jsonPath = path.join(dictAudioDir, file + '.json');
   if (!existsSync(audioPath) || !existsSync(jsonPath)) continue;
-  dictData[name] = {
+  dictData[name] ||= {};
+  dictData[name][voice] = {
     timings: JSON.parse(await readFile(jsonPath, 'utf8')),
     audio: `data:audio/mpeg;base64,${(await readFile(audioPath)).toString('base64')}`
   };

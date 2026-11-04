@@ -16,7 +16,7 @@ function pluralErr(n){
   return plural(n, 'ошибка', 'ошибки', 'ошибок');
 }
 
-var S = { limit:18, from:0, ops:['add','sub'], carry:true, miss:'r', answer:'type', mode:'free', min:2, sec:0, sound:true, trickZero:false, format:'visual' };
+var S = { limit:18, from:0, ops:['add','sub'], carry:true, miss:'r', answer:'type', mode:'free', min:2, sec:0, sound:true, trickZero:false, format:'visual', voice:'f' };
 var OPS_ALL = ['add','sub','mul','div'];
 var OP_SIGN = { add:'+', sub:'−', mul:'×', div:'÷' };
 var SIGN_OP = { '+':'add', '−':'sub', '×':'mul', '÷':'div' };
@@ -266,6 +266,7 @@ function loadSettings(){
   if(typeof v.sound === 'boolean') S.sound = v.sound;
   if(typeof v.trickZero === 'boolean') S.trickZero = v.trickZero;
   if(v.format === 'visual' || v.format === 'dictation' || v.format === 'dictation-full') S.format = v.format;
+  if(v.voice === 'f' || v.voice === 'm') S.voice = v.voice;
   enforceDictation();
 }
 function saveSettings(){ saveJSON(K_SET, S); }
@@ -385,6 +386,7 @@ function applyUrl(){
   if(p.has('sound')) S.sound = p.get('sound') !== '0';
   if(p.has('trick')) S.trickZero = p.get('trick') !== '0';
   if(p.get('format') === 'visual' || p.get('format') === 'dictation' || p.get('format') === 'dictation-full') S.format = p.get('format');
+  if(p.get('voice') === 'f' || p.get('voice') === 'm') S.voice = p.get('voice');
   enforceDictation();
 }
 
@@ -482,7 +484,10 @@ function syncDictationUI(){
   });
   els.timeRow.style.display = (on || S.mode !== 'timed') ? 'none' : '';
   if(els.formatHint) els.formatHint.hidden = false;
-  if(on && window.DictationAudio) DictationAudio.load(dictBank()).catch(function(){});
+  if(on && window.DictationAudio){
+    DictationAudio.setVoice(S.voice);
+    DictationAudio.load(dictBank()).catch(function(){});
+  }
 }
 
 function rangeLabel(){ return (S.from > 0 ? tr('от ', 'from ') + S.from + tr(' до ', ' to ') + S.limit : tr('до ', 'up to ') + S.limit); }
@@ -575,6 +580,7 @@ function startHardList(h, track, kind){
   unlockAudio();
   if(isDictation() && window.DictationAudio){
     DictationAudio.unlock();
+    DictationAudio.setVoice(S.voice);
     DictationAudio.load(dictBank()).catch(function(){});
   }
   if(!h.length){ hardInfo(); return; }
@@ -923,8 +929,8 @@ function fullSequence(c){
       ['p_minuend','m'+a,'p_subtrahend','m'+b,'p_diff_short']
     ];
     if(a > b){
-      variants.push(['p_howmuch','m'+a,'p_more','q'+b]);
-      variants.push(['p_howmuch','m'+b,'p_less','q'+a]);
+      variants.push(['p_howmuch','m'+a,'p_more','g'+b]);
+      variants.push(['p_howmuch','m'+b,'p_less','g'+a]);
     }
   } else if(c.op === '×'){
     variants = [
@@ -938,7 +944,10 @@ function fullSequence(c){
       ['p_quot_calc','m'+a,'i'+b],
       ['p_dividend','m'+a,'p_divisor','m'+b,'p_quot_short']
     ];
-    if(a > b) variants.push(['p_howmany','m'+a,'p_more','q'+b]);
+    if(a > b){
+      variants.push(['p_howmany','m'+a,'p_more','g'+b]);
+      variants.push(['p_howmany','m'+b,'p_less','g'+a]);
+    }
   }
   return variants[Math.floor(Math.random() * variants.length)];
 }
@@ -1981,6 +1990,14 @@ each(document.querySelectorAll('.seg'), function(seg){
       updateHints();
       syncDictationUI();
       poolInfo();
+      saveSettings();
+      return;
+    }
+    if(key === 'voice'){
+      if(window.DictationAudio){
+        DictationAudio.setVoice(S.voice);
+        if(isDictation()) DictationAudio.load(dictBank()).catch(function(){});
+      }
       saveSettings();
       return;
     }
