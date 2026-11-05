@@ -143,6 +143,7 @@ const copyPayload = {
 <section id="game" class="screen">
   <div class="gbar">
     <button id="stopBtn" class="btn" type="button">{p.stop}</button>
+    <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={p.pause} data-resume={p.resume}>{p.pause}</button>
     <div class="gmeta" id="gInfo"></div>
     <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
   </div>
@@ -204,6 +205,7 @@ const copyPayload = {
     var soundTest = document.getElementById('soundTest');
     var startBtn = document.getElementById('startBtn');
     var stopBtn = document.getElementById('stopBtn');
+    var pauseBtn = document.getElementById('pauseBtn');
     var againBtn = document.getElementById('againBtn');
     var toSetupBtn = document.getElementById('toSetupBtn');
     var gInfo = document.getElementById('gInfo');
@@ -543,6 +545,8 @@ const copyPayload = {
 
     function nextQuestion() {
       if (!game) return;
+      window.clearTimeout(game.advanceId);
+      if (game.paused) { game.pendingNext = true; return; }
       var now = Date.now();
       if (game.mode === 'timed' && now >= game.endsAt) {
         finish();
@@ -684,7 +688,7 @@ const copyPayload = {
     }
 
     function answer(btn, opt) {
-      if (!game || game.lock || !game.current || game.current.answered) return;
+      if (!game || game.lock || game.paused || !game.current || game.current.answered) return;
       var q = game.current;
       game.lock = true;
       q.answered = true;
@@ -729,11 +733,11 @@ const copyPayload = {
         if (correct) correct.classList.add('correct');
       }
       if (settings.sound) beep(ok);
-      window.setTimeout(nextQuestion, ok ? 650 : 1250);
+      game.advanceId = window.setTimeout(nextQuestion, ok ? 650 : 1250);
     }
 
     function tick() {
-      if (!game) return;
+      if (!game || game.paused) return;
       var now = Date.now();
       if (game.mode === 'timed') {
         var left = Math.max(0, game.endsAt - now);
@@ -765,7 +769,11 @@ const copyPayload = {
         ok: 0,
         bad: 0,
         lock: false,
-        current: null
+        current: null,
+        paused: false,
+        pausedAt: 0,
+        pendingNext: false,
+        advanceId: 0
       };
       scoreOk.textContent = '0';
       scoreBad.textContent = '0';
@@ -776,16 +784,60 @@ const copyPayload = {
       if (settings.mode === 'timed') tclock.textContent = fmtClock(game.dur);
       else tclock.textContent = '0:00';
       show('game');
+      updatePauseUI();
       nextQuestion();
       window.clearInterval(timerId);
       timerId = window.setInterval(tick, 200);
       tick();
     }
 
+    function setPaused(v) {
+      if (!game || game.mode === 'timed' || v === game.paused) return;
+      game.paused = v;
+      if (v) {
+        game.pausedAt = Date.now();
+        window.clearInterval(timerId);
+        timerId = 0;
+        window.clearTimeout(game.advanceId);
+        if (game.lock) game.pendingNext = true;
+        gameEl.classList.add('paused');
+      } else {
+        var d = Date.now() - game.pausedAt;
+        game.startedAt += d;
+        if (game.endsAt) game.endsAt += d;
+        if (game.current) game.current.startedAt += d;
+        game.pausedAt = 0;
+        gameEl.classList.remove('paused');
+        timerId = window.setInterval(tick, 200);
+        tick();
+        if (game.pendingNext) {
+          game.pendingNext = false;
+          nextQuestion();
+        }
+      }
+      updatePauseUI();
+    }
+
+    function updatePauseUI() {
+      if (!pauseBtn) return;
+      var show = !!game && game.mode !== 'timed';
+      var on = !!(show && game.paused);
+      pauseBtn.hidden = !show;
+      pauseBtn.textContent = on ? pauseBtn.getAttribute('data-resume') : pauseBtn.getAttribute('data-pause');
+      pauseBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
     function finish() {
       if (!game) return;
       window.clearInterval(timerId);
       timerId = 0;
+      window.clearTimeout(game.advanceId);
+      if (game.paused) {
+        game.startedAt += Date.now() - game.pausedAt;
+        game.paused = false;
+        game.pausedAt = 0;
+      }
+      gameEl.classList.remove('paused');
       var endedAt = Date.now();
       var answers = game.answers;
       var ok = 0;
@@ -847,12 +899,14 @@ const copyPayload = {
 
       game = null;
       show('results');
+      updatePauseUI();
     }
 
     startBtn.addEventListener('click', startGame);
     againBtn.addEventListener('click', startGame);
     toSetupBtn.addEventListener('click', function () { show('setup'); });
     stopBtn.addEventListener('click', finish);
+    if (pauseBtn) pauseBtn.addEventListener('click', function () { setPaused(!(game && game.paused)); });
 
     document.querySelectorAll('.seg[data-key]').forEach(function (seg) {
       seg.addEventListener('click', function (e) {

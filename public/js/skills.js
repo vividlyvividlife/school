@@ -7,6 +7,7 @@ if(!setup) return;
 var SKILL = setup.getAttribute('data-skill') || 'digits';
 var LANG = document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'ru';
 var K_SET = 'mathSkills.' + SKILL + '.settings.v1';
+var K_ANSWER12 = 'mathSkills.' + SKILL + '.answer12.v1';
 var K_HARD = 'mathSkills.' + SKILL + '.hard.v1';
 var K_HIST = 'mathSkills.' + SKILL + '.history.v1';
 
@@ -80,7 +81,7 @@ var els = {
   hardInfo: $('hardInfo'), hardList: $('hardList'), hardBtn: $('hardBtn'), clearHard: $('clearHard'),
   histList: $('histList'), clearHist: $('clearHist'),
   gInfo: $('gInfo'), scoreOk: $('scoreOk'), scoreBad: $('scoreBad'),
-  stopBtn: $('stopBtn'), timeWrap: $('timeWrap'), tfill: $('tfill'), tclock: $('tclock'),
+  stopBtn: $('stopBtn'), pauseBtn: $('pauseBtn'), timeWrap: $('timeWrap'), tfill: $('tfill'), tclock: $('tclock'),
   eqw: $('eqw'), eq: $('eq'), cap: $('cap'),
   figWrap: $('figWrap'), figSummary: $('figSummary'), fig: $('fig'),
   signpad: $('signpad'), tiles: $('tiles'), pad: $('pad'),
@@ -123,7 +124,7 @@ var S = {
   miss: 'r',
   carry: false,
   star: false,
-  answer: 'type',
+  answer: 'tiles12',
   mode: 'free',
   min: parseInt(els.min.value, 10) || 2,
   sec: parseInt(els.sec.value, 10) || 0,
@@ -152,8 +153,15 @@ function loadSettings(){
   if(v.min !== undefined) S.min = clampInt(v.min, 0, 300, 2);
   if(v.sec !== undefined) S.sec = clampInt(v.sec, 0, 59, 0);
   if(typeof v.sound === 'boolean') S.sound = v.sound;
+  if(!loadJSON(K_ANSWER12, false)){
+    if(v.answer === 'type'){
+      S.answer = 'tiles12';
+      saveJSON(K_SET, S);
+    }
+    saveJSON(K_ANSWER12, true);
+  }
 }
-function saveSettings(){ saveJSON(K_SET, S); }
+function saveSettings(){ saveJSON(K_SET, S); saveJSON(K_ANSWER12, true); }
 
 function limits(){
   if(SKILL === 'digits') return { min: 10, max: 99 };
@@ -647,6 +655,7 @@ function bracketsGen(type){
     var v = evalTri(a, o1, b, o2, c, mode, cap);
     if(v === null) continue;
     var rr = render(mode, a, o1, b, o2, c);
+    rr.v = v;
     return ex('br:' + rr.plain, rr.html, rr.plain, rr.v, 'number', 'expr', 100, { long: rr.plain.length > 12 });
   }
   var fb = scan(mode) || scan(0) || scan(1) || scan(2);
@@ -1573,12 +1582,53 @@ function showScreen(id){
 function startClock(){
   run.start = Date.now();
   run.endAt = run.limitMs ? run.start + run.limitMs : 0;
+  run.paused = false;
+  run.pausedAt = 0;
+  run.pendingNext = false;
+  if(els.game) els.game.classList.remove('paused');
   clearInterval(run.timer);
   run.timer = setInterval(tick, 200);
+  updatePauseUI();
   tick();
 }
+function setPaused(v){
+  if(!run || run.done || run.limitMs || v === run.paused) return;
+  run.paused = v;
+  if(v){
+    run.pausedAt = Date.now();
+    clearInterval(run.timer);
+    clearTimeout(run.advanceTimer);
+    if(run.locked) run.pendingNext = true;
+    if(run.shownAt > run.pausedAt) run.shownAt = run.pausedAt;
+    els.game.classList.add('paused');
+  } else {
+    var d = Date.now() - run.pausedAt;
+    run.start += d;
+    if(run.endAt) run.endAt += d;
+    if(run.shownAt) run.shownAt += d;
+    run.pausedAt = 0;
+    els.game.classList.remove('paused');
+    run.timer = setInterval(tick, 200);
+    tick();
+    if(run.pendingNext){
+      run.pendingNext = false;
+      next();
+    }
+  }
+  updatePauseUI();
+}
+function updatePauseUI(){
+  if(!els.pauseBtn) return;
+  var show = !!run && !run.done && !run.limitMs && els.game.classList.contains('active');
+  var on = !!(show && run.paused);
+  els.pauseBtn.hidden = !show;
+  els.pauseBtn.textContent = on
+    ? els.pauseBtn.getAttribute('data-resume')
+    : els.pauseBtn.getAttribute('data-pause');
+  els.pauseBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
 function tick(){
-  if(!run || run.done) return;
+  if(!run || run.done || run.paused) return;
   var now = Date.now();
   if(run.endAt){
     var left = Math.max(0, run.endAt - now);
@@ -1600,6 +1650,7 @@ function startRun(list, kind){
     records: [], mistakes: [], unsolved: [], slow: [], recent: [],
     done: false, locked: false, typed: '', cur: null, shownAt: 0,
     timer: 0, advanceTimer: 0, start: 0, endAt: 0, limitMs: limitMs,
+    paused: false, pausedAt: 0, pendingNext: false,
     listKind: kind || 'normal', hardMode: kind === 'hard',
     queue: [], hardRemaining: [],
     summary: summaryText()
@@ -1681,6 +1732,7 @@ function renderCurrent(){
 }
 function next(){
   if(!run || run.done) return;
+  if(run.paused){ run.pendingNext = true; return; }
   clearTimeout(run.advanceTimer);
   var e = nextExercise();
   if(!e){ finish('done'); return; }
@@ -1714,22 +1766,22 @@ function updateSlot(){
   slot.classList.toggle('empty', !run.typed);
 }
 function typeDigit(d){
-  if(!run || run.locked || !run.cur || run.cur.answerKind !== 'number') return;
+  if(!run || run.locked || run.paused || !run.cur || run.cur.answerKind !== 'number') return;
   if(run.typed.length >= 5) return;
   run.typed += d;
   updateSlot();
 }
 function backspace(){
-  if(!run || run.locked || !run.cur) return;
+  if(!run || run.locked || run.paused || !run.cur) return;
   run.typed = run.typed.slice(0, -1);
   updateSlot();
 }
 function submitTyped(){
-  if(!run || run.locked || !run.cur || run.typed === '') return;
+  if(!run || run.locked || run.paused || !run.cur || run.typed === '') return;
   submitValue(Number(run.typed));
 }
 function submitValue(val, btn){
-  if(!run || run.locked || !run.cur) return;
+  if(!run || run.locked || run.paused || !run.cur) return;
   run.locked = true;
   var e = run.cur;
   var ok;
@@ -1812,6 +1864,14 @@ function finish(reason){
   run.done = true;
   clearInterval(run.timer);
   clearTimeout(run.advanceTimer);
+  if(run.paused){
+    var pauseMs = Date.now() - run.pausedAt;
+    run.start += pauseMs;
+    if(run.shownAt) run.shownAt += pauseMs;
+    run.paused = false;
+    run.pausedAt = 0;
+  }
+  if(els.game) els.game.classList.remove('paused');
   if(reason === 'time' || reason === 'stop') markUnsolved();
   var durSec = Math.round((Date.now() - run.start) / 1000);
   if(run.listKind === 'normal' || run.listKind === 'fluency'){
@@ -1827,6 +1887,7 @@ function finish(reason){
   renderHard();
   renderHistory();
   showScreen('results');
+  updatePauseUI();
 }
 
 var VERDICTS = {
@@ -2109,6 +2170,7 @@ els.clearHist.addEventListener('click', function(){
   renderHistory();
 });
 els.stopBtn.addEventListener('click', function(){ finish('stop'); });
+if(els.pauseBtn) els.pauseBtn.addEventListener('click', function(){ setPaused(!(run && run.paused)); });
 els.againBtn.addEventListener('click', function(){ startRun(null, 'normal'); });
 els.toSetupBtn.addEventListener('click', function(){
   renderHard();

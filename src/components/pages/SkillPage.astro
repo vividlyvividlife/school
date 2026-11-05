@@ -223,6 +223,7 @@ const taskEntries = Object.entries(p.tasks);
 <section id="game" class="screen">
   <div class="gbar">
     <button id="stopBtn" class="btn" type="button">{t.stop}</button>
+    <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={t.pause} data-resume={t.resume}>{t.pause}</button>
     <div class="gmeta" id="gInfo"></div>
     <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
   </div>

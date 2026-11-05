@@ -16,12 +16,13 @@ function pluralErr(n){
   return plural(n, 'ошибка', 'ошибки', 'ошибок');
 }
 
-var S = { limit:18, from:0, ops:['add','sub'], carry:true, miss:'r', answer:'type', mode:'free', min:2, sec:0, sound:true, trickZero:false, format:'visual', voice:'f' };
+var S = { limit:18, from:0, ops:['add','sub'], carry:true, miss:'r', answer:'tiles12', mode:'free', min:2, sec:0, sound:true, trickZero:false, format:'visual', voice:'f' };
 var OPS_ALL = ['add','sub','mul','div'];
 var OP_SIGN = { add:'+', sub:'−', mul:'×', div:'÷' };
 var SIGN_OP = { '+':'add', '−':'sub', '×':'mul', '÷':'div' };
 var MAX_FACTOR = 10;
 var K_SET = 'mathTrainer.settings.v1';
+var K_ANSWER12 = 'mathTrainer.answer12.v1';
 var K_HIST = 'mathTrainer.history.v1';
 var K_HARD = 'mathTrainer.hard.v1';
 var HARD_MAX = 60;
@@ -37,7 +38,7 @@ var els = {
   histList: $('histList'), clearHist: $('clearHist'),
   gInfo: $('gInfo'), scoreOk: $('scoreOk'), scoreBad: $('scoreBad'),
   timeWrap: $('timeWrap'), tfill: $('tfill'), tclock: $('tclock'),
-  eqw: $('eqw'), eq: $('eq'), cap: $('cap'), pairInfo: $('pairInfo'), pad: $('pad'), tiles: $('tiles'), stopBtn: $('stopBtn'), cannotBtn: $('cannotBtn'),
+  eqw: $('eqw'), eq: $('eq'), cap: $('cap'), pairInfo: $('pairInfo'), pad: $('pad'), tiles: $('tiles'), stopBtn: $('stopBtn'), pauseBtn: $('pauseBtn'), game: $('game'), cannotBtn: $('cannotBtn'),
   dict: $('dict'), dictRepeat: $('dictRepeat'), dictLeft: $('dictLeft'), dictLabel: $('dictLabel'), dictNote: $('dictNote'), dictAnswer: $('dictAnswer'), formatHint: $('formatHint'),
   verdict: $('verdict'), advice: $('advice'), resTitle: $('resTitle'), rOk: $('rOk'), rBad: $('rBad'), rAcc: $('rAcc'), rAvg: $('rAvg'), rFast: $('rFast'), rSlow: $('rSlow'), rDur: $('rDur'),
   hardInfo: $('hardInfo'), hardList: $('hardList'), hardBtn: $('hardBtn'), clearHard: $('clearHard'), soundTest: $('soundTest'),
@@ -267,9 +268,16 @@ function loadSettings(){
   if(typeof v.trickZero === 'boolean') S.trickZero = v.trickZero;
   if(v.format === 'visual' || v.format === 'dictation' || v.format === 'dictation-full') S.format = v.format;
   if(v.voice === 'f' || v.voice === 'm') S.voice = v.voice;
+  if(!loadJSON(K_ANSWER12, false)){
+    if(v.answer === 'type'){
+      S.answer = 'tiles12';
+      saveJSON(K_SET, S);
+    }
+    saveJSON(K_ANSWER12, true);
+  }
   enforceDictation();
 }
-function saveSettings(){ saveJSON(K_SET, S); }
+function saveSettings(){ saveJSON(K_SET, S); saveJSON(K_ANSWER12, true); }
 var dictAllowed = !!document.querySelector('.format-seg');
 function isDictation(){ return dictAllowed && (S.format === 'dictation' || S.format === 'dictation-full'); }
 function isFullDictation(){ return dictAllowed && S.format === 'dictation-full'; }
@@ -555,6 +563,7 @@ function start(){
     cur: null, typed: '', locked: false, done: false, tok: 0, vmax: S.limit,
     ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], unsolved: [], slow: [],
     curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0,
+    paused: false, pausedAt: 0, pendingNext: false,
     exCount: 0, trickAt: 5 + Math.floor(Math.random() * 4)
   };
   lastHard = false;
@@ -605,7 +614,8 @@ function startHardList(h, track, kind){
     next: null, ops: [], drawers: null, hardRemaining: items.slice(),
     cur: null, typed: '', locked: false, done: false, tok: 0, vmax: S.limit,
     ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], unsolved: [], slow: [],
-    curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0
+    curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0,
+    paused: false, pausedAt: 0, pendingNext: false
   };
   run.next = makeHardDrawer(run, items);
   lastHard = true;
@@ -635,6 +645,10 @@ function updateScore(){
 
 function startClock(){
   run.start = Date.now();
+  run.paused = false;
+  run.pausedAt = 0;
+  run.pendingNext = false;
+  if(els.game) els.game.classList.remove('paused');
   if(S.mode === 'timed'){
     run.total = Math.max(5, S.min * 60 + S.sec) * 1000;
     run.deadline = run.start + run.total;
@@ -643,10 +657,51 @@ function startClock(){
     els.timeWrap.classList.add('free');
   }
   run.timer = setInterval(tick, 100);
+  updatePauseUI();
   tick();
 }
+function setPaused(v){
+  if(!run || run.done || S.mode === 'timed' || v === run.paused) return;
+  run.paused = v;
+  if(v){
+    run.pausedAt = Date.now();
+    clearInterval(run.timer);
+    if(isDictation()) dictStop();
+    if(run.shownAt > run.pausedAt) run.shownAt = run.pausedAt;
+    if(run.locked && run.curDone) run.pendingNext = true;
+    els.game.classList.add('paused');
+  } else {
+    var d = Date.now() - run.pausedAt;
+    run.start += d;
+    if(run.deadline) run.deadline += d;
+    if(run.shownAt) run.shownAt += d;
+    run.pausedAt = 0;
+    els.game.classList.remove('paused');
+    run.timer = setInterval(tick, 100);
+    tick();
+    if(run.pendingNext){
+      run.pendingNext = false;
+      run.tok++;
+      run.locked = false;
+      nextExercise();
+    } else if(isDictation() && run.cur && !run.curDone && !run.locked){
+      speakCurrent(false);
+    }
+  }
+  updatePauseUI();
+}
+function updatePauseUI(){
+  if(!els.pauseBtn) return;
+  var show = screenName === 'game' && run && !run.done && S.mode !== 'timed';
+  var on = !!(show && run.paused);
+  els.pauseBtn.hidden = !show;
+  els.pauseBtn.textContent = on
+    ? els.pauseBtn.getAttribute('data-resume')
+    : els.pauseBtn.getAttribute('data-pause');
+  els.pauseBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
 function tick(){
-  if(!run || run.done) return;
+  if(!run || run.done || run.paused) return;
   var now = Date.now();
   if(S.mode === 'timed'){
     var left = Math.max(0, run.deadline - now);
@@ -714,6 +769,7 @@ function solutionsFor(op, R, lim){
 
 function nextExercise(){
   if(!run || run.done) return;
+  if(run.paused){ run.pendingNext = true; return; }
   if(!run.hardMode && trickActive() && run.ops.indexOf('div') >= 0 && run.exCount >= run.trickAt){
     startTrick();
     run.exCount++;
@@ -824,7 +880,7 @@ function buildTrickTiles(){
 }
 
 function judgeTrick(val, btn){
-  if(!run || run.locked || run.done || !run.cur || !run.cur.trick) return;
+  if(!run || run.locked || run.done || run.paused || !run.cur || !run.cur.trick) return;
   unlockAudio();
   var cur = run.cur, dt = Date.now() - run.shownAt;
   var correct = val === 'none';
@@ -952,7 +1008,7 @@ function fullSequence(c){
   return variants[Math.floor(Math.random() * variants.length)];
 }
 function speakCurrent(repeat){
-  if(!isDictation() || !run || !run.cur || run.curDone || run.done) return;
+  if(!isDictation() || !run || run.paused || !run.cur || run.curDone || run.done) return;
   if(repeat && (!run.dictLeft || run.dictLeft <= 0)) return;
   if(!window.DictationAudio) return;
   var cur = run.cur, tok = run.tok;
@@ -1028,6 +1084,7 @@ function paint(){
 }
 
 function pressAll(k){
+  if(!run || run.locked || run.done || run.paused || !run.cur) return;
   var c = run.cur;
   var maxLen = String(run.vmax).length;
   if(k === 'del'){
@@ -1053,7 +1110,7 @@ function pressAll(k){
 
 function submitPair(){
   var c = run.cur;
-  if(!c || run.locked || run.done) return;
+  if(!c || run.locked || run.done || run.paused) return;
   var x = parseInt(c.slots[0], 10), y = parseInt(c.slots[1], 10);
   if(!isFinite(x) || !isFinite(y)) return;
   var mathOk = c.op === '+' ? (x + y === c.r)
@@ -1119,7 +1176,7 @@ function submitPair(){
 }
 
 function press(k){
-  if(!run || run.locked || run.done || !run.cur) return;
+  if(!run || run.locked || run.done || run.paused || !run.cur) return;
   unlockAudio();
   if(k === 'none'){
     if(run.cur.trick) judgeTrick('none', null);
@@ -1208,12 +1265,12 @@ function fillSlot(v){
 }
 
 function submit(){
-  if(!run || run.locked || run.done || !run.cur || run.typed === '') return;
+  if(!run || run.locked || run.done || run.paused || !run.cur || run.typed === '') return;
   judge(parseInt(run.typed, 10), null);
 }
 
 function judge(val, tileBtn){
-  if(!run || run.locked || run.done || !run.cur) return;
+  if(!run || run.locked || run.done || run.paused || !run.cur) return;
   var cur = run.cur;
   var need = cur.miss === 'r' ? cur.r : cur.miss === 'a' ? cur.a : cur.b;
   var dt = Math.max(0, Date.now() - run.shownAt);
@@ -1268,7 +1325,7 @@ function judge(val, tileBtn){
 }
 
 function judgeAllNone(){
-  if(!run || run.locked || run.done || !run.cur) return;
+  if(!run || run.locked || run.done || run.paused || !run.cur) return;
   var cur = run.cur, dt = Date.now() - run.shownAt;
   run.locked = true;
   run.tok++;
@@ -1355,6 +1412,12 @@ function finish(reason){
   run.tok++;
   if(isDictation()) dictStop();
   clearInterval(run.timer);
+  if(run.paused){
+    run.start += Date.now() - run.pausedAt;
+    run.paused = false;
+    run.pausedAt = 0;
+  }
+  if(els.game) els.game.classList.remove('paused');
   var durSec = Math.round((Date.now() - run.start) / 1000);
   markUnsolved();
   var newHard = [];
@@ -1372,6 +1435,7 @@ function finish(reason){
   if(run.hardMode && run.trackHard) lastHardList = loadHard();
   hardInfo();
   showScreen('results');
+  updatePauseUI();
 }
 
 var VERDICTS = [
@@ -2069,6 +2133,7 @@ els.startBtn.addEventListener('click', start);
 els.hardBtn.addEventListener('click', startHard);
 els.clearHard.addEventListener('click', function(){ saveHard([]); hardInfo(); });
 els.stopBtn.addEventListener('click', function(){ finish('stop'); });
+if(els.pauseBtn) els.pauseBtn.addEventListener('click', function(){ setPaused(!(run && run.paused)); });
 els.slowBtn.addEventListener('click', function(){
   if(!run || !run.slow || !run.slow.length) return;
   startHardList(run.slow, false, 'fluency');

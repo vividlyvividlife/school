@@ -217,6 +217,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 <section id="game" class="screen">
   <div class="gbar">
     <button id="stopBtn" class="btn" type="button">{p.stop}</button>
+    <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={p.pause} data-resume={p.resume}>{p.pause}</button>
     <div class="gmeta" id="gInfo"></div>
     <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
   </div>
