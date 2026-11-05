@@ -49,6 +49,9 @@ h2{font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif;font-size:clamp(18px
   border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-card);
 }
 .tile-title{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);line-height:1.2}
+.tico{display:inline-block;font-style:normal;font-weight:400;letter-spacing:0;text-transform:none;font-size:15px;line-height:1;margin-right:.42em;vertical-align:-.1em}
+.stat>.tico{display:block;font-size:17px;margin:0 0 3px}
+h2 .tico{font-size:.9em;margin-right:.28em}
 .tile-body{display:flex;flex-wrap:wrap;align-items:center;align-content:flex-start;gap:8px;flex:1 1 auto;min-width:0}
 .tile .hint{flex:1 1 100%}
 

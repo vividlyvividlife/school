@@ -79,7 +79,7 @@ const taskEntries = Object.entries(p.tasks);
 
     <div class="setup-grid">
       <div class="tile">
-        <div class="tile-title">{sc.rangeTitle}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">📏</span>{sc.rangeTitle}</div>
         <div class="tile-body">
           <div class="fields">
             <label class="fld"><span>{t.from}</span><input id="from" class="num" type="number" inputmode="numeric" min="0" max={toMax} step="1" value={d.from}></label>
@@ -94,7 +94,7 @@ const taskEntries = Object.entries(p.tasks);
 
       {taskEntries.length > 0 && (
         <div class="tile tasks-tile">
-          <div class="tile-title">{sc.tasksTitle}</div>
+          <div class="tile-title"><span class="tico" aria-hidden="true">🗂️</span>{sc.tasksTitle}</div>
           <div class="tile-body">
             <div class="seg multi types-seg" data-key="types">
               {taskEntries.map(([key, label]) => <button type="button" data-v={key}>{label}</button>)}
@@ -106,7 +106,7 @@ const taskEntries = Object.entries(p.tasks);
 
       {hasOps && (
         <div class="tile">
-          <div class="tile-title">{isProblems ? t.actionsProblems : t.actions}</div>
+          <div class="tile-title"><span class="tico" aria-hidden="true">{isProblems ? '📝' : '➕'}</span>{isProblems ? t.actionsProblems : t.actions}</div>
           <div class="tile-body">
             <div class="seg multi ops-seg" data-key="ops" data-multi="1">
               <button type="button" data-v="add" title={t.addTitle}>+</button>
@@ -130,7 +130,7 @@ const taskEntries = Object.entries(p.tasks);
 
       {!isCompare && (
         <div class="tile">
-          <div class="tile-title">{t.answerWith}</div>
+          <div class="tile-title"><span class="tico" aria-hidden="true">👆</span>{t.answerWith}</div>
           <div class="tile-body">
             <div class="seg answer-seg" data-key="answer">
               <button type="button" data-v="type">{t.answerType}</button>
@@ -144,7 +144,7 @@ const taskEntries = Object.entries(p.tasks);
 
       {isCompare && (
         <div class="tile answer-tile">
-          <div class="tile-title">{t.answerWith}</div>
+          <div class="tile-title"><span class="tico" aria-hidden="true">👆</span>{t.answerWith}</div>
           <div class="tile-body">
             <div class="sign-legend" aria-hidden="true">
               <span><b>&lt;</b><i>{sc.signLess}</i></span>
@@ -157,7 +157,7 @@ const taskEntries = Object.entries(p.tasks);
       )}
 
       <div class="tile">
-        <div class="tile-title">{t.mode}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">⏱️</span>{t.mode}</div>
         <div class="tile-body">
           <div class="seg mode-seg" data-key="mode">
             <button type="button" data-v="free">{t.modeFree}</button>
@@ -172,7 +172,7 @@ const taskEntries = Object.entries(p.tasks);
       </div>
 
       <div class="tile sound-tile">
-        <div class="tile-title">{t.sound}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🔔</span>{t.sound}</div>
         <div class="tile-body">
           <div class="sound-row">
             <label class="switch">
@@ -187,7 +187,7 @@ const taskEntries = Object.entries(p.tasks);
       </div>
 
       <div class="tile wide start-tile">
-        <div class="tile-title">{t.setTitle}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🚀</span>{t.setTitle}</div>
         <div class="start-info">
           <div class="hint" id="poolInfo">{sc.poolPrefix}…</div>
           <a class="btn small" href={asset(offlineFile)} download={downloadName} title={t.offlineTitle} data-offline-hide>{t.offline}</a>
@@ -196,7 +196,7 @@ const taskEntries = Object.entries(p.tasks);
       </div>
 
       <div class="tile wide hard-tile">
-        <div class="tile-title">{t.hardTitle}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🌱</span>{t.hardTitle}</div>
         <div class="tile-body hard-body">
           <div class="hard-info">
             <div class="hint" id="hardInfo">{t.hardInfo}</div>
@@ -211,7 +211,7 @@ const taskEntries = Object.entries(p.tasks);
     </div>
 
     <div class="tile history-tile">
-      <div class="tile-title">{t.history}</div>
+      <div class="tile-title"><span class="tico" aria-hidden="true">📜</span>{t.history}</div>
       <div class="tile-body hist-body">
         <div id="histList" class="hist"></div>
         <button id="clearHist" class="btn small" type="button">{t.clear}</button>
@@ -272,20 +272,20 @@ const taskEntries = Object.entries(p.tasks);
     <h2 id="resTitle">{t.resTitle}</h2>
     <div class="verdict" id="verdict"></div>
     <div class="stats">
-      <div class="stat good"><b id="rOk">0</b><span>{t.rOk}</span></div>
-      <div class="stat bad"><b id="rBad">0</b><span>{t.rBad}</span></div>
-      <div class="stat"><b id="rAcc">—</b><span>{t.rAcc}</span></div>
-      <div class="stat"><b id="rAvg">—</b><span>{t.rAvg}</span></div>
-      <div class="stat"><b id="rFast">—</b><span>{t.rFast}</span></div>
-      <div class="stat"><b id="rSlow">—</b><span>{t.rSlow}</span></div>
-      <div class="stat"><b id="rDur">0:00</b><span>{t.rDur}</span></div>
+      <div class="stat good"><span class="tico" aria-hidden="true">✅</span><b id="rOk">0</b><span>{t.rOk}</span></div>
+      <div class="stat bad"><span class="tico" aria-hidden="true">❌</span><b id="rBad">0</b><span>{t.rBad}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🎯</span><b id="rAcc">—</b><span>{t.rAcc}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⚡</span><b id="rAvg">—</b><span>{t.rAvg}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐇</span><b id="rFast">—</b><span>{t.rFast}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐢</span><b id="rSlow">—</b><span>{t.rSlow}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⏳</span><b id="rDur">0:00</b><span>{t.rDur}</span></div>
     </div>
     <div class="card">
-      <div class="lbl" id="misTitle">{t.mistakes}</div>
+      <div class="lbl" id="misTitle"><span class="tico" aria-hidden="true">🐞</span>{t.mistakes}</div>
       <div id="misList" class="mis"></div>
     </div>
     <div class="card" id="slowCard" hidden>
-      <div class="lbl" id="slowTitle">{t.slowTitle}</div>
+      <div class="lbl" id="slowTitle"><span class="tico" aria-hidden="true">🐢</span>{t.slowTitle}</div>
       <div class="hint">{t.slowHint}</div>
       <div id="slowList" class="mis"></div>
       <div class="slow-actions">
@@ -293,7 +293,7 @@ const taskEntries = Object.entries(p.tasks);
       </div>
     </div>
     <div class="card" id="unsolvedCard" hidden>
-      <div class="lbl" id="unsolvedTitle">{t.unsolvedTitle}</div>
+      <div class="lbl" id="unsolvedTitle"><span class="tico" aria-hidden="true">🤔</span>{t.unsolvedTitle}</div>
       <div class="hint">{t.unsolvedHint}</div>
       <div id="unsolvedList" class="mis"></div>
       <div class="slow-actions">

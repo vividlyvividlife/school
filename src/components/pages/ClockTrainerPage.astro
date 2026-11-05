@@ -67,7 +67,7 @@ const copyPayload = {
 
     <div class="setup-grid">
       <div class="tile">
-        <div class="tile-title">{p.task}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🕐</span>{p.task}</div>
         <div class="tile-body">
           <div class="seg clock-task" data-key="task">
             <button type="button" data-v="mix">{p.taskMix}</button>
@@ -80,7 +80,7 @@ const copyPayload = {
       </div>
 
       <div class="tile">
-        <div class="tile-title">{p.step}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">👣</span>{p.step}</div>
         <div class="tile-body">
           <div class="seg clock-step" data-key="step">
             <button type="button" data-v="30">{p.step30}</button>
@@ -92,7 +92,7 @@ const copyPayload = {
       </div>
 
       <div class="tile">
-        <div class="tile-title">{p.format}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🕰️</span>{p.format}</div>
         <div class="tile-body">
           <div class="seg mode-seg" data-key="format">
             <button type="button" data-v="12">{p.format12}</button>
@@ -103,7 +103,7 @@ const copyPayload = {
       </div>
 
       <div class="tile">
-        <div class="tile-title">{p.mode}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">⏱️</span>{p.mode}</div>
         <div class="tile-body">
           <div class="seg mode-seg" data-key="mode">
             <button type="button" data-v="free">{p.modeFree}</button>
@@ -118,7 +118,7 @@ const copyPayload = {
       </div>
 
       <div class="tile wide">
-        <div class="tile-title">{p.sound}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🔔</span>{p.sound}</div>
         <div class="tile-body">
           <div class="sound-row">
             <label class="switch">
@@ -132,7 +132,7 @@ const copyPayload = {
       </div>
 
       <div class="tile wide clock-start">
-        <div class="tile-title">{p.startTitle}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🚀</span>{p.startTitle}</div>
         <div class="hint">{p.startHint}</div>
         <button id="startBtn" class="btn primary" type="button">{p.start}</button>
       </div>
@@ -166,19 +166,19 @@ const copyPayload = {
 
 <section id="results" class="screen">
   <div class="wrap">
-    <h2>{p.resTitle}</h2>
+    <h2><span class="tico" aria-hidden="true">🎉</span>{p.resTitle}</h2>
     <div class="verdict" id="verdict" hidden></div>
     <div class="stats">
-      <div class="stat good"><b id="rOk">0</b><span>{p.rOk}</span></div>
-      <div class="stat bad"><b id="rBad">0</b><span>{p.rBad}</span></div>
-      <div class="stat"><b id="rAcc">—</b><span>{p.rAcc}</span></div>
-      <div class="stat"><b id="rAvg">—</b><span>{p.rAvg}</span></div>
-      <div class="stat"><b id="rFast">—</b><span>{p.rFast}</span></div>
-      <div class="stat"><b id="rSlow">—</b><span>{p.rSlow}</span></div>
-      <div class="stat"><b id="rDur">0:00</b><span>{p.rDur}</span></div>
+      <div class="stat good"><span class="tico" aria-hidden="true">✅</span><b id="rOk">0</b><span>{p.rOk}</span></div>
+      <div class="stat bad"><span class="tico" aria-hidden="true">❌</span><b id="rBad">0</b><span>{p.rBad}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🎯</span><b id="rAcc">—</b><span>{p.rAcc}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⚡</span><b id="rAvg">—</b><span>{p.rAvg}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐇</span><b id="rFast">—</b><span>{p.rFast}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐢</span><b id="rSlow">—</b><span>{p.rSlow}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⏳</span><b id="rDur">0:00</b><span>{p.rDur}</span></div>
     </div>
     <div class="card">
-      <div class="lbl">{p.mistakes}</div>
+      <div class="lbl"><span class="tico" aria-hidden="true">🐞</span>{p.mistakes}</div>
       <div id="misList" class="mis"></div>
     </div>
     <div class="actions">

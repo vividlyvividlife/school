@@ -12,6 +12,7 @@ var K_HARD = 'mathSkills.' + SKILL + '.hard.v1';
 var K_HIST = 'mathSkills.' + SKILL + '.history.v1';
 
 function tr(ru, en){ return LANG === 'en' ? en : ru; }
+function tico(i){ return '<span class="tico" aria-hidden="true">' + i + '</span>'; }
 function $(id){ return document.getElementById(id); }
 function each(list, fn){ Array.prototype.forEach.call(list || [], fn); }
 function ri(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
@@ -1911,7 +1912,8 @@ var VERDICTS = {
 function showResults(reason, durSec){
   var list = VERDICTS[LANG];
   var total = run.ok + run.bad;
-  els.resTitle.textContent = reason === 'time'
+  els.resTitle.innerHTML = tico(reason === 'time' ? '⏰' : reason === 'stop' ? '✋' : reason === 'done' ? '🌟' : '🎉') + (
+    reason === 'time'
     ? tr('Время вышло', 'Time is up')
     : reason === 'stop'
       ? tr('Тренировка остановлена', 'Training stopped')
@@ -1921,7 +1923,7 @@ function showResults(reason, durSec){
             : run.hardMode
               ? tr('Все ошибки проработаны', 'All mistakes reviewed')
               : tr('Готово', 'Done'))
-        : tr('Готово', 'Done');
+        : tr('Готово', 'Done'));
   if(!total){
     els.verdict.textContent = tr('Ни одного ответа. Попробуй ещё раз.', 'No answers yet. Try again.');
     els.verdict.className = 'verdict g0';
@@ -1951,7 +1953,7 @@ function showResults(reason, durSec){
   els.rFast.textContent = run.tN ? fmtSec1(run.minMs) : '—';
   els.rSlow.textContent = run.tN ? fmtSec1(run.maxMs) : '—';
   els.rDur.textContent = fmt(durSec);
-  els.misTitle.textContent = tr('Ошибки: ', 'Mistakes: ') + run.bad;
+  els.misTitle.innerHTML = tico('🐞') + tr('Ошибки: ', 'Mistakes: ') + run.bad;
   if(!total){
     els.misList.innerHTML = '<div class="dim">' + tr('Ответов пока нет', 'No answers yet') + '</div>';
   } else if(!run.bad){
@@ -1966,7 +1968,7 @@ function showResults(reason, durSec){
   }
   els.unsolvedCard.hidden = !run.unsolved.length;
   if(run.unsolved.length){
-    els.unsolvedTitle.textContent = tr('Не решено: ', 'Not solved: ') + run.unsolved.length;
+    els.unsolvedTitle.innerHTML = tico('🤔') + tr('Не решено: ', 'Not solved: ') + run.unsolved.length;
     els.unsolvedList.innerHTML = run.unsolved.map(function(x){
       return '<div class="mrow">' + x.text + '<span class="ua missed">' + tr('не решено', 'not solved') + '</span></div>';
     }).join('');
@@ -1975,7 +1977,7 @@ function showResults(reason, durSec){
   }
   els.slowCard.hidden = !run.slow.length;
   if(run.slow.length){
-    els.slowTitle.textContent = tr('Медленные, но верные: ', 'Slow but correct: ') + run.slow.length;
+    els.slowTitle.innerHTML = tico('🐢') + tr('Медленные, но верные: ', 'Slow but correct: ') + run.slow.length;
     els.slowList.innerHTML = run.slow.map(function(x){
       return '<div class="mrow">' + x.ex.text + '<span class="ua slow">' + fmtSec1(x.ms) + '</span></div>';
     }).join('');

@@ -6,6 +6,7 @@ function each(list, fn){ Array.prototype.forEach.call(list, fn); }
 
 var LANG = (document.documentElement.lang || 'ru').toLowerCase().indexOf('en') === 0 ? 'en' : 'ru';
 function tr(ru, en){ return LANG === 'en' ? en : ru; }
+function tico(i){ return '<span class="tico" aria-hidden="true">' + i + '</span>'; }
 function answerText(v){ return v === 'none' ? tr('Нельзя', 'Undefined') : String(v); }
 function pluralEx(n){
   if(LANG === 'en') return n === 1 ? 'example' : 'examples';
@@ -1751,7 +1752,8 @@ function showResults(reason, durSec){
     }
     return arr[Math.floor(Math.random() * arr.length)];
   }
-  els.resTitle.textContent = reason === 'time'
+  els.resTitle.innerHTML = tico(reason === 'time' ? '⏰' : reason === 'stop' ? '✋' : reason === 'done' ? '🌟' : '🎉') + (
+    reason === 'time'
     ? tr('Время вышло', 'Time is up')
     : reason === 'stop'
       ? tr('Тренировка остановлена', 'Training stopped')
@@ -1759,7 +1761,7 @@ function showResults(reason, durSec){
         ? (run.listKind === 'fluency'
             ? tr('Все примеры на беглость пройдены!', 'All fluency problems completed!')
             : tr('Все ошибки проработаны!', 'All mistakes reviewed!'))
-        : tr('Готово', 'Done');
+        : tr('Готово', 'Done'));
   var total = run.ok + run.bad;
   if(!total){
     els.verdict.textContent = tr('Ни одного ответа. Давай попробуем ещё раз — всё получится! 🙂', 'No answers yet. Let’s try again — you can do it! 🙂');
@@ -1794,7 +1796,7 @@ function showResults(reason, durSec){
   els.rFast.textContent = run.tN ? fmtSec1(run.minMs) : '—';
   els.rSlow.textContent = run.tN ? fmtSec1(run.maxMs) : '—';
   els.rDur.textContent = fmt(durSec);
-  els.misTitle.textContent = tr('Ошибки: ', 'Mistakes: ') + run.bad;
+  els.misTitle.innerHTML = tico('🐞') + tr('Ошибки: ', 'Mistakes: ') + run.bad;
   if(!run.bad){
     els.misList.innerHTML = '<div class="none">' + tr('Ошибок нет', 'No mistakes') + '</div>';
   } else {
@@ -1805,7 +1807,7 @@ function showResults(reason, durSec){
   }
   els.unsolvedCard.hidden = !run.unsolved.length;
   if(run.unsolved.length){
-    els.unsolvedTitle.textContent = tr('Не решено: ', 'Not solved: ') + run.unsolved.length;
+    els.unsolvedTitle.innerHTML = tico('🤔') + tr('Не решено: ', 'Not solved: ') + run.unsolved.length;
     els.unsolvedList.innerHTML = run.unsolved.map(function(u){
       return '<div class="mrow">' + u.q +
         '<span class="ua missed">' + tr('не решено', 'not solved') + '</span></div>';
@@ -1855,7 +1857,7 @@ function renderSlow(r){
     els.slowList.innerHTML = '';
     return;
   }
-  els.slowTitle.textContent = tr('Медленные, но верные: ', 'Slow but correct: ') + slow.length;
+  els.slowTitle.innerHTML = tico('🐢') + tr('Медленные, но верные: ', 'Slow but correct: ') + slow.length;
   els.slowList.innerHTML = slow.map(function(x){
     return '<div class="mrow">' + x.a + ' ' + x.op + ' ' + x.b + ' = ' + computeResult(x.op, x.a, x.b) +
       '<span class="ua slow">' + fmtSec1(x.ms) + '</span></div>';

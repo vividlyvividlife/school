@@ -49,7 +49,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 
     <div class="setup-grid">
       <div class="tile">
-        <div class="tile-title">{p.count}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🔢</span>{p.count}</div>
         <div class="tile-body">
           <div class="fields">
             <label class="fld"><span>{p.from}</span><input id="from" class="num" type="number" inputmode="numeric" min="0" max="100" step="1" value="0"></label>
@@ -66,7 +66,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
 
       <div class="tile">
-        <div class="tile-title">{p.actions}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">➕</span>{p.actions}</div>
         <div class="tile-body">
           <div class="seg multi ops-seg" data-key="ops" data-multi="1">
             <button type="button" data-v="add" title={p.addTitle}>+</button>
@@ -79,7 +79,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
 
       <div class="tile">
-        <div class="tile-title">{p.extra}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">✨</span>{p.extra}</div>
         <div class="tile-body">
           <label class="switch">
             <input id="carry" type="checkbox" checked>
@@ -97,7 +97,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
 
       <div class="tile wide">
-        <div class="tile-title">{p.missing}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🧩</span>{p.missing}</div>
         <div class="tile-body">
           <div class="seg miss-seg" data-key="miss">
             <button type="button" data-v="r">{p.answerR}</button>
@@ -112,7 +112,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
 
       <div class="tile">
-        <div class="tile-title">{p.answerWith}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">👆</span>{p.answerWith}</div>
         <div class="tile-body">
           <div class="seg answer-seg" data-key="answer">
             <button type="button" data-v="type">{p.answerType}</button>
@@ -125,7 +125,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 
       {lang === 'ru' && (
         <div class="tile">
-          <div class="tile-title">{p.format}</div>
+          <div class="tile-title"><span class="tico" aria-hidden="true">🎧</span>{p.format}</div>
           <div class="tile-body">
             <div class="seg format-seg" data-key="format">
               <button type="button" data-v="visual">{p.formatVisual}</button>
@@ -139,7 +139,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 
       {lang === 'ru' && (
         <div class="tile">
-          <div class="tile-title">{p.voice}</div>
+          <div class="tile-title"><span class="tico" aria-hidden="true">🎙️</span>{p.voice}</div>
           <div class="tile-body">
             <div class="seg voice-seg" data-key="voice">
               <button type="button" data-v="f">{p.voiceFemale}</button>
@@ -151,7 +151,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       )}
 
       <div class="tile">
-        <div class="tile-title">{p.mode}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">⏱️</span>{p.mode}</div>
         <div class="tile-body">
           <div class="seg mode-seg" data-key="mode">
             <button type="button" data-v="free">{p.modeFree}</button>
@@ -166,7 +166,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
 
       <div class="tile">
-        <div class="tile-title">{p.sound}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🔔</span>{p.sound}</div>
         <div class="tile-body">
           <div class="sound-row">
             <label class="switch">
@@ -181,7 +181,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
 
       <div class="tile wide start-tile">
-        <div class="tile-title">{p.setTitle}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🚀</span>{p.setTitle}</div>
         <div class="start-info">
           <div class="hint" id="poolInfo">{p.poolInfo}</div>
           <a class="btn small" href={asset(offlineFile)} download={downloadName} title={p.offlineTitle} data-offline-hide>{p.offline}</a>
@@ -190,7 +190,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
 
       <div class="tile wide hard-tile">
-        <div class="tile-title">{p.hardTitle}</div>
+        <div class="tile-title"><span class="tico" aria-hidden="true">🌱</span>{p.hardTitle}</div>
         <div class="tile-body hard-body">
           <div class="hard-info">
             <div class="hint" id="hardInfo">{p.hardInfo}</div>
@@ -205,7 +205,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
     </div>
 
     <div class="tile history-tile">
-      <div class="tile-title">{p.history}</div>
+      <div class="tile-title"><span class="tico" aria-hidden="true">📜</span>{p.history}</div>
       <div class="tile-body hist-body">
         <div id="histList" class="hist"></div>
         <button id="clearHist" class="btn small" type="button">{p.clear}</button>
@@ -272,20 +272,20 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
     <div class="verdict" id="verdict"></div>
     <div class="verdict" id="advice" hidden></div>
     <div class="stats">
-      <div class="stat good"><b id="rOk">0</b><span>{p.rOk}</span></div>
-      <div class="stat bad"><b id="rBad">0</b><span>{p.rBad}</span></div>
-      <div class="stat"><b id="rAcc">—</b><span>{p.rAcc}</span></div>
-      <div class="stat"><b id="rAvg">—</b><span>{p.rAvg}</span></div>
-      <div class="stat"><b id="rFast">—</b><span>{p.rFast}</span></div>
-      <div class="stat"><b id="rSlow">—</b><span>{p.rSlow}</span></div>
-      <div class="stat"><b id="rDur">0:00</b><span>{p.rDur}</span></div>
+      <div class="stat good"><span class="tico" aria-hidden="true">✅</span><b id="rOk">0</b><span>{p.rOk}</span></div>
+      <div class="stat bad"><span class="tico" aria-hidden="true">❌</span><b id="rBad">0</b><span>{p.rBad}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🎯</span><b id="rAcc">—</b><span>{p.rAcc}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⚡</span><b id="rAvg">—</b><span>{p.rAvg}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐇</span><b id="rFast">—</b><span>{p.rFast}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐢</span><b id="rSlow">—</b><span>{p.rSlow}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⏳</span><b id="rDur">0:00</b><span>{p.rDur}</span></div>
     </div>
     <div class="card">
-      <div class="lbl" id="misTitle">{p.mistakes}</div>
+      <div class="lbl" id="misTitle"><span class="tico" aria-hidden="true">🐞</span>{p.mistakes}</div>
       <div id="misList" class="mis"></div>
     </div>
     <div class="card" id="slowCard" hidden>
-      <div class="lbl" id="slowTitle">{p.slowTitle}</div>
+      <div class="lbl" id="slowTitle"><span class="tico" aria-hidden="true">🐢</span>{p.slowTitle}</div>
       <div class="hint">{p.slowHint}</div>
       <div id="slowList" class="mis"></div>
       <div class="slow-actions">
@@ -293,7 +293,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
     </div>
     <div class="card" id="unsolvedCard" hidden>
-      <div class="lbl" id="unsolvedTitle">{p.unsolvedTitle}</div>
+      <div class="lbl" id="unsolvedTitle"><span class="tico" aria-hidden="true">🤔</span>{p.unsolvedTitle}</div>
       <div class="hint">{p.unsolvedHint}</div>
       <div id="unsolvedList" class="mis"></div>
       <div class="slow-actions">
@@ -301,11 +301,11 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       </div>
     </div>
     <div class="card" id="pairsCard" hidden>
-      <div class="lbl">{p.pairs}</div>
+      <div class="lbl"><span class="tico" aria-hidden="true">🎴</span>{p.pairs}</div>
       <div id="pairsList" class="pairs"></div>
     </div>
     <div class="card" id="retryCard" hidden>
-      <div class="lbl">{p.retry}</div>
+      <div class="lbl"><span class="tico" aria-hidden="true">🔁</span>{p.retry}</div>
       <div class="retryeq" id="retryEq"></div>
       <div class="retrybtns" id="retryBtns"></div>
     </div>
