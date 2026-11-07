@@ -98,6 +98,11 @@ const writeEntries: [string, string][] = [
 <BaseLayout title={c.worksheetPage.title} page="examples" lang={lang}>
 <div class="toolbar">
   <div class="toolbar-inner">
+    <header class="ws-hero">
+      <span class="ws-kicker">{p.heroKicker}</span>
+      <h1>{p.heroTitle}</h1>
+      <p>{p.heroText}</p>
+    </header>
     <section class="tgroup tgroup-type" aria-labelledby="tg-type">
       <div class="tgroup-title" id="tg-type">{p.typeTitle}</div>
       <div class="tgroup-body">

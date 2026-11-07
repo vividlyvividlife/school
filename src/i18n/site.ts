@@ -189,6 +189,9 @@ export const siteCopy = {
       settings: 'Настройки'
     },
     worksheet: {
+      heroKicker: 'Математика · карточки для печати',
+      heroTitle: 'Раздаточный материал',
+      heroText: 'Соберите лист под урок: тема, диапазон и оформление — задания и ключи формируются на лету.',
       typeTitle: 'Тип заданий',
       typeExamples: 'Примеры',
       typeDigits: 'Разряды',
@@ -800,6 +803,9 @@ export const siteCopy = {
       settings: 'Settings'
     },
     worksheet: {
+      heroKicker: 'Math · printable cards',
+      heroTitle: 'Worksheets',
+      heroText: 'Build a sheet for your lesson: choose a topic, range and layout — tasks and answer keys are generated on the fly.',
       typeTitle: 'Task type',
       typeExamples: 'Arithmetic',
       typeDigits: 'Place value',

@@ -239,49 +239,53 @@ const taskEntries = Object.entries(p.tasks);
   </div>
 </section>
 
-<section id="game" class="screen">
-  <div class="gbar">
-    <button id="stopBtn" class="btn" type="button">{t.stop}</button>
-    <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={t.pause} data-resume={t.resume}>{t.pause}</button>
-    <button id="skipBtn" class="btn skip-btn" type="button">{t.skip}</button>
-    <div class="gmeta" id="gInfo"></div>
-    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+<section id="game" class="screen v-game">
+  <div class="v-game-head">
+    <button id="stopBtn" class="v-round-btn" type="button" aria-label={t.stop}>×</button>
+    <div class="v-score-row">
+      <span class="v-pill ok"><span aria-hidden="true">✓</span><b id="scoreOk">0</b></span>
+      <span class="v-pill bad"><span aria-hidden="true">×</span><b id="scoreBad">0</b></span>
+      <span class="gmeta" id="gInfo"></span>
+    </div>
+    <button id="pauseBtn" class="v-round-btn pause-btn" type="button" aria-pressed="false" hidden data-pause={t.pause} data-resume={t.resume}>{t.pause}</button>
   </div>
+
   <div class="timewrap" id="timeWrap">
     <div class="tbar"><div class="tfill" id="tfill"></div></div>
-    <div class="tclock" id="tclock">{t.time}</div>
+    <div class="tclock" id="tclock">0:00</div>
   </div>
-  <div class="playarea">
-    <div class="playgroup">
-      <div class="eqwrap" id="eqw">
-        <div class="eq" id="eq"></div>
-        <div class="cap" id="cap"></div>
-        <details class="sk-acc" id="figWrap" hidden>
-          <summary id="figSummary">{sc.figShow}</summary>
-          <div class="sk-fig" id="fig"></div>
-        </details>
+
+  <div class="v-game-body">
+    <div class="eqwrap eqw v-qcard" id="eqw">
+      <div class="eq" id="eq"></div>
+      <div class="cap" id="cap"></div>
+      <details class="sk-acc" id="figWrap" hidden>
+        <summary id="figSummary">{sc.figShow}</summary>
+        <div class="sk-fig" id="fig"></div>
+      </details>
+      <button id="skipBtn" class="v-skip-btn" type="button">{t.skip}</button>
+    </div>
+
+    <div class="padwrap v-answer">
+      <div class="signpad" id="signpad" hidden>
+        <button type="button" data-s="&lt;" aria-label="меньше">&lt;</button>
+        <button type="button" data-s="=" aria-label="равно">=</button>
+        <button type="button" data-s="&gt;" aria-label="больше">&gt;</button>
       </div>
-      <div class="padwrap">
-        <div class="signpad" id="signpad" hidden>
-          <button type="button" data-s="&lt;" aria-label="меньше">&lt;</button>
-          <button type="button" data-s="=" aria-label="равно">=</button>
-          <button type="button" data-s="&gt;" aria-label="больше">&gt;</button>
-        </div>
-        <div class="pad tiles" id="tiles" hidden></div>
-        <div class="pad" id="pad">
-          <button type="button" data-k="1">1</button>
-          <button type="button" data-k="2">2</button>
-          <button type="button" data-k="3">3</button>
-          <button type="button" data-k="4">4</button>
-          <button type="button" data-k="5">5</button>
-          <button type="button" data-k="6">6</button>
-          <button type="button" data-k="7">7</button>
-          <button type="button" data-k="8">8</button>
-          <button type="button" data-k="9">9</button>
-          <button type="button" data-k="del" class="del">⌫</button>
-          <button type="button" data-k="0">0</button>
-          <button type="button" data-k="ok" class="ok">OK</button>
-        </div>
+      <div class="pad tiles" id="tiles" hidden></div>
+      <div class="pad" id="pad">
+        <button type="button" data-k="1">1</button>
+        <button type="button" data-k="2">2</button>
+        <button type="button" data-k="3">3</button>
+        <button type="button" data-k="4">4</button>
+        <button type="button" data-k="5">5</button>
+        <button type="button" data-k="6">6</button>
+        <button type="button" data-k="7">7</button>
+        <button type="button" data-k="8">8</button>
+        <button type="button" data-k="9">9</button>
+        <button type="button" data-k="del" class="del">⌫</button>
+        <button type="button" data-k="0">0</button>
+        <button type="button" data-k="ok" class="ok">OK</button>
       </div>
     </div>
   </div>

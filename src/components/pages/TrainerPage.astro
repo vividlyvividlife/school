@@ -42,7 +42,12 @@ const offlineFile = lang === 'en' ? 'offline/en-practice.html' : 'offline/primer
 const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 ---
 
-<BaseLayout title={c.trainerPage.title} page="trainer" lang={lang}>
+<BaseLayout
+  title={c.trainerPage.title}
+  page="trainer"
+  lang={lang}
+  crumbs={[lang === 'en' ? 'Math' : 'Математика', lang === 'en' ? 'Practice' : 'Примеры']}
+>
 <section id="setup" class="screen active">
   <div class="wrap">
     <h1>{p.h1}</h1>
@@ -254,7 +259,7 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
 
   <div class="timewrap" id="timeWrap">
     <div class="tbar"><div class="tfill" id="tfill"></div></div>
-    <div class="tclock" id="tclock">{p.time}</div>
+    <div class="tclock" id="tclock">0:00</div>
   </div>
 
   <div class="v-game-body">

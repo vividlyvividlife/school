@@ -1000,4 +1000,73 @@ const copyPayload = {
       transition: none;
     }
   }
+
+  /* VIVID polish */
+  .hhero {
+    text-align: left;
+    padding: 0 2px;
+    margin-bottom: clamp(1.3rem, 3.5vw, 2.1rem);
+  }
+  .hkicker {
+    color: var(--site-teal-d);
+    border-color: var(--site-teal-line);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+  }
+  .hhero h1 {
+    font-family: "Nunito", "DM Sans", "Segoe UI", Roboto, sans-serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 4.8vw, 3rem);
+    letter-spacing: -0.025em;
+  }
+  .hsub {
+    margin: 0.7rem 0 0;
+    font-weight: 500;
+  }
+  .hcard {
+    border-radius: 24px;
+    box-shadow: 0 18px 40px -30px rgba(15, 23, 42, 0.45);
+  }
+  .hclockcard {
+    background:
+      radial-gradient(500px 260px at 50% -40px, var(--site-teal-soft), transparent 70%),
+      var(--site-surface);
+  }
+  .phead h2 {
+    font-family: "Nunito", "DM Sans", "Segoe UI", Roboto, sans-serif;
+    font-weight: 900;
+  }
+  .btn {
+    font-family: "Nunito", "DM Sans", "Segoe UI", Roboto, sans-serif;
+    font-weight: 900;
+    border-radius: 12px;
+  }
+  .btn:not(.ghost) {
+    border: 0;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 10px 22px -16px rgba(99, 102, 241, 0.9);
+  }
+  .btn:not(.ghost):hover:not(:disabled) {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  }
+  .hquick button {
+    border-color: var(--site-line);
+    background: var(--site-surface-2);
+    font-weight: 800;
+    padding: 0.35rem 0.75rem;
+  }
+  .hquick button:hover {
+    border-color: var(--site-teal-line);
+    background: var(--site-teal-soft);
+  }
+  .hrow {
+    border-radius: 12px;
+  }
+  .hempty {
+    border-radius: 16px;
+    background: var(--site-surface-2);
+  }
+  html[data-theme="dark"] .btn:not(.ghost):not(:disabled) {
+    color: #fff;
+  }
 </style>

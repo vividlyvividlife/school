@@ -129,13 +129,15 @@ const copyPayload = {
   </div>
 </section>
 
-<section id="game" class="screen">
-  <div class="gbar">
-    <button id="stopBtn" class="btn" type="button">{q.stop}</button>
-    <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={q.pause} data-resume={q.resume}>{q.pause}</button>
-    <button id="skipBtn" class="btn skip-btn" type="button">{q.skip}</button>
-    <div class="gmeta" id="gInfo"></div>
-    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+<section id="game" class="screen v-game v-tgame">
+  <div class="v-game-head">
+    <button id="stopBtn" class="v-round-btn" type="button" aria-label={q.stop}>×</button>
+    <div class="v-score-row">
+      <span class="v-pill ok"><span aria-hidden="true">✓</span><b id="scoreOk">0</b></span>
+      <span class="v-pill bad"><span aria-hidden="true">×</span><b id="scoreBad">0</b></span>
+      <span class="gmeta" id="gInfo"></span>
+    </div>
+    <button id="pauseBtn" class="v-round-btn pause-btn" type="button" aria-pressed="false" hidden data-pause={q.pause} data-resume={q.resume}>{q.pause}</button>
   </div>
   <div class="timewrap" id="timeWrap">
     <div class="tbar"><div class="tfill" id="tfill"></div></div>
@@ -143,12 +145,13 @@ const copyPayload = {
   </div>
   <div class="playarea">
     <div class="playgroup">
-      <div class="qwrap">
+      <div class="qwrap v-qcard" id="qWrap">
         <div class="qprompt" id="qPrompt"></div>
         <div class="qbody-dur" id="qBody"></div>
         <div class="qsub" id="qSub" hidden></div>
+        <div class="cap" id="cap"></div>
+        <button id="skipBtn" class="v-skip-btn" type="button">{q.skip}</button>
       </div>
-      <div class="cap" id="cap"></div>
       <div class="opts words" id="opts"></div>
     </div>
   </div>

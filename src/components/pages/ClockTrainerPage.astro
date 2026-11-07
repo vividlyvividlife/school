@@ -197,13 +197,15 @@ const copyPayload = {
   </div>
 </section>
 
-<section id="game" class="screen">
-  <div class="gbar">
-    <button id="stopBtn" class="btn" type="button">{p.stop}</button>
-    <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={p.pause} data-resume={p.resume}>{p.pause}</button>
-    <button id="skipBtn" class="btn skip-btn" type="button">{p.skip}</button>
-    <div class="gmeta" id="gInfo"></div>
-    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+<section id="game" class="screen v-game v-tgame">
+  <div class="v-game-head">
+    <button id="stopBtn" class="v-round-btn" type="button" aria-label={p.stop}>×</button>
+    <div class="v-score-row">
+      <span class="v-pill ok"><span aria-hidden="true">✓</span><b id="scoreOk">0</b></span>
+      <span class="v-pill bad"><span aria-hidden="true">×</span><b id="scoreBad">0</b></span>
+      <span class="gmeta" id="gInfo"></span>
+    </div>
+    <button id="pauseBtn" class="v-round-btn pause-btn" type="button" aria-pressed="false" hidden data-pause={p.pause} data-resume={p.resume}>{p.pause}</button>
   </div>
   <div class="timewrap" id="timeWrap">
     <div class="tbar"><div class="tfill" id="tfill"></div></div>
@@ -211,23 +213,24 @@ const copyPayload = {
   </div>
   <div class="playarea">
     <div class="playgroup">
-      <div class="dict" id="dict" hidden>
-        <button class="dict-play" id="dictRepeat" type="button" aria-label={p.dictRepeatAria}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 9.2v5.6h3.6L13 19V5L7.6 9.2H4z" fill="currentColor"/>
-            <path d="M16.3 8.4a5 5 0 010 7.2M18.9 5.8a8.6 8.6 0 010 12.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
-          <span class="dict-badge" id="dictLeft">1</span>
-        </button>
-        <div class="dict-label" id="dictLabel">{p.dictListen}</div>
-        <div class="dict-note" id="dictNote">{p.dictNote}</div>
-      </div>
-      <div class="qwrap" id="qWrap">
+      <div class="qwrap v-qcard" id="qWrap">
+        <div class="dict" id="dict" hidden>
+          <button class="dict-play" id="dictRepeat" type="button" aria-label={p.dictRepeatAria}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 9.2v5.6h3.6L13 19V5L7.6 9.2H4z" fill="currentColor"/>
+              <path d="M16.3 8.4a5 5 0 010 7.2M18.9 5.8a8.6 8.6 0 010 12.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span class="dict-badge" id="dictLeft">1</span>
+          </button>
+          <div class="dict-label" id="dictLabel">{p.dictListen}</div>
+          <div class="dict-note" id="dictNote">{p.dictNote}</div>
+        </div>
         <div class="qprompt" id="qPrompt"></div>
         <div class="qday" id="qDay" hidden></div>
         <div id="qBody" class="qclock"></div>
+        <div class="cap" id="cap"></div>
+        <button id="skipBtn" class="v-skip-btn" type="button">{p.skip}</button>
       </div>
-      <div class="cap" id="cap"></div>
       <div class="opts texts" id="opts"></div>
     </div>
   </div>
