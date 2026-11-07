@@ -3,6 +3,7 @@ dist/
 .astro/
 .tts/
 .teratts/
+.vox/
 .kitten/
 .env
 .env.*

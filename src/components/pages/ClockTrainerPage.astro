@@ -11,6 +11,23 @@ interface Props {
 const { lang } = Astro.props;
 const c = siteCopy[lang];
 const p = c.clock;
+const B = import.meta.env.BASE_URL;
+const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+/* bump when regenerating the clock dictation audio banks */
+const dictBankVersion = '2';
+const dictBanks = {
+  clock: {
+    f: {
+      audio: asset('audio/dictation/vox-f-clock.mp3') + '?v=' + dictBankVersion,
+      timings: asset('audio/dictation/vox-f-clock.json') + '?v=' + dictBankVersion
+    },
+    m: {
+      audio: asset('audio/dictation/vox-m-clock.mp3') + '?v=' + dictBankVersion,
+      timings: asset('audio/dictation/vox-m-clock.json') + '?v=' + dictBankVersion
+    }
+  }
+};
 const copyPayload = {
   readQ: p.readQ,
   showQ: p.showQ,
@@ -42,6 +59,15 @@ const copyPayload = {
   step1: p.step1,
   format12: p.format12,
   format24: p.format24,
+  speechDictation: p.speechDictation,
+  speechHint: p.speechHint,
+  dictListen: p.dictListen,
+  dictNote: p.dictNote,
+  dictNoRepeat: p.dictNoRepeat,
+  dictLoading: p.dictLoading,
+  dictFail: p.dictFail,
+  dictStepHint: p.dictStepHint,
+  stepHint: p.stepHint,
   dayNight: p.dayNight,
   dayMorning: p.dayMorning,
   dayDay: p.dayDay,
@@ -87,7 +113,7 @@ const copyPayload = {
             <button type="button" data-v="5">{p.step5}</button>
             <button type="button" data-v="1">{p.step1}</button>
           </div>
-          <div class="hint">{p.stepHint}</div>
+          <div class="hint" id="stepHint">{p.stepHint}</div>
         </div>
       </div>
 
@@ -101,6 +127,32 @@ const copyPayload = {
           <div class="hint">{p.formatHint}</div>
         </div>
       </div>
+
+      {lang === 'ru' && (
+        <div class="tile">
+          <div class="tile-title"><span class="tico" aria-hidden="true">🎧</span>{p.speech}</div>
+          <div class="tile-body">
+            <div class="seg speech-seg" data-key="speech">
+              <button type="button" data-v="visual">{p.speechVisual}</button>
+              <button type="button" data-v="dictation">{p.speechDictation}</button>
+            </div>
+            <div class="hint" id="speechHint">{p.speechHint}</div>
+          </div>
+        </div>
+      )}
+
+      {lang === 'ru' && (
+        <div class="tile" id="voiceTile" hidden>
+          <div class="tile-title"><span class="tico" aria-hidden="true">🎙️</span>{p.voice}</div>
+          <div class="tile-body">
+            <div class="seg voice-seg" data-key="voice">
+              <button type="button" data-v="f">{p.voiceFemale}</button>
+              <button type="button" data-v="m">{p.voiceMale}</button>
+            </div>
+            <div class="hint">{p.voiceHint}</div>
+          </div>
+        </div>
+      )}
 
       <div class="tile">
         <div class="tile-title"><span class="tico" aria-hidden="true">⏱️</span>{p.mode}</div>
@@ -153,7 +205,18 @@ const copyPayload = {
   </div>
   <div class="playarea">
     <div class="playgroup">
-      <div class="qwrap">
+      <div class="dict" id="dict" hidden>
+        <button class="dict-play" id="dictRepeat" type="button" aria-label={p.dictRepeatAria}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9.2v5.6h3.6L13 19V5L7.6 9.2H4z" fill="currentColor"/>
+            <path d="M16.3 8.4a5 5 0 010 7.2M18.9 5.8a8.6 8.6 0 010 12.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="dict-badge" id="dictLeft">1</span>
+        </button>
+        <div class="dict-label" id="dictLabel">{p.dictListen}</div>
+        <div class="dict-note" id="dictNote">{p.dictNote}</div>
+      </div>
+      <div class="qwrap" id="qWrap">
         <div class="qprompt" id="qPrompt"></div>
         <div class="qday" id="qDay" hidden></div>
         <div id="qBody" class="qclock"></div>
@@ -189,6 +252,14 @@ const copyPayload = {
 </section>
 
 <script is:inline type="application/json" id="clockCopy" set:html={JSON.stringify(copyPayload)}></script>
+{lang === 'ru' && (
+  <>
+    <script is:inline define:vars={{ dictBanks }}>
+      window.__DICTATION__ = dictBanks;
+    </script>
+    <script is:inline src={asset('js/dictation.js') + '?v=' + jsVersion}></script>
+  </>
+)}
 
 <script>
   (function () {
@@ -217,6 +288,14 @@ const copyPayload = {
     var qPrompt = document.getElementById('qPrompt');
     var qDay = document.getElementById('qDay');
     var qBody = document.getElementById('qBody');
+    var qWrap = document.getElementById('qWrap');
+    var stepHintEl = document.getElementById('stepHint');
+    var voiceTile = document.getElementById('voiceTile');
+    var speechHintEl = document.getElementById('speechHint');
+    var dictEl = document.getElementById('dict');
+    var dictRepeat = document.getElementById('dictRepeat');
+    var dictLeftEl = document.getElementById('dictLeft');
+    var dictNote = document.getElementById('dictNote');
     var capEl = document.getElementById('cap');
     var optsEl = document.getElementById('opts');
     var verdictEl = document.getElementById('verdict');
@@ -229,8 +308,14 @@ const copyPayload = {
     var rDur = document.getElementById('rDur');
     var misList = document.getElementById('misList');
 
-    var settings = { task: 'mix', step: 5, format: 12, mode: 'free', min: 2, sec: 0, sound: true };
+    var settings = { task: 'mix', step: 5, format: 12, mode: 'free', min: 2, sec: 0, sound: true, speech: 'visual', voice: 'f' };
+    var DICT_BANK = 'clock';
+    var DICT_REPEATS = 1;
+    var dictAllowed = !!dictEl && !!document.querySelector('.speech-seg');
     var game = null;
+    var dictTok = 0;
+    var dictError = false;
+    var dictLeft = DICT_REPEATS;
     var lastKey = '';
     var timerId = 0;
     var audioCtx = null;
@@ -527,6 +612,8 @@ const copyPayload = {
         if (isFinite(data.min)) settings.min = Math.max(0, Math.min(300, Math.round(data.min)));
         if (isFinite(data.sec)) settings.sec = Math.max(0, Math.min(59, Math.round(data.sec)));
         settings.sound = data.sound !== false;
+        if (data.speech === 'visual' || data.speech === 'dictation') settings.speech = data.speech;
+        if (data.voice === 'f' || data.voice === 'm') settings.voice = data.voice;
       } catch (e) {}
     }
 
@@ -541,12 +628,118 @@ const copyPayload = {
       minEl.value = settings.min;
       secEl.value = settings.sec;
       soundEl.checked = settings.sound;
+      applyDictUI();
+    }
+
+    function isDictation() { return dictAllowed && settings.speech === 'dictation'; }
+
+    function dictKeysFor(q) {
+      if (q.kind === 'a2d') return ['p_read'];
+      if (q.kind === 'd2a') return ['p_show', 't_' + q.dial + '_' + q.m];
+      return [q.dictKey];
+    }
+
+    function stopDict() {
+      dictTok++;
+      if (window.DictationAudio) DictationAudio.stop();
+      if (dictEl) dictEl.classList.remove('playing');
+    }
+
+    function applyDictUI() {
+      if (voiceTile) voiceTile.hidden = !isDictation();
+      if (speechHintEl) speechHintEl.textContent = dictError ? copy.dictFail : copy.speechHint;
+      if (stepHintEl) stepHintEl.textContent = isDictation() ? copy.dictStepHint : copy.stepHint;
+      paintDictLeft();
+      if (!isDictation()) { stopDict(); return; }
+      if (!window.DictationAudio) return;
+      DictationAudio.setVoice(settings.voice);
+      DictationAudio.load(DICT_BANK).catch(function () {});
+    }
+
+    function reconcile(changed) {
+      if (!dictAllowed) { settings.speech = 'visual'; return; }
+      if (settings.speech !== 'dictation' || settings.step !== 1) return;
+      if (changed === 'step') settings.speech = 'visual';
+      else settings.step = 5;
+    }
+
+    function dictNoteText() {
+      var q = game && game.current;
+      if (q && q.textFallback) return copy.dictFail;
+      return dictLeft > 0 ? copy.dictNote : copy.dictNoRepeat;
+    }
+
+    function renderDict(q) {
+      var dict = isDictation() && !!q;
+      var shown = dict && !q.textFallback;
+      if (dictEl) dictEl.hidden = !dict;
+      if (dictNote) dictNote.textContent = dictNoteText();
+      if (qPrompt) qPrompt.hidden = shown;
+      if (qWrap) qWrap.hidden = shown && q.kind === 'd2a';
+    }
+
+    function paintDictLeft() {
+      if (dictLeftEl) dictLeftEl.textContent = dictLeft;
+      if (dictRepeat) {
+        dictRepeat.disabled = dictLeft <= 0;
+        dictRepeat.setAttribute('aria-disabled', dictLeft <= 0 ? 'true' : 'false');
+      }
+      if (dictNote && isDictation()) dictNote.textContent = dictNoteText();
+    }
+
+    function speakCurrent(repeat) {
+      if (!isDictation() || !game || game.paused || !game.current || game.current.answered) return;
+      if (repeat && dictLeft <= 0) return;
+      if (!window.DictationAudio) { dictFallback(); return; }
+      var q = game.current;
+      var keys = q.dictKeys || (q.dictKeys = dictKeysFor(q));
+      DictationAudio.unlock();
+      DictationAudio.setVoice(settings.voice);
+      function playIt() {
+        if (!game || game.current !== q || q.answered || game.paused) return;
+        var info = DictationAudio.playKeys(keys, DICT_BANK);
+        if (!info) {
+          if (DictationAudio.isReady(DICT_BANK)) {
+            q.textFallback = true;
+            renderDict(q);
+          } else {
+            dictFallback();
+          }
+          return;
+        }
+        q.textFallback = false;
+        renderDict(q);
+        if (repeat) {
+          dictLeft = Math.max(0, dictLeft - 1);
+          paintDictLeft();
+        }
+        if (q.kind === 'd2a') q.startedAt = Date.now() + Math.round(info.duration * 1000);
+        dictTok++;
+        var tok = dictTok;
+        dictEl.classList.add('playing');
+        window.setTimeout(function () { if (dictTok === tok) dictEl.classList.remove('playing'); }, Math.round(info.duration * 1000) + 80);
+      }
+      if (DictationAudio.isReady(DICT_BANK)) { playIt(); return; }
+      dictNote.textContent = copy.dictLoading;
+      DictationAudio.load(DICT_BANK).then(playIt, dictFallback);
+    }
+
+    function dictFallback() {
+      stopDict();
+      dictError = true;
+      settings.speech = 'visual';
+      syncControls();
+      save();
+      if (game && game.current && !game.current.answered) nextQuestion();
+      capEl.textContent = copy.dictFail;
+      capEl.className = 'cap';
     }
 
     function nextQuestion() {
       if (!game) return;
       window.clearTimeout(game.advanceId);
       if (game.paused) { game.pendingNext = true; return; }
+      stopDict();
       var now = Date.now();
       if (game.mode === 'timed' && now >= game.endsAt) {
         finish();
@@ -602,6 +795,10 @@ const copyPayload = {
         b.addEventListener('click', function () { answer(b, o); });
         optsEl.appendChild(b);
       });
+      renderDict(game.current);
+      dictLeft = DICT_REPEATS;
+      paintDictLeft();
+      speakCurrent();
     }
 
     function mixKind() {
@@ -627,20 +824,24 @@ const copyPayload = {
       var nText = isHour ? durHour(delta / 60) : durMin(delta);
       var prompt;
       var sub;
+      var dictKey;
       if (isLesson) {
         prompt = copy.calcLesson.replace('{n}', nText) + ' ' + (dir > 0 ? copy.calcLessonEnd : copy.calcLessonStart);
         sub = dir > 0 ? copy.subStart : copy.subEnd;
+        dictKey = 'd_lesson_' + (dir > 0 ? 'end' : 'start') + '_' + delta;
       } else if (isOffset) {
         prompt = (dir > 0 ? copy.calcSlow : copy.calcFast).replace('{n}', nText);
         sub = copy.subShown;
+        dictKey = 'd_' + (dir > 0 ? 'slow' : 'fast') + '_' + delta;
       } else {
         prompt = (dir > 0 ? copy.calcPlus : copy.calcMinus).replace('{n}', nText);
         sub = copy.subNow;
+        dictKey = (isHour ? 'h_' : 'd_') + (dir > 0 ? 'plus' : 'minus') + '_' + (isHour ? delta / 60 : delta);
       }
       var q = {
         kind: 'calc', variant: variant,
         givenDial: givenDial, m: st.m, ansDial: ansDial, ansM: st.rM,
-        delta: delta, dir: dir,
+        delta: delta, dir: dir, dictKey: dictKey,
         expr: fmt(givenDial, st.m) + (dir > 0 ? ' + ' : ' − ') +
           (isHour ? (delta / 60) + ' ' + copy.hourShort : delta + ' ' + copy.minUnit),
         format: format, startedAt: now, answered: false
@@ -678,6 +879,10 @@ const copyPayload = {
         b.addEventListener('click', function () { answer(b, o); });
         optsEl.appendChild(b);
       });
+      renderDict(game.current);
+      dictLeft = DICT_REPEATS;
+      paintDictLeft();
+      speakCurrent();
     }
 
     function dayPart(h) {
@@ -692,6 +897,7 @@ const copyPayload = {
       var q = game.current;
       game.lock = true;
       q.answered = true;
+      stopDict();
 
       var ok;
       var correctText;
@@ -714,7 +920,7 @@ const copyPayload = {
         correctSel = 'button[data-h="' + q.ansDial + '"][data-m="' + q.ansM + '"]';
       }
       var qText = q.kind === 'calc' ? q.expr + ' = ' + correctText : correctText;
-      var ms = Date.now() - q.startedAt;
+      var ms = Math.max(0, Date.now() - q.startedAt);
       game.answers.push({ q: qText, your: yourText, ok: ok, ms: ms });
 
       if (ok) {
@@ -777,7 +983,8 @@ const copyPayload = {
       };
       scoreOk.textContent = '0';
       scoreBad.textContent = '0';
-      gInfo.textContent = taskLabel() + ' · ' + stepLabel() + ' · ' + (settings.format === 24 ? copy.format24 : copy.format12);
+      gInfo.textContent = taskLabel() + ' · ' + stepLabel() + ' · ' + (settings.format === 24 ? copy.format24 : copy.format12) +
+        (isDictation() ? ' · ' + copy.speechDictation : '');
       timeWrap.classList.toggle('free', settings.mode !== 'timed');
       tfill.classList.remove('warn', 'low');
       tfill.style.width = '100%';
@@ -795,6 +1002,7 @@ const copyPayload = {
       if (!game || game.mode === 'timed' || v === game.paused) return;
       game.paused = v;
       if (v) {
+        stopDict();
         game.pausedAt = Date.now();
         window.clearInterval(timerId);
         timerId = 0;
@@ -813,6 +1021,8 @@ const copyPayload = {
         if (game.pendingNext) {
           game.pendingNext = false;
           nextQuestion();
+        } else {
+          speakCurrent();
         }
       }
       updatePauseUI();
@@ -829,6 +1039,7 @@ const copyPayload = {
 
     function finish() {
       if (!game) return;
+      stopDict();
       window.clearInterval(timerId);
       timerId = 0;
       window.clearTimeout(game.advanceId);
@@ -914,10 +1125,17 @@ const copyPayload = {
         if (!b) return;
         var key = seg.getAttribute('data-key');
         var v = b.getAttribute('data-v');
+        if (key === 'speech' || key === 'voice') dictError = false;
         settings[key] = key === 'step' || key === 'format' ? Number(v) : v;
+        reconcile(key);
         syncControls();
         save();
       });
+    });
+
+    if (dictRepeat) dictRepeat.addEventListener('click', function () {
+      if (!game || game.paused || !game.current || game.current.answered) return;
+      speakCurrent(true);
     });
 
     [minEl, secEl].forEach(function (input) {
@@ -944,6 +1162,7 @@ const copyPayload = {
     document.addEventListener('pointerdown', ensureAudio, { once: true });
 
     load();
+    reconcile('speech');
     syncControls();
   })();
 </script>
