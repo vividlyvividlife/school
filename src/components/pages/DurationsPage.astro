@@ -1,0 +1,609 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteCopy, type Lang } from '../../i18n/site';
+import '../../styles/trainer.css';
+import '../../styles/vivid-trainer.css';
+import '../../styles/clock.css';
+import '../../styles/timequiz.css';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = siteCopy[lang];
+const p = c.durations;
+const q = c.quiz;
+const B = import.meta.env.BASE_URL;
+const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+const copyPayload = {
+  ...p,
+  capOk: q.capOk,
+  capBad: q.capBad,
+  mistakes: q.mistakes,
+  skippedTitle: q.skippedTitle,
+  skippedMark: q.skippedMark,
+  capSkip: q.capSkip,
+  none: q.none,
+  yourAnswer: q.yourAnswer,
+  secShort: q.secShort,
+  v5: q.v5,
+  v4: q.v4,
+  v3: q.v3,
+  v2: q.v2,
+  v1: q.v1,
+  v0: q.v0,
+  lang
+};
+---
+
+<BaseLayout title={c.durationsPage.title} description={c.durationsPage.description} page="durations" lang={lang}>
+<section id="setup" class="screen active">
+  <div class="wrap">
+    <h1>{p.h1}</h1>
+    <p class="sub">{p.sub}</p>
+
+    <div class="v-setup">
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{p.task}</h2><p>{p.taskHint}</p></div>
+        </header>
+        <div class="seg v-tasks-grid" data-key="task">
+          <button type="button" data-v="mix">{p.taskMix}</button>
+          <button type="button" data-v="unit">{p.taskUnit}</button>
+          <button type="button" data-v="convert">{p.taskConvert}</button>
+          <button type="button" data-v="compare">{p.taskCompare}</button>
+          <button type="button" data-v="span">{p.taskSpan}</button>
+        </div>
+      </section>
+
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{p.level}</h2><p>{p.levelHint}</p></div>
+        </header>
+        <div class="seg dur-level v-tiles-4" data-key="level">
+          <button type="button" data-v="1">{p.level1}</button>
+          <button type="button" data-v="2">{p.level2}</button>
+          <button type="button" data-v="3">{p.level3}</button>
+          <button type="button" data-v="all">{p.levelAll}</button>
+        </div>
+      </section>
+
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{q.tiles}</h2><p>{q.tilesHint}</p></div>
+        </header>
+        <div class="seg tiles-seg v-tiles-4" data-key="tiles">
+          <button type="button" data-v="4">4</button>
+          <button type="button" data-v="6">6</button>
+          <button type="button" data-v="9">9</button>
+          <button type="button" data-v="12">12</button>
+        </div>
+      </section>
+
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{q.mode}</h2></div>
+        </header>
+        <div class="seg mode-seg v-seg" data-key="mode">
+          <button type="button" data-v="free">{q.modeFree}</button>
+          <button type="button" data-v="timed">{q.modeTimed}</button>
+        </div>
+        <div class="v-time" id="timeRow" hidden>
+          <span class="v-field-label">{q.duration}</span>
+          <span class="numitem"><input id="min" class="v-num-input" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{q.minUnit}</span></span>
+          <span class="numitem"><input id="sec" class="v-num-input" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{q.secUnit}</span></span>
+        </div>
+      </section>
+
+      <section class="v-section">
+        <header class="v-head">
+          <span class="v-num">🔔</span>
+          <div><h2>{q.sound}</h2></div>
+        </header>
+        <div class="sound-row">
+          <label class="switch v-switch">
+            <input id="sound" type="checkbox" checked>
+            <span class="track"></span>
+            <span>{q.soundLabel}</span>
+          </label>
+          <button id="soundTest" class="btn small" type="button">{q.soundTest}</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="v-startbar">
+      <div class="v-startbar-inner">
+        <div class="v-start-info">
+          <div class="v-start-kicker">{q.startTitle}</div>
+          <div class="hint">{q.startHint}</div>
+        </div>
+        <button id="startBtn" class="btn primary v-start-btn" type="button">{q.start}</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="gbar">
+    <button id="stopBtn" class="btn" type="button">{q.stop}</button>
+    <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={q.pause} data-resume={q.resume}>{q.pause}</button>
+    <button id="skipBtn" class="btn skip-btn" type="button">{q.skip}</button>
+    <div class="gmeta" id="gInfo"></div>
+    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+  </div>
+  <div class="timewrap" id="timeWrap">
+    <div class="tbar"><div class="tfill" id="tfill"></div></div>
+    <div class="tclock" id="tclock">0:00</div>
+  </div>
+  <div class="playarea">
+    <div class="playgroup">
+      <div class="qwrap">
+        <div class="qprompt" id="qPrompt"></div>
+        <div class="qbody-dur" id="qBody"></div>
+        <div class="qsub" id="qSub" hidden></div>
+      </div>
+      <div class="cap" id="cap"></div>
+      <div class="opts words" id="opts"></div>
+    </div>
+  </div>
+</section>
+
+<section id="results" class="screen">
+  <div class="wrap">
+    <h2><span class="tico" aria-hidden="true">🎉</span>{q.resTitle}</h2>
+    <div class="verdict" id="verdict" hidden></div>
+    <div class="stats">
+      <div class="stat good"><span class="tico" aria-hidden="true">✅</span><b id="rOk">0</b><span>{q.rOk}</span></div>
+      <div class="stat bad"><span class="tico" aria-hidden="true">❌</span><b id="rBad">0</b><span>{q.rBad}</span></div>
+      <div class="stat skip"><span class="tico" aria-hidden="true">⏭️</span><b id="rSkip">0</b><span>{q.rSkip}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🎯</span><b id="rAcc">—</b><span>{q.rAcc}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⚡</span><b id="rAvg">—</b><span>{q.rAvg}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐇</span><b id="rFast">—</b><span>{q.rFast}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐢</span><b id="rSlow">—</b><span>{q.rSlow}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⏳</span><b id="rDur">0:00</b><span>{q.rDur}</span></div>
+    </div>
+    <div class="card">
+      <div class="lbl"><span class="tico" aria-hidden="true">🐞</span>{q.mistakes}</div>
+      <div id="misList" class="mis"></div>
+    </div>
+    <div class="card" id="skippedCard" hidden>
+      <div class="lbl" id="skippedTitle"><span class="tico" aria-hidden="true">⏭️</span>{q.skippedTitle}</div>
+      <div class="hint">{q.skippedHint}</div>
+      <div id="skippedList" class="mis"></div>
+    </div>
+    <div class="actions">
+      <button id="againBtn" class="btn primary" type="button">{q.again}</button>
+      <button id="toSetupBtn" class="btn" type="button">{q.settings}</button>
+    </div>
+  </div>
+</section>
+
+<script is:inline type="application/json" id="durCopy" set:html={JSON.stringify(copyPayload)}></script>
+<script is:inline src={asset('js/timequiz.js') + '?v=' + jsVersion}></script>
+<script is:inline>
+  (function () {
+    var copy = JSON.parse(document.getElementById('durCopy').textContent);
+    var isEn = copy.lang === 'en';
+    var targetTiles = 4;
+    var recentFns = [];
+
+    function rand(n) { return Math.floor(Math.random() * n); }
+    function pick(a) { return a[rand(a.length)]; }
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = rand(i + 1);
+        var t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+      }
+      return a;
+    }
+    function fill(tpl, vars) {
+      return String(tpl).replace(/\{(\w+)\}/g, function (m, key) {
+        return Object.prototype.hasOwnProperty.call(vars, key) ? String(vars[key]) : m;
+      });
+    }
+    function durText(min) {
+      if (min < 60) return min + ' ' + copy.minShort;
+      var h = Math.floor(min / 60);
+      var m = min % 60;
+      return h + ' ' + copy.hourShort + (m ? ' ' + m + ' ' + copy.minShort : '');
+    }
+    function fmtText(total) {
+      total = ((total % 1440) + 1440) % 1440;
+      var h = Math.floor(total / 60);
+      var m = total % 60;
+      return h + ':' + (m < 10 ? '0' : '') + m;
+    }
+    function addMin(h, m, delta) {
+      return { h: Math.floor((h * 60 + m + delta) / 60), m: (h * 60 + m + delta) % 60 };
+    }
+    function extraPool(correct) {
+      var cs = String(correct);
+      var out = [];
+      var m;
+      if ((m = cs.match(/^(\d{1,2}):(\d{2})$/))) {
+        var total = Number(m[1]) * 60 + Number(m[2]);
+        [5, -5, 10, -10, 15, -15, 30, -30, 45, -45, 60, -60, 90, -90].forEach(function (d) {
+          out.push(fmtText(total + d));
+        });
+        return out;
+      }
+      if ((m = cs.match(/^(\d+)\s+(\S+)(?:\s+(\d+)\s+(\S+))?$/))) {
+        if (m[3] !== undefined) {
+          var tot = Number(m[1]) * 60 + Number(m[3]);
+          [5, -5, 10, -10, 15, -15, 20, -20, 30, -30, 45, -45, 60, -60].forEach(function (d) {
+            if (tot + d > 0) out.push(durText(tot + d));
+          });
+          return out;
+        }
+        var n = Number(m[1]);
+        var suffix = cs.slice(String(n).length);
+        [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 8, -8, 10, -10, 15, -15, 20, -20, 30, -30, 60, -60, 90, -90].forEach(function (d) {
+          if (n + d > 0) out.push(n + d + suffix);
+        });
+        return out;
+      }
+      if (/^\d+$/.test(cs)) {
+        var v = Number(cs);
+        [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 8, -8, 10, -10, 15, -15, 20, -20, 30, -30, 60, -60, 100, -100].forEach(function (d) {
+          if (v + d > 0) out.push(String(v + d));
+        });
+      }
+      return out;
+    }
+    function optionOrder(text) {
+      var s = String(text);
+      var tm = s.match(/^(\d{1,2}):(\d{2})$/);
+      if (tm) return Number(tm[1]) * 60 + Number(tm[2]);
+      var m = s.match(/^(\d+)\s+(\S+)(?:\s+(\d+)\s+(\S+))?$/);
+      if (m) {
+        var units = {};
+        units[copy.secShort] = 1;
+        units[copy.minShort] = 60;
+        units[copy.hourShort] = 3600;
+        units[copy.dayShort] = 86400;
+        units[copy.monthShort] = 2592000;
+        var total = Number(m[1]) * (units[m[2]] || 1);
+        if (m[3] !== undefined) total += Number(m[3]) * (units[m[4]] || 1);
+        return total;
+      }
+      if (/^\d+$/.test(s)) return Number(s);
+      return null;
+    }
+    function question(prompt, correctText, wrongTexts, cls, visual, pool, maxTiles) {
+      var seen = {};
+      var correct = String(correctText);
+      var limit = maxTiles || targetTiles;
+      seen[correct] = true;
+      var options = [{ text: correct, right: true }];
+      shuffle(wrongTexts.slice()).concat(shuffle(pool || extraPool(correct))).forEach(function (w) {
+        var t = String(w);
+        if (options.length >= limit || seen[t]) return;
+        seen[t] = true;
+        options.push({ text: t });
+      });
+      options.sort(function (a, b) {
+        var oa = optionOrder(a.text);
+        var ob = optionOrder(b.text);
+        if (oa !== null && ob !== null) return oa - ob;
+        if (oa !== null) return -1;
+        if (ob !== null) return 1;
+        return a.text.localeCompare(b.text);
+      });
+      return {
+        prompt: prompt,
+        answerText: correct,
+        questionText: prompt + ' → ' + correct,
+        options: options,
+        optionsClass: cls || 'opts words',
+        optionClass: 'opt-txt',
+        bodyClass: 'qbody-dur',
+        visual: visual || null
+      };
+    }
+    function withUnit(n, unit) { return n + (unit ? ' ' + unit : ''); }
+    function unitQ(prompt, correct, cands, unit) {
+      return question(prompt, withUnit(correct, unit), cands.map(function (n) { return withUnit(n, unit); }));
+    }
+
+    var FREE_ESTIMATES = [
+      { prompt: copy.qMyRoute, min: 1, max: 180, unit: copy.minShort, placeholder: '15' },
+      { prompt: copy.qMyExercise, min: 1, max: 180, unit: copy.minShort, placeholder: '10' },
+      { prompt: copy.qMyLunch, min: 1, max: 180, unit: copy.minShort, placeholder: '30' },
+      { prompt: copy.qMyReading, min: 1, max: 180, unit: copy.minShort, placeholder: '15' },
+      { prompt: copy.qMyHaircut, min: 1, max: 180, unit: copy.minShort, placeholder: '30' },
+      { prompt: copy.qMyBus, min: 1, max: 180, unit: copy.minShort, placeholder: '30' },
+      { prompt: copy.qMyTeeth, min: 1, max: 60, unit: copy.minShort, placeholder: '3' },
+      { prompt: copy.qMySleep, min: 1, max: 24, unit: copy.hourShort, placeholder: '8' }
+    ];
+    function freeEstimateQ(item) {
+      return {
+        prompt: item.prompt,
+        free: {
+          min: item.min,
+          max: item.max,
+          unit: item.unit,
+          placeholder: item.placeholder,
+          hint: copy.freeEstimateHint,
+          label: item.prompt
+        },
+        answerText: '',
+        questionText: item.prompt,
+        bodyClass: 'qbody-dur'
+      };
+    }
+    function estimateQ() {
+      if (Math.random() < 0.5) return freeEstimateQ(pick(FREE_ESTIMATES));
+      var a = pick(copy.activities);
+      return question(fill(copy.qEstimate, { x: a.name }), a.right, a.wrong.slice(), null, null, null, 4);
+    }
+    function qSecMin() { return unitQ(copy.qSecMin, 60, [30, 100, 24], copy.secShort); }
+    function qMinHour() { return unitQ(copy.qMinHour, 60, [30, 100, 24], copy.minShort); }
+    function qHourDay() { return unitQ(copy.qHourDay, 24, [12, 20, 30], copy.hourShort); }
+    function qDayWeek() { return unitQ(copy.qDayWeek, 7, [5, 10, 14], copy.dayShort); }
+    function qMonthYear() { return unitQ(copy.qMonthYear, 12, [10, 24, 36], copy.monthShort); }
+    function qYearCentury() { return unitQ(copy.qYearCentury, 100, [10, 50, 1000], ''); }
+    function qHalf() { return unitQ(copy.qHalf, 30, [15, 45, 60], copy.minShort); }
+    function qQuarter() { return unitQ(copy.qQuarter, 15, [10, 20, 30], copy.minShort); }
+
+    function hoursToMin() {
+      var n = 2 + rand(4);
+      var correct = 60 * n;
+      return unitQ(fill(copy.qHoursToMin, { n: n }), correct, [correct - 60, correct + 60, correct - 10, correct + 10], copy.minShort);
+    }
+    function minToSec() {
+      var n = 2 + rand(8);
+      var correct = 60 * n;
+      return unitQ(fill(copy.qMinToSec, { n: n }), correct, [correct - 60, correct + 60, correct - 10, correct + 10], copy.secShort);
+    }
+    function daysToHours() {
+      var n = 2 + rand(4);
+      var correct = 24 * n;
+      return unitQ(fill(copy.qDaysToHours, { n: n }), correct, [correct - 24, correct + 24, correct - 1, correct + 1], copy.hourShort);
+    }
+    function weeksToDays() {
+      var n = 2 + rand(4);
+      var correct = 7 * n;
+      return unitQ(fill(copy.qWeeksToDays, { n: n }), correct, [correct - 7, correct + 7, correct - 1, correct + 1], copy.dayShort);
+    }
+    function yearsToMonths() {
+      var n = 2 + rand(4);
+      var correct = 12 * n;
+      return unitQ(fill(copy.qYearsToMonths, { n: n }), correct, [correct - 12, correct + 12, correct - 1, correct + 1], copy.monthShort);
+    }
+    function hourMinToMin() {
+      var h = 1 + rand(2);
+      var m = pick([10, 15, 20, 30, 40, 45]);
+      var correct = 60 * h + m;
+      return unitQ(fill(copy.qHourMinToMin, { h: h, m: m }), correct, [correct - 60, correct + 60, correct - 10, correct + 10], copy.minShort);
+    }
+    function minToHM() {
+      var n = pick([70, 75, 80, 90, 100, 110, 135]);
+      return question(
+        fill(copy.qMinToHM, { n: n }),
+        durText(n),
+        [n + 5, n - 5, n + 10, n - 10, n + 60].map(durText)
+      );
+    }
+    function dayHourToHours() {
+      var d = 2 + rand(2);
+      var h = pick([2, 3, 4, 5, 6]);
+      var correct = 24 * d + h;
+      return unitQ(fill(copy.qDayHourToHours, { d: d, h: h }), correct, [correct - 24, correct + 24, correct - 1, correct + 1], copy.hourShort);
+    }
+
+    var COMPARE_VALUES = [5, 10, 15, 20, 25, 30, 40, 45, 50, 60, 70, 75, 90, 120];
+    function extremeQ(prompt, longest) {
+      var n = Math.max(4, Math.min(targetTiles, COMPARE_VALUES.length));
+      var vals = shuffle(COMPARE_VALUES.slice()).slice(0, n);
+      var best = longest ? Math.max.apply(null, vals) : Math.min.apply(null, vals);
+      var correct = durText(best);
+      var wrong = vals.map(durText).filter(function (t) { return t !== correct; });
+      var q = question(prompt, correct, wrong, null, null, null, n);
+      q.options = shuffle(q.options);
+      return q;
+    }
+    function longerQ() { return extremeQ(copy.qLonger, true); }
+    function shorterQ() { return extremeQ(copy.qShorter, false); }
+    function diffQ() {
+      var pairs = [[60, 45], [90, 60], [120, 90], [45, 30], [75, 60], [100, 80]];
+      var p = pick(pairs);
+      var diff = p[0] - p[1];
+      return unitQ(fill(copy.qDiff, { a: durText(p[0]), b: durText(p[1]) }), diff, [diff - 5, diff + 5, diff + 10, diff + 15], copy.minShort);
+    }
+
+    function fixedQ(prompt, correct, cands, unit) { return unitQ(prompt, correct, cands, unit); }
+    function lessonBreak() { return fixedQ(copy.qLessonBreak, 55, [35, 45, 65, 50], copy.minShort); }
+    function twoCartoons() { return fixedQ(copy.qTwoCartoons, 45, [5, 40, 50, 55], copy.minShort); }
+    function movieAd() { return question(copy.qMovieAd, durText(90), [durText(80), durText(100), durText(70)]); }
+    function cooking() { return question(copy.qCooking, durText(135), [durText(120), durText(150), durText(105)]); }
+    function morning() { return fixedQ(copy.qMorning, 40, [20, 30, 50, 60], copy.minShort); }
+    function travel() { return question(copy.qTravel, durText(70), [durText(50), durText(60), durText(80)]); }
+
+    function timeline(startText, endText) {
+      var wrap = document.createElement('div');
+      wrap.className = 'tl';
+      var a = document.createElement('span');
+      a.className = 'tl-time';
+      a.textContent = startText;
+      var track = document.createElement('span');
+      track.className = 'tl-track';
+      var fillEl = document.createElement('i');
+      fillEl.className = 'tl-fill';
+      track.appendChild(fillEl);
+      var b = document.createElement('span');
+      b.className = 'tl-time';
+      b.textContent = endText;
+      wrap.appendChild(a);
+      wrap.appendChild(track);
+      wrap.appendChild(b);
+      return wrap;
+    }
+    function timeOptions(total, offsets) {
+      return offsets.map(function (o) { return fmtText(total + o); });
+    }
+    function randomStart() {
+      return { h: 8 + rand(8), m: 5 * rand(12) };
+    }
+
+    function timelineQ() {
+      var duration = pick([10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]);
+      var st = randomStart();
+      var end = addMin(st.h, st.m, duration);
+      var startText = fmtText(st.h * 60 + st.m);
+      var endText = fmtText(end.h * 60 + end.m);
+      var wrong = [duration + 5, duration - 5, duration + 10, duration - 10, duration + 15]
+        .filter(function (n) { return n > 0; })
+        .map(durText);
+      return question(
+        fill(copy.qTimeline, { start: startText, end: endText }),
+        durText(duration),
+        wrong,
+        'opts words',
+        timeline(startText, endText)
+      );
+    }
+    function arriveQ() {
+      var duration = pick([40, 45, 50, 60, 70, 80, 90]);
+      var st = randomStart();
+      var total = st.h * 60 + st.m + duration;
+      var startText = fmtText(st.h * 60 + st.m);
+      return question(
+        fill(copy.qArrive, { start: startText, dur: durText(duration) }),
+        fmtText(total),
+        timeOptions(total, [-5, 5, -10, 10, -15]),
+        'opts words',
+        timeline(startText, '?')
+      );
+    }
+    function startQ() {
+      var duration = pick([40, 45, 50, 60, 70, 80, 90]);
+      var st = randomStart();
+      var total = st.h * 60 + st.m + duration;
+      var endText = fmtText(total);
+      return question(
+        fill(copy.qStart, { end: endText, dur: durText(duration) }),
+        fmtText(st.h * 60 + st.m),
+        timeOptions(st.h * 60 + st.m, [-5, 5, -10, 10, -15]),
+        'opts words',
+        timeline('?', endText)
+      );
+    }
+    function departQ() {
+      var duration = pick([40, 45, 50, 60, 70, 80, 90]);
+      var st = randomStart();
+      var total = st.h * 60 + st.m + duration;
+      var startText = fmtText(st.h * 60 + st.m);
+      return question(
+        fill(copy.qDepart, { start: startText, dur: durText(duration) }),
+        fmtText(total),
+        timeOptions(total, [-5, 5, -10, 10, -15]),
+        'opts words',
+        timeline(startText, '?')
+      );
+    }
+    function walkQ() {
+      var duration = pick([40, 45, 50, 60, 70, 80, 90]);
+      var st = randomStart();
+      var total = st.h * 60 + st.m + duration;
+      var startText = fmtText(st.h * 60 + st.m);
+      return question(
+        fill(copy.qWalk, { start: startText, dur: durText(duration) }),
+        fmtText(total),
+        timeOptions(total, [-5, 5, -10, 10, -15]),
+        'opts words',
+        timeline(startText, '?')
+      );
+    }
+
+    var VARIANTS = {
+      unit: [
+        { min: 1, max: 3, fn: estimateQ },
+        { min: 1, max: 3, fn: qSecMin },
+        { min: 1, max: 3, fn: qMinHour },
+        { min: 1, max: 3, fn: qHourDay },
+        { min: 1, max: 3, fn: qDayWeek },
+        { min: 1, max: 3, fn: qMonthYear },
+        { min: 2, max: 3, fn: qYearCentury },
+        { min: 1, max: 2, fn: qHalf },
+        { min: 1, max: 2, fn: qQuarter }
+      ],
+      convert: [
+        { min: 1, max: 3, fn: hoursToMin },
+        { min: 1, max: 3, fn: minToSec },
+        { min: 1, max: 3, fn: daysToHours },
+        { min: 1, max: 3, fn: weeksToDays },
+        { min: 2, max: 3, fn: yearsToMonths },
+        { min: 2, max: 3, fn: hourMinToMin },
+        { min: 2, max: 3, fn: minToHM },
+        { min: 3, max: 3, fn: dayHourToHours }
+      ],
+      compare: [
+        { min: 2, max: 3, fn: longerQ },
+        { min: 2, max: 3, fn: shorterQ },
+        { min: 2, max: 3, fn: diffQ }
+      ],
+      span: [
+        { min: 2, max: 3, fn: lessonBreak },
+        { min: 2, max: 3, fn: twoCartoons },
+        { min: 2, max: 3, fn: morning },
+        { min: 3, max: 3, fn: movieAd },
+        { min: 3, max: 3, fn: cooking },
+        { min: 3, max: 3, fn: travel },
+        { min: 3, max: 3, fn: timelineQ },
+        { min: 3, max: 3, fn: arriveQ },
+        { min: 3, max: 3, fn: startQ },
+        { min: 3, max: 3, fn: departQ },
+        { min: 3, max: 3, fn: walkQ }
+      ]
+    };
+
+    function generate(settings) {
+      targetTiles = Number(settings.tiles) || 4;
+      var level = settings.level === 'all' ? 1 + rand(3) : Number(settings.level);
+      var kinds = settings.task === 'mix' ? ['unit', 'convert', 'compare', 'span'] : [settings.task];
+      var pool = [];
+      kinds.forEach(function (kind) {
+        var list = VARIANTS[kind] || [];
+        var eligible = list.filter(function (v) { return level >= v.min && level <= v.max; });
+        if (!eligible.length && settings.task !== 'mix') eligible = list;
+        pool = pool.concat(eligible);
+      });
+      if (!pool.length) pool = VARIANTS.unit;
+      var fresh = pool.filter(function (v) { return recentFns.indexOf(v.fn) < 0; });
+      var bag = fresh.length ? fresh : pool;
+      var choice = pick(bag);
+      recentFns.push(choice.fn);
+      while (recentFns.length > 12) recentFns.shift();
+      return choice.fn(level);
+    }
+
+    function info(settings) {
+      var tasks = { mix: copy.taskMix, unit: copy.taskUnit, convert: copy.taskConvert, compare: copy.taskCompare, span: copy.taskSpan };
+      var levels = { 1: copy.level1, 2: copy.level2, 3: copy.level3, all: copy.levelAll };
+      return tasks[settings.task] + ' · ' + levels[settings.level];
+    }
+
+    if (!window.TimeQuiz) return;
+    window.TimeQuiz.mount({
+      key: 'durations:v1',
+      copy: copy,
+      defaults: { task: 'mix', level: 2, tiles: 4, mode: 'free', min: 2, sec: 0, sound: true },
+      coerce: function (key, v) {
+        if (key === 'level') return v === 'all' ? 'all' : Number(v);
+        if (key === 'task' || key === 'mode') return v;
+        return Number(v);
+      },
+      info: info,
+      generate: generate
+    });
+  })();
+</script>
+</BaseLayout>

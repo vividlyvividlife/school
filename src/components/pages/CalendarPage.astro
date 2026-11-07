@@ -1,0 +1,553 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteCopy, type Lang } from '../../i18n/site';
+import '../../styles/trainer.css';
+import '../../styles/vivid-trainer.css';
+import '../../styles/clock.css';
+import '../../styles/timequiz.css';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = siteCopy[lang];
+const p = c.calendar;
+const q = c.quiz;
+const B = import.meta.env.BASE_URL;
+const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+const copyPayload = {
+  ...p,
+  capOk: q.capOk,
+  capBad: q.capBad,
+  mistakes: q.mistakes,
+  skippedTitle: q.skippedTitle,
+  skippedMark: q.skippedMark,
+  capSkip: q.capSkip,
+  none: q.none,
+  yourAnswer: q.yourAnswer,
+  secShort: q.secShort,
+  v5: q.v5,
+  v4: q.v4,
+  v3: q.v3,
+  v2: q.v2,
+  v1: q.v1,
+  v0: q.v0,
+  lang
+};
+---
+
+<BaseLayout title={c.calendarPage.title} description={c.calendarPage.description} page="calendar" lang={lang}>
+<section id="setup" class="screen active">
+  <div class="wrap">
+    <h1>{p.h1}</h1>
+    <p class="sub">{p.sub}</p>
+
+    <div class="v-setup">
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{p.task}</h2><p>{p.taskHint}</p></div>
+        </header>
+        <div class="seg v-tasks-grid" data-key="task">
+          <button type="button" data-v="mix">{p.taskMix}</button>
+          <button type="button" data-v="week">{p.taskWeek}</button>
+          <button type="button" data-v="month">{p.taskMonth}</button>
+          <button type="button" data-v="date">{p.taskDate}</button>
+          <button type="button" data-v="span">{p.taskSpan}</button>
+        </div>
+      </section>
+
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{q.tiles}</h2><p>{q.tilesHint}</p></div>
+        </header>
+        <div class="seg tiles-seg v-tiles-4" data-key="tiles">
+          <button type="button" data-v="4">4</button>
+          <button type="button" data-v="6">6</button>
+          <button type="button" data-v="9">9</button>
+          <button type="button" data-v="12">12</button>
+        </div>
+      </section>
+
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{q.mode}</h2></div>
+        </header>
+        <div class="seg mode-seg v-seg" data-key="mode">
+          <button type="button" data-v="free">{q.modeFree}</button>
+          <button type="button" data-v="timed">{q.modeTimed}</button>
+        </div>
+        <div class="v-time" id="timeRow" hidden>
+          <span class="v-field-label">{q.duration}</span>
+          <span class="numitem"><input id="min" class="v-num-input" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{q.minUnit}</span></span>
+          <span class="numitem"><input id="sec" class="v-num-input" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{q.secUnit}</span></span>
+        </div>
+      </section>
+
+      <section class="v-section">
+        <header class="v-head">
+          <span class="v-num">🔔</span>
+          <div><h2>{q.sound}</h2></div>
+        </header>
+        <div class="sound-row">
+          <label class="switch v-switch">
+            <input id="sound" type="checkbox" checked>
+            <span class="track"></span>
+            <span>{q.soundLabel}</span>
+          </label>
+          <button id="soundTest" class="btn small" type="button">{q.soundTest}</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="v-startbar">
+      <div class="v-startbar-inner">
+        <div class="v-start-info">
+          <div class="v-start-kicker">{q.startTitle}</div>
+          <div class="hint">{q.startHint}</div>
+        </div>
+        <button id="startBtn" class="btn primary v-start-btn" type="button">{q.start}</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="gbar">
+    <button id="stopBtn" class="btn" type="button">{q.stop}</button>
+    <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={q.pause} data-resume={q.resume}>{q.pause}</button>
+    <button id="skipBtn" class="btn skip-btn" type="button">{q.skip}</button>
+    <div class="gmeta" id="gInfo"></div>
+    <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
+  </div>
+  <div class="timewrap" id="timeWrap">
+    <div class="tbar"><div class="tfill" id="tfill"></div></div>
+    <div class="tclock" id="tclock">0:00</div>
+  </div>
+  <div class="playarea">
+    <div class="playgroup">
+      <div class="qwrap">
+        <div class="qprompt" id="qPrompt"></div>
+        <div class="qbody-cal" id="qBody"></div>
+        <div class="qsub" id="qSub" hidden></div>
+      </div>
+      <div class="cap" id="cap"></div>
+      <div class="opts words" id="opts"></div>
+    </div>
+  </div>
+</section>
+
+<section id="results" class="screen">
+  <div class="wrap">
+    <h2><span class="tico" aria-hidden="true">🎉</span>{q.resTitle}</h2>
+    <div class="verdict" id="verdict" hidden></div>
+    <div class="stats">
+      <div class="stat good"><span class="tico" aria-hidden="true">✅</span><b id="rOk">0</b><span>{q.rOk}</span></div>
+      <div class="stat bad"><span class="tico" aria-hidden="true">❌</span><b id="rBad">0</b><span>{q.rBad}</span></div>
+      <div class="stat skip"><span class="tico" aria-hidden="true">⏭️</span><b id="rSkip">0</b><span>{q.rSkip}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🎯</span><b id="rAcc">—</b><span>{q.rAcc}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⚡</span><b id="rAvg">—</b><span>{q.rAvg}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐇</span><b id="rFast">—</b><span>{q.rFast}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">🐢</span><b id="rSlow">—</b><span>{q.rSlow}</span></div>
+      <div class="stat"><span class="tico" aria-hidden="true">⏳</span><b id="rDur">0:00</b><span>{q.rDur}</span></div>
+    </div>
+    <div class="card">
+      <div class="lbl"><span class="tico" aria-hidden="true">🐞</span>{q.mistakes}</div>
+      <div id="misList" class="mis"></div>
+    </div>
+    <div class="card" id="skippedCard" hidden>
+      <div class="lbl" id="skippedTitle"><span class="tico" aria-hidden="true">⏭️</span>{q.skippedTitle}</div>
+      <div class="hint">{q.skippedHint}</div>
+      <div id="skippedList" class="mis"></div>
+    </div>
+    <div class="actions">
+      <button id="againBtn" class="btn primary" type="button">{q.again}</button>
+      <button id="toSetupBtn" class="btn" type="button">{q.settings}</button>
+    </div>
+  </div>
+</section>
+
+<script is:inline type="application/json" id="calCopy" set:html={JSON.stringify(copyPayload)}></script>
+<script is:inline src={asset('js/timequiz.js') + '?v=' + jsVersion}></script>
+<script is:inline>
+  (function () {
+    var copy = JSON.parse(document.getElementById('calCopy').textContent);
+    var W = copy.weekdays;
+    var WG = copy.weekdaysGen;
+    var WA = copy.weekdaysAcc;
+    var WI = copy.weekdaysIns;
+    var WP = copy.weekdaysPlural;
+    var M = copy.months;
+    var MG = copy.monthsGen;
+    var MP = copy.monthsPrep;
+    var MI = copy.monthsIns;
+    var isEn = copy.lang === 'en';
+    var targetTiles = 4;
+
+    function rand(n) { return Math.floor(Math.random() * n); }
+    function pick(a) { return a[rand(a.length)]; }
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = rand(i + 1);
+        var t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+      }
+      return a;
+    }
+    function fill(tpl, vars) {
+      return String(tpl).replace(/\{(\w+)\}/g, function (m, key) {
+        return Object.prototype.hasOwnProperty.call(vars, key) ? String(vars[key]) : m;
+      });
+    }
+    function plural(n, forms) {
+      if (isEn) return n === 1 ? forms[0] : forms[1];
+      var n10 = n % 10;
+      var n100 = n % 100;
+      if (n10 === 1 && n100 !== 11) return forms[0];
+      if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return forms[1];
+      return forms[2];
+    }
+    function daysInMonth(y, m) { return new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); }
+    function firstDow(y, m) { return (new Date(Date.UTC(y, m, 1)).getUTCDay() + 6) % 7; }
+    function utc(y, m, d) { return Date.UTC(y, m, d) / 86400000; }
+    function dateText(d, m) { return fill(copy.dateFmt, { d: d, month: MG[m] }); }
+
+    function extraPool(correct) {
+      var cs = String(correct);
+      var out = [];
+      var wi = W.indexOf(cs);
+      if (wi >= 0) {
+        W.forEach(function (w, i) { if (i !== wi) out.push(w); });
+        return out;
+      }
+      var mi = M.indexOf(cs);
+      if (mi >= 0) {
+        M.forEach(function (m, i) { if (i !== mi) out.push(m); });
+        return out;
+      }
+      if (/^\d+$/.test(cs)) {
+        var n = Number(cs);
+        [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8, 9, -9, 10, -10, 11, -11, 12, -12, 20, -20, 60, -60, 100, -100].forEach(function (d) {
+          var v = n + d;
+          if (v > 0) out.push(String(v));
+        });
+      }
+      return out;
+    }
+    function optionOrder(text) {
+      var s = String(text);
+      var wi = W.indexOf(s);
+      if (wi >= 0) return wi;
+      var mi = M.indexOf(s);
+      if (mi >= 0) return mi;
+      for (var i = 0; i < M.length; i++) {
+        if (s.indexOf(M[i]) === 0) return i;
+      }
+      if (/^\d+$/.test(s)) return Number(s);
+      return null;
+    }
+    function question(prompt, correctText, wrongTexts, cls, visual, pool) {
+      var seen = {};
+      var correct = String(correctText);
+      seen[correct] = true;
+      var options = [{ text: correct, right: true }];
+      var cands = shuffle(wrongTexts.slice()).concat(shuffle(pool || extraPool(correct)));
+      cands.forEach(function (w) {
+        var t = String(w);
+        if (options.length >= targetTiles || seen[t]) return;
+        seen[t] = true;
+        options.push({ text: t });
+      });
+      options.sort(function (a, b) {
+        var oa = optionOrder(a.text);
+        var ob = optionOrder(b.text);
+        if (oa !== null && ob !== null) return oa - ob;
+        if (oa !== null) return -1;
+        if (ob !== null) return 1;
+        return a.text.localeCompare(b.text);
+      });
+      return {
+        prompt: prompt,
+        answerText: correct,
+        questionText: prompt + ' → ' + correct,
+        options: options,
+        optionsClass: cls || 'opts words',
+        optionClass: 'opt-txt',
+        bodyClass: 'qbody-cal',
+        visual: visual || null
+      };
+    }
+    function nums(correct, cands) {
+      var out = [];
+      cands.forEach(function (n) {
+        if (n >= 1 && n !== correct && out.indexOf(n) < 0) out.push(n);
+      });
+      return out.slice(0, 3);
+    }
+    function otherDays(correctIdx) {
+      var out = [];
+      for (var i = 0; i < 7; i++) if (i !== correctIdx) out.push(W[i]);
+      return shuffle(out).slice(0, 3);
+    }
+    function otherMonths(correctIdx) {
+      var out = [];
+      for (var i = 0; i < 12; i++) if (i !== correctIdx) out.push(M[i]);
+      return shuffle(out).slice(0, 3);
+    }
+
+    function weekAfter() {
+      var i = rand(7);
+      var idx = (i + 1) % 7;
+      return question(fill(copy.qAfterDay, { x: WG[i] }), W[idx], otherDays(idx));
+    }
+    function weekBefore() {
+      var i = rand(7);
+      var idx = (i + 6) % 7;
+      return question(fill(copy.qBeforeDay, { x: WI[i] }), W[idx], otherDays(idx));
+    }
+    function weekBetween() {
+      var i = rand(7);
+      var j = (i + 2) % 7;
+      var idx = (i + 1) % 7;
+      return question(fill(copy.qBetweenDay, { a: WI[i], b: WI[j] }), W[idx], otherDays(idx));
+    }
+    function dayNumber() {
+      var i = rand(7);
+      return question(fill(copy.qDayNumber, { x: W[i] }), i + 1, nums(i + 1, [1, 2, 3, 4, 5, 6, 7]), null, null, ['1', '2', '3', '4', '5', '6', '7']);
+    }
+    function dayPlus() {
+      var i = rand(7);
+      var n = 1 + rand(6);
+      var idx = (i + n) % 7;
+      return question(fill(copy.qDayPlus, { day: W[i], n: n, form: plural(n, copy.dayForms) }), W[idx], otherDays(idx));
+    }
+    function dayMinus() {
+      var i = rand(7);
+      var n = 1 + rand(6);
+      var idx = ((i - n) % 7 + 7) % 7;
+      return question(fill(copy.qDayMinus, { day: W[i], n: n, form: plural(n, copy.dayForms) }), W[idx], otherDays(idx));
+    }
+    function weekDays() {
+      return question(copy.qWeekDays, 7, ['5', '6', '8']);
+    }
+    function weekend() {
+      return question(copy.qWeekend, 2, ['1', '3', '4']);
+    }
+
+    function monthAfter() {
+      var i = rand(12);
+      var idx = (i + 1) % 12;
+      return question(fill(copy.qMonthAfter, { x: MG[i] }), M[idx], otherMonths(idx));
+    }
+    function monthBefore() {
+      var i = rand(12);
+      var idx = (i + 11) % 12;
+      return question(fill(copy.qMonthBefore, { x: MI[i] }), M[idx], otherMonths(idx));
+    }
+    function monthBetween() {
+      var i = rand(12);
+      var j = (i + 2) % 12;
+      var idx = (i + 1) % 12;
+      return question(fill(copy.qMonthBetween, { a: MI[i], b: MI[j] }), M[idx], otherMonths(idx));
+    }
+    function monthNumber() {
+      var i = rand(12);
+      return question(fill(copy.qMonthNumber, { x: M[i] }), i + 1, nums(i + 1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]), null, null, ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
+    }
+    function daysInMonthQ() {
+      var i = pick([0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+      var dim = daysInMonth(2026, i);
+      return question(fill(copy.qDaysInMonth, { x: MP[i] }), dim, nums(dim, [28, 29, 30, 31]));
+    }
+    function seasonQ() {
+      var i = rand(4);
+      var wrong = [];
+      for (var k = 0; k < 4; k++) if (k !== i) wrong.push(copy.seasons[k].months);
+      return question(fill(copy.qSeason, { x: copy.seasons[i].name }), copy.seasons[i].months, wrong, 'opts words long');
+    }
+    function factYear() { return question(copy.qYearDays, 365, [360, 364, 366]); }
+    function factLeap() { return question(copy.qLeapDays, 366, [364, 365, 367]); }
+    function factFeb() { return question(copy.qFebDays, 28, [27, 29, 30]); }
+    function factCentury() { return question(copy.qCentury, 100, [10, 50, 1000]); }
+    function factDecade() { return question(copy.qDecade, 10, [5, 50, 100]); }
+    function factHours() { return question(copy.qHoursDay, 24, [12, 20, 30]); }
+
+    function gridVisual(year, month) {
+      var wrap = document.createElement('div');
+      wrap.className = 'cal';
+      var head = document.createElement('div');
+      head.className = 'cal-head';
+      head.textContent = fill(copy.calTitle, { month: M[month], year: year });
+      wrap.appendChild(head);
+      var grid = document.createElement('div');
+      grid.className = 'calgrid';
+      copy.calWeekdays.forEach(function (w) {
+        var cell = document.createElement('div');
+        cell.className = 'calwd';
+        cell.textContent = w;
+        grid.appendChild(cell);
+      });
+      var offset = firstDow(year, month);
+      var dim = daysInMonth(year, month);
+      for (var i = 0; i < offset; i++) {
+        var empty = document.createElement('div');
+        empty.className = 'calday off';
+        grid.appendChild(empty);
+      }
+      for (var d = 1; d <= dim; d++) {
+        var cell = document.createElement('div');
+        cell.className = 'calday';
+        cell.textContent = String(d);
+        grid.appendChild(cell);
+      }
+      wrap.appendChild(grid);
+      return wrap;
+    }
+
+    function gridWeekday() {
+      var year = pick([2026, 2027]);
+      var month = rand(12);
+      var dim = daysInMonth(year, month);
+      var d = 1 + rand(dim);
+      var idx = (new Date(Date.UTC(year, month, d)).getUTCDay() + 6) % 7;
+      var prompt = fill(copy.qGridWeekday, { date: dateText(d, month), year: year });
+      return question(prompt, W[idx], otherDays(idx), 'opts words', gridVisual(year, month));
+    }
+    function gridNth() {
+      var year = pick([2026, 2027]);
+      var month = rand(12);
+      var wd = rand(7);
+      var dim = daysInMonth(year, month);
+      var offset = (wd - firstDow(year, month) + 7) % 7;
+      var k = 1 + rand(4);
+      var day = 1 + offset + 7 * (k - 1);
+      while (day > dim) {
+        k = 1 + rand(3);
+        day = 1 + offset + 7 * (k - 1);
+      }
+      var ord = (wd === 2 || wd === 4 || wd === 5) ? copy.ordF[k - 1] : (wd === 6 ? copy.ordN[k - 1] : copy.ordM[k - 1]);
+      var prompt = fill(copy.qGridNth, {
+        ord: ord,
+        weekday: isEn ? W[wd] : WA[wd],
+        month: isEn ? M[month] : MG[month]
+      });
+      var cands = [day - 1, day + 1, day - 2, day + 2, day - 7, day + 7, 1, 2, 3]
+        .filter(function (n) { return n >= 1 && n <= dim; });
+      var pool = [];
+      for (var d = 1; d <= dim; d++) pool.push(String(d));
+      return question(prompt, day, nums(day, cands), 'opts words', gridVisual(year, month), pool);
+    }
+    function gridCount() {
+      var year = pick([2026, 2027]);
+      var month = rand(12);
+      var wd = rand(7);
+      var dim = daysInMonth(year, month);
+      var offset = (wd - firstDow(year, month) + 7) % 7;
+      var count = 1 + Math.floor((dim - 1 - offset) / 7);
+      var prompt = fill(copy.qGridCount, {
+        weekday: WP[wd],
+        month: isEn ? M[month] : MP[month]
+      });
+      return question(prompt, count, nums(count, [3, 4, 5, 6]), 'opts words', gridVisual(year, month), ['1', '2', '3', '4', '5', '6']);
+    }
+
+    function spanSame() {
+      var m = rand(12);
+      var dim = daysInMonth(2026, m);
+      var d1 = 1 + rand(dim - 2);
+      var len = 2 + rand(dim - d1 - 1);
+      var d2 = d1 + len;
+      return question(fill(copy.qSpan, { a: dateText(d1, m), b: dateText(d2, m) }), len, nums(len, [len - 1, len + 1, len + 2, len + 7]));
+    }
+    function spanMonths() {
+      var m = rand(11);
+      var dim = daysInMonth(2026, m);
+      var d1 = dim - rand(6);
+      var d2 = 1 + rand(14);
+      var diff = Math.round(utc(2026, m + 1, d2) - utc(2026, m, d1));
+      return question(fill(copy.qSpan, { a: dateText(d1, m), b: dateText(d2, m + 1) }), diff, nums(diff, [diff - 1, diff + 1, diff + 2, diff + 7]));
+    }
+    function spanYear() {
+      var d1 = 25 + rand(7);
+      var d2 = 1 + rand(15);
+      var diff = Math.round(utc(2027, 0, d2) - utc(2026, 11, d1));
+      return question(fill(copy.qSpan, { a: dateText(d1, 11), b: dateText(d2, 0) }), diff, nums(diff, [diff - 1, diff + 1, diff + 2, diff + 7]));
+    }
+
+    var VARIANTS = {
+      week: [
+        { min: 1, max: 2, fn: weekAfter },
+        { min: 1, max: 2, fn: weekBefore },
+        { min: 2, max: 3, fn: weekBetween },
+        { min: 2, max: 3, fn: dayNumber },
+        { min: 2, max: 3, fn: dayPlus },
+        { min: 3, max: 3, fn: dayMinus },
+        { min: 1, max: 1, fn: weekDays },
+        { min: 1, max: 1, fn: weekend }
+      ],
+      month: [
+        { min: 1, max: 2, fn: monthAfter },
+        { min: 1, max: 2, fn: monthBefore },
+        { min: 2, max: 3, fn: monthBetween },
+        { min: 1, max: 3, fn: monthNumber },
+        { min: 1, max: 3, fn: daysInMonthQ },
+        { min: 1, max: 2, fn: seasonQ },
+        { min: 1, max: 3, fn: factYear },
+        { min: 3, max: 3, fn: factLeap },
+        { min: 1, max: 3, fn: factFeb },
+        { min: 2, max: 3, fn: factCentury },
+        { min: 2, max: 3, fn: factDecade },
+        { min: 1, max: 3, fn: factHours }
+      ],
+      date: [
+        { min: 2, max: 3, fn: gridWeekday },
+        { min: 2, max: 3, fn: gridNth },
+        { min: 3, max: 3, fn: gridCount }
+      ],
+      span: [
+        { min: 2, max: 3, fn: spanSame },
+        { min: 3, max: 3, fn: spanMonths },
+        { min: 3, max: 3, fn: spanYear }
+      ]
+    };
+
+    function generate(settings) {
+      targetTiles = Number(settings.tiles) || 4;
+      var level = 1 + rand(3);
+      var kinds = settings.task === 'mix' ? ['week', 'month', 'date', 'span'] : [settings.task];
+      var pool = [];
+      kinds.forEach(function (kind) {
+        var list = VARIANTS[kind] || [];
+        var eligible = list.filter(function (v) { return level >= v.min && level <= v.max; });
+        if (!eligible.length && settings.task !== 'mix') eligible = list;
+        pool = pool.concat(eligible);
+      });
+      if (!pool.length) pool = VARIANTS.week.concat(VARIANTS.month);
+      return pick(pool).fn(level);
+    }
+
+    function info(settings) {
+      var tasks = { mix: copy.taskMix, week: copy.taskWeek, month: copy.taskMonth, date: copy.taskDate, span: copy.taskSpan };
+      return tasks[settings.task];
+    }
+
+    if (!window.TimeQuiz) return;
+    window.TimeQuiz.mount({
+      key: 'calendar:v1',
+      copy: copy,
+      defaults: { task: 'mix', tiles: 4, mode: 'free', min: 2, sec: 0, sound: true },
+      coerce: function (key, v) {
+        if (key === 'task' || key === 'mode') return v;
+        return Number(v);
+      },
+      info: info,
+      generate: generate
+    });
+  })();
+</script>
+</BaseLayout>

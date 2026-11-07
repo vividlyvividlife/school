@@ -1,14 +1,16 @@
 import type { Lang } from './site';
 
 export interface PagePair {
-  kind: 'home' | 'trainer' | 'examples' | 'reading' | 'skill' | 'helper' | 'clock';
+  kind: 'home' | 'trainer' | 'examples' | 'reading' | 'skill' | 'helper' | 'clock' | 'calendar' | 'durations';
   ru: string;
   en: string;
 }
 
 export const pagePairs: PagePair[] = [
   { kind: 'home', ru: '/', en: '/en/' },
+  { kind: 'home', ru: '/matematika/', en: '/en/math/' },
   { kind: 'examples', ru: '/2-class/matematika/razdatochnyy-material/', en: '/en/grade-2/math/worksheets/' },
+  { kind: 'trainer', ru: '/matematika/primery/', en: '/en/math/practice/' },
   { kind: 'trainer', ru: '/2-class/matematika/primery/', en: '/en/grade-2/math/practice/' },
   { kind: 'skill', ru: '/2-class/matematika/razryady/', en: '/en/grade-2/math/place-value/' },
   { kind: 'skill', ru: '/2-class/matematika/sravnenie/', en: '/en/grade-2/math/comparison/' },
@@ -30,7 +32,9 @@ export const pagePairs: PagePair[] = [
   { kind: 'reading', ru: '/2-class/belaruskaya-mova/zima/', en: '/en/grade-2/belarusian/winter/' },
   { kind: 'reading', ru: '/2-class/belaruskaya-mova/viasna/', en: '/en/grade-2/belarusian/spring/' },
   { kind: 'helper', ru: '/pomogator/', en: '/en/helper/' },
-  { kind: 'clock', ru: '/pomogator/vremya/', en: '/en/helper/time/' }
+  { kind: 'clock', ru: '/vremya/', en: '/en/time/' },
+  { kind: 'calendar', ru: '/vremya/kalendar/', en: '/en/time/calendar/' },
+  { kind: 'durations', ru: '/vremya/dlitelnosti/', en: '/en/time/durations/' }
 ];
 
 export function pagePairFor(path: string): PagePair {

@@ -160,8 +160,8 @@ input.num{width:72px;padding:8px 10px;border:1px solid var(--line);border-radius
 input.num:focus{outline:2px solid #99f6e4;border-color:var(--blue)}
 .numitem{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 
-.switch{display:inline-flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
-.switch input{position:absolute;opacity:0;pointer-events:none}
+.switch{display:inline-flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;position:relative}
+.switch input{position:absolute;left:0;top:50%;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
 .track{width:46px;height:27px;border-radius:14px;background:var(--track);position:relative;transition:.15s;flex:none}
 .track::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.15s}
 .switch input:checked + .track{background:var(--blue)}
@@ -191,6 +191,11 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-align:c
 .mrow .ua.missed{color:var(--amber)}
 
 .gbar{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--line-strong);flex:none}
+@media (max-width:420px){
+  .gbar{gap:6px;padding:8px}
+  .gbar .btn{padding:8px 10px;font-size:13px}
+  .score{font-size:14px}
+}
 .gbar .pause-btn[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
 .gbar .pause-btn[aria-pressed="true"]:hover{background:var(--blue-d)}
 #game.paused .playarea{opacity:.45;pointer-events:none}
@@ -230,6 +235,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-align:c
 .cap{min-height:1.5em;font-size:15px;font-weight:600}
 .cap.ok{color:var(--green)}
 .cap.bad{color:var(--red)}
+.cap.note{color:var(--muted)}
 .padwrap{width:100%;max-width:440px}
 .pad{display:flex;flex-wrap:wrap;gap:clamp(6px,1.6vw,12px);width:100%;max-width:420px;margin:0 auto}
 .pad button{flex:1 1 30%;height:56px;height:clamp(46px,9.2dvh,84px);font-size:clamp(19px,4.5dvh,30px);font-weight:600;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow-card);padding:0}
@@ -282,6 +288,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-align:c
 .mrow:last-child{border-bottom:none}
 .mrow .ua{color:var(--red);margin-left:10px}
 .mrow .ua.missed,.mrow .ua.slow{color:var(--amber)}
+.mrow .ua.skipped{color:var(--muted)}
+.stat.skip b{color:var(--muted)}
 .none{color:var(--green);font-weight:600;padding:6px 0}
 .slow-actions{padding:0 0 10px}
 .slow-actions .btn{width:100%;padding:10px}

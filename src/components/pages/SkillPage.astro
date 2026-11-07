@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Decor from '../Decor.astro';
 import { siteCopy, type Lang } from '../../i18n/site';
 import { skillCommon, skillCopy, type SkillId } from '../../i18n/skills';
 import '../../styles/trainer.css';
+import '../../styles/vivid-trainer.css';
 import '../../styles/skills.css';
 
 interface Props {
@@ -71,150 +71,169 @@ const taskEntries = Object.entries(p.tasks);
 ---
 
 <BaseLayout title={p.meta.title} description={p.meta.description} keywords={p.meta.keywords} page="trainer" lang={lang}>
-<Decor variant={skill} />
 <section id="setup" class="screen active" data-skill={skill} data-lang={lang}>
   <div class="wrap">
     <h1>{p.h1}</h1>
     <p class="sub">{p.sub}</p>
 
-    <div class="setup-grid">
-      <div class="tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">📏</span>{sc.rangeTitle}</div>
-        <div class="tile-body">
-          <div class="fields">
-            <label class="fld"><span>{t.from}</span><input id="from" class="num" type="number" inputmode="numeric" min="0" max={toMax} step="1" value={d.from}></label>
-            <label class="fld"><span>{t.to}</span><input id="to" class="num" type="number" inputmode="numeric" min="1" max={toMax} step="1" value={d.to}></label>
+    <div class="v-setup">
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{sc.rangeTitle}</h2><p>{p.rangeHint}</p></div>
+        </header>
+        <div class="v-range">
+          <div class="v-stepper-field">
+            <span class="v-field-label">{t.from}</span>
+            <div class="v-stepper">
+              <button type="button" class="v-step" data-target="from" data-step="-1" aria-label="−">−</button>
+              <input id="from" class="v-num-input" type="number" inputmode="numeric" min="0" max={toMax} step="1" value={d.from}>
+              <button type="button" class="v-step" data-target="from" data-step="1" aria-label="+">+</button>
+            </div>
           </div>
-          <div class="chips" id="toChips">
-            {p.chips.map((v) => <button type="button" data-v={v}>{v}</button>)}
+          <div class="v-stepper-field">
+            <span class="v-field-label">{t.to}</span>
+            <div class="v-stepper">
+              <button type="button" class="v-step" data-target="to" data-step="-1" aria-label="−">−</button>
+              <input id="to" class="v-num-input" type="number" inputmode="numeric" min="1" max={toMax} step="1" value={d.to}>
+              <button type="button" class="v-step" data-target="to" data-step="1" aria-label="+">+</button>
+            </div>
           </div>
-          <div class="hint">{p.rangeHint}</div>
         </div>
-      </div>
+        <div class="chips" id="toChips">
+          {p.chips.map((v) => <button type="button" data-v={v}>{v}</button>)}
+        </div>
+      </section>
 
       {taskEntries.length > 0 && (
-        <div class="tile tasks-tile">
-          <div class="tile-title"><span class="tico" aria-hidden="true">🗂️</span>{sc.tasksTitle}</div>
-          <div class="tile-body">
-            <div class="seg multi types-seg" data-key="types">
-              {taskEntries.map(([key, label]) => <button type="button" data-v={key}>{label}</button>)}
-            </div>
-            <div class="hint">{sc.tasksHint}</div>
+        <section class="v-section v-counted">
+          <header class="v-head">
+            <span class="v-num"></span>
+            <div><h2>{sc.tasksTitle}</h2><p>{sc.tasksHint}</p></div>
+          </header>
+          <div class="seg multi types-seg v-tasks-grid" data-key="types">
+            {taskEntries.map(([key, label]) => <button type="button" data-v={key}>{label}</button>)}
           </div>
-        </div>
+        </section>
       )}
 
       {hasOps && (
-        <div class="tile">
-          <div class="tile-title"><span class="tico" aria-hidden="true">{isProblems ? '📝' : '➕'}</span>{isProblems ? t.actionsProblems : t.actions}</div>
-          <div class="tile-body">
-            <div class="seg multi ops-seg" data-key="ops" data-multi="1">
-              <button type="button" data-v="add" title={t.addTitle}>+</button>
-              <button type="button" data-v="sub" title={t.subTitle}>−</button>
-              <button type="button" data-v="mul" title={t.mulTitle}>×</button>
-              <button type="button" data-v="div" title={t.divTitle}>÷</button>
-            </div>
-            <div class="hint">{isProblems ? t.actionsHintProblems : t.actionsHint}</div>
-            {isProblems && (
-              <div class="star-row">
-                <button type="button" id="starBtn" class="star-toggle" aria-pressed="false" title={t.starTitle}>
-                  <svg class="star-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.98 6.04 6.66.97-4.82 4.7 1.14 6.63L12 17.8l-5.96 3.14 1.14-6.63-4.82-4.7 6.66-.97z"/></svg>
-                  <span>{t.starLabel}</span>
-                </button>
-                <div class="hint">{t.starHint}</div>
-              </div>
-            )}
+        <section class="v-section v-counted">
+          <header class="v-head">
+            <span class="v-num"></span>
+            <div><h2>{isProblems ? t.actionsProblems : t.actions}</h2><p>{isProblems ? t.actionsHintProblems : t.actionsHint}</p></div>
+          </header>
+          <div class="seg multi ops-seg v-ops" data-key="ops" data-multi="1">
+            <button type="button" data-v="add" title={t.addTitle}><span class="v-op-symbol">+</span><span class="v-op-label">{t.addTitle}</span></button>
+            <button type="button" data-v="sub" title={t.subTitle}><span class="v-op-symbol">−</span><span class="v-op-label">{t.subTitle}</span></button>
+            <button type="button" data-v="mul" title={t.mulTitle}><span class="v-op-symbol">×</span><span class="v-op-label">{t.mulTitle}</span></button>
+            <button type="button" data-v="div" title={t.divTitle}><span class="v-op-symbol">÷</span><span class="v-op-label">{t.divTitle}</span></button>
           </div>
-        </div>
+          {isProblems && (
+            <div class="v-star-row">
+              <button type="button" id="starBtn" class="star-toggle v-star-toggle" aria-pressed="false" title={t.starTitle}>
+                <svg class="star-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.98 6.04 6.66.97-4.82 4.7 1.14 6.63L12 17.8l-5.96 3.14 1.14-6.63-4.82-4.7 6.66-.97z"/></svg>
+                <span>{t.starLabel}</span>
+              </button>
+              <div class="hint">{t.starHint}</div>
+            </div>
+          )}
+        </section>
       )}
 
       {!isCompare && (
-        <div class="tile">
-          <div class="tile-title"><span class="tico" aria-hidden="true">👆</span>{t.answerWith}</div>
-          <div class="tile-body">
-            <div class="seg answer-seg" data-key="answer">
-              <button type="button" data-v="type">{t.answerType}</button>
-              <button type="button" data-v="tiles6">{t.answerTiles6}</button>
-              <button type="button" data-v="tiles9">{t.answerTiles9}</button>
-              <button type="button" data-v="tiles12">{t.answerTiles12}</button>
-            </div>
+        <section class="v-section v-counted">
+          <header class="v-head">
+            <span class="v-num"></span>
+            <div><h2>{t.answerWith}</h2></div>
+          </header>
+          <div class="seg answer-seg v-answer-grid" data-key="answer">
+            <button type="button" data-v="type"><span class="v-ans-preview"><i>7</i><i>8</i><i>9</i></span><span class="v-ans-title">{t.answerType}</span></button>
+            <button type="button" data-v="tiles6"><span class="v-ans-preview"><i>6</i></span><span class="v-ans-title">{t.answerTiles6}</span></button>
+            <button type="button" data-v="tiles9"><span class="v-ans-preview"><i>9</i></span><span class="v-ans-title">{t.answerTiles9}</span></button>
+            <button type="button" data-v="tiles12"><span class="v-ans-preview"><i>12</i></span><span class="v-ans-title">{t.answerTiles12}</span></button>
           </div>
-        </div>
+        </section>
       )}
 
       {isCompare && (
-        <div class="tile answer-tile">
-          <div class="tile-title"><span class="tico" aria-hidden="true">👆</span>{t.answerWith}</div>
-          <div class="tile-body">
-            <div class="sign-legend" aria-hidden="true">
-              <span><b>&lt;</b><i>{sc.signLess}</i></span>
-              <span><b>=</b><i>{sc.signEqual}</i></span>
-              <span><b>&gt;</b><i>{sc.signMore}</i></span>
-            </div>
-            <div class="hint">{sc.signHint}</div>
+        <section class="v-section v-counted">
+          <header class="v-head">
+            <span class="v-num"></span>
+            <div><h2>{t.answerWith}</h2><p>{sc.signHint}</p></div>
+          </header>
+          <div class="v-sign-row" aria-hidden="true">
+            <span><b>&lt;</b><i>{sc.signLess}</i></span>
+            <span><b>=</b><i>{sc.signEqual}</i></span>
+            <span><b>&gt;</b><i>{sc.signMore}</i></span>
           </div>
-        </div>
+        </section>
       )}
 
-      <div class="tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">⏱️</span>{t.mode}</div>
-        <div class="tile-body">
-          <div class="seg mode-seg" data-key="mode">
-            <button type="button" data-v="free">{t.modeFree}</button>
-            <button type="button" data-v="timed">{t.modeTimed}</button>
-          </div>
-          <div class="duration" id="timeRow">
-            <span class="duration-label">{t.duration}</span>
-            <span class="numitem"><input id="min" class="num" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{t.minUnit}</span></span>
-            <span class="numitem"><input id="sec" class="num" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{t.secUnit}</span></span>
-          </div>
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{t.mode}</h2></div>
+        </header>
+        <div class="seg mode-seg v-seg" data-key="mode">
+          <button type="button" data-v="free">{t.modeFree}</button>
+          <button type="button" data-v="timed">{t.modeTimed}</button>
         </div>
-      </div>
+        <div class="v-time" id="timeRow">
+          <span class="v-field-label">{t.duration}</span>
+          <span class="numitem"><input id="min" class="v-num-input" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{t.minUnit}</span></span>
+          <span class="numitem"><input id="sec" class="v-num-input" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{t.secUnit}</span></span>
+        </div>
+      </section>
 
-      <div class="tile sound-tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">🔔</span>{t.sound}</div>
-        <div class="tile-body">
+      <details class="v-section v-more">
+        <summary class="v-more-summary">
+          <span class="v-num">🔔</span>
+          <div><h2>{t.sound}</h2><p>{t.soundHint}</p></div>
+          <span class="v-chev" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="v-more-body">
           <div class="sound-row">
-            <label class="switch">
+            <label class="switch v-switch">
               <input id="sound" type="checkbox" checked>
               <span class="track"></span>
               <span>{t.soundLabel}</span>
             </label>
             <button id="soundTest" class="btn small" type="button">{t.soundTest}</button>
           </div>
-          <div class="hint">{t.soundHint}</div>
         </div>
-      </div>
+      </details>
 
-      <div class="tile wide start-tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">🚀</span>{t.setTitle}</div>
-        <div class="start-info">
-          <div class="hint" id="poolInfo">{sc.poolPrefix}…</div>
-          <a class="btn small" href={asset(offlineFile)} download={downloadName} title={t.offlineTitle} data-offline-hide>{t.offline}</a>
+      <section class="v-section v-hard">
+        <header class="v-head">
+          <span class="v-num">🌱</span>
+          <div><h2>{t.hardTitle}</h2><p id="hardInfo">{t.hardInfo}</p></div>
+        </header>
+        <div id="hardList" class="exlist" hidden></div>
+        <div class="hard-actions">
+          <button id="hardBtn" class="btn" type="button" disabled>{t.hardBtn}</button>
+          <button id="clearHard" class="btn small" type="button" hidden>{t.clearHard}</button>
         </div>
-        <button id="startBtn" class="btn primary" type="button">{t.start}</button>
-      </div>
+      </section>
 
-      <div class="tile wide hard-tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">🌱</span>{t.hardTitle}</div>
-        <div class="tile-body hard-body">
-          <div class="hard-info">
-            <div class="hint" id="hardInfo">{t.hardInfo}</div>
-            <div id="hardList" class="exlist" hidden></div>
-          </div>
-          <div class="hard-actions">
-            <button id="hardBtn" class="btn" type="button" disabled>{t.hardBtn}</button>
-            <button id="clearHard" class="btn small" type="button" hidden>{t.clearHard}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tile history-tile">
-      <div class="tile-title"><span class="tico" aria-hidden="true">📜</span>{t.history}</div>
-      <div class="tile-body hist-body">
+      <section class="v-section v-history">
+        <header class="v-head">
+          <span class="v-num">📜</span>
+          <div><h2>{t.history}</h2></div>
+        </header>
         <div id="histList" class="hist"></div>
         <button id="clearHist" class="btn small" type="button">{t.clear}</button>
+      </section>
+    </div>
+
+    <div class="v-startbar">
+      <div class="v-startbar-inner">
+        <div class="v-start-info">
+          <div class="v-start-kicker">{t.setTitle}</div>
+          <div class="hint" id="poolInfo">{sc.poolPrefix}…</div>
+          <a class="v-offline" href={asset(offlineFile)} download={downloadName} title={t.offlineTitle} data-offline-hide>{t.offline}</a>
+        </div>
+        <button id="startBtn" class="btn primary v-start-btn" type="button">{t.start}</button>
       </div>
     </div>
   </div>
@@ -224,6 +243,7 @@ const taskEntries = Object.entries(p.tasks);
   <div class="gbar">
     <button id="stopBtn" class="btn" type="button">{t.stop}</button>
     <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={t.pause} data-resume={t.resume}>{t.pause}</button>
+    <button id="skipBtn" class="btn skip-btn" type="button">{t.skip}</button>
     <div class="gmeta" id="gInfo"></div>
     <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
   </div>
@@ -274,6 +294,7 @@ const taskEntries = Object.entries(p.tasks);
     <div class="stats">
       <div class="stat good"><span class="tico" aria-hidden="true">✅</span><b id="rOk">0</b><span>{t.rOk}</span></div>
       <div class="stat bad"><span class="tico" aria-hidden="true">❌</span><b id="rBad">0</b><span>{t.rBad}</span></div>
+      <div class="stat skip"><span class="tico" aria-hidden="true">⏭️</span><b id="rSkip">0</b><span>{t.rSkip}</span></div>
       <div class="stat"><span class="tico" aria-hidden="true">🎯</span><b id="rAcc">—</b><span>{t.rAcc}</span></div>
       <div class="stat"><span class="tico" aria-hidden="true">⚡</span><b id="rAvg">—</b><span>{t.rAvg}</span></div>
       <div class="stat"><span class="tico" aria-hidden="true">🐇</span><b id="rFast">—</b><span>{t.rFast}</span></div>
@@ -283,6 +304,11 @@ const taskEntries = Object.entries(p.tasks);
     <div class="card">
       <div class="lbl" id="misTitle"><span class="tico" aria-hidden="true">🐞</span>{t.mistakes}</div>
       <div id="misList" class="mis"></div>
+    </div>
+    <div class="card" id="skippedCard" hidden>
+      <div class="lbl" id="skippedTitle"><span class="tico" aria-hidden="true">⏭️</span>{t.skippedTitle}</div>
+      <div class="hint">{t.skippedHint}</div>
+      <div id="skippedList" class="mis"></div>
     </div>
     <div class="card" id="slowCard" hidden>
       <div class="lbl" id="slowTitle"><span class="tico" aria-hidden="true">🐢</span>{t.slowTitle}</div>

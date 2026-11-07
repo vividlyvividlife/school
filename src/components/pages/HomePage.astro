@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { siteCopy, type Lang } from '../../i18n/site';
-import { navigationByLang, type NavItem } from '../../data/navigation';
+import { navigationByLang } from '../../data/navigation';
 
 interface Props {
   lang: Lang;
@@ -9,279 +9,312 @@ interface Props {
 
 const { lang } = Astro.props;
 const c = siteCopy[lang];
-const p = c.home;
+const isEn = lang === 'en';
 const B = import.meta.env.BASE_URL;
 const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
-const grades = navigationByLang[lang];
-const countItems = (subject: NavItem) =>
-  (subject.children || []).filter((it) => !it.soon).length;
+const subjects = navigationByLang[lang];
+const math = subjects.find((item) => item.path === (isEn ? '/en/math/' : '/matematika/'));
+if (!math) throw new Error('Math section not found');
+const time = subjects.find((item) => item.label === (isEn ? 'Time' : 'Время'));
+const reading = subjects.find((item) => item.label === (isEn ? 'Literary Reading' : 'Літаратурнае чытанне'));
+const helper = subjects.find((item) => item.label === (isEn ? 'Helper' : 'Помогатор'));
+const mathChildren = (math.children || []).filter((item) => !item.soon);
+const practice = mathChildren.find((item) => item.page === 'trainer' && /Примеры|Practice/i.test(item.label)) || mathChildren[0];
+const worksheet = mathChildren.find((item) => item.page === 'examples');
+const timeFirst = (time?.children || []).find((item) => !item.soon);
+const helperFirst = (helper?.children || []).find((item) => !item.soon);
+
+const plural = (n: number) => {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'раздел';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'раздела';
+  return 'разделов';
+};
+
+const copy = {
+  sub: isEn ? 'Practice and learning materials' : 'Тренажёры и материалы',
+  kicker: isEn ? 'Math · Practice' : 'Математика · Примеры',
+  heroDesc: isEn ? 'Counting and times tables' : 'Счёт и таблица умножения',
+  continue: isEn ? 'Continue' : 'Продолжить',
+  all: isEn ? 'All topics' : 'Все темы',
+  sections: isEn ? 'Sections' : 'Разделы',
+  allSections: isEn ? 'All sections' : 'Все разделы',
+};
+
+const cards = [
+  {
+    title: isEn ? 'Math' : 'Математика',
+    desc: isEn ? 'Practice, problems, units' : 'Примеры, задачи, величины',
+    icon: '∑',
+    tone: 'math',
+    href: math.path,
+    count: mathChildren.filter((item) => item.page !== 'examples').length,
+  },
+  {
+    title: isEn ? 'Time' : 'Время',
+    desc: isEn ? 'Clocks, calendar, durations' : 'Часы, календарь, длительности',
+    icon: '◷',
+    tone: 'time',
+    href: timeFirst?.path || time?.path || '/',
+    count: time?.children?.filter((item) => !item.soon).length || 0,
+  },
+  {
+    title: reading?.label || (isEn ? 'Literary Reading' : 'Літаратурнае чытанне'),
+    desc: isEn ? 'Reading lists with full texts' : 'Чытанне і тэксты',
+    icon: '▤',
+    tone: 'reading',
+    href: reading?.path || '/',
+    count: reading?.children?.filter((item) => !item.soon).length || 0,
+  },
+  worksheet
+    ? {
+        title: worksheet.label,
+        desc: worksheet.desc || '',
+        icon: '⎙',
+        tone: 'print',
+        href: worksheet.path,
+        count: 0,
+      }
+    : null,
+  helperFirst
+    ? {
+        title: helper?.label || (isEn ? 'Helper' : 'Помогатор'),
+        desc: helperFirst.desc || '',
+        icon: '⏱',
+        tone: 'helper',
+        href: helperFirst.path,
+        count: 1,
+      }
+    : null,
+].filter(Boolean) as { title: string; desc: string; icon: string; tone: string; href: string; count: number }[];
 ---
 
 <BaseLayout title={c.homePage.title} lang={lang}>
-  <div class="home">
-    <header class="hero">
-      <div class="kicker">{p.kicker}</div>
-      <h1>{p.h1}</h1>
-      <p class="sub">{p.sub}</p>
+  <div class="vivid-home">
+    <header class="vivid-brand">
+      <a class="vivid-brand-link" href={url(isEn ? 'en/' : '')} aria-label={c.siteName}>
+        <span class="vivid-logo" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M5 4h6.2l4.8 15 4.8-15H27l-8.6 24h-4.8L5 4z" fill="currentColor"/></svg>
+        </span>
+        <span class="vivid-brand-copy">
+          <span class="vivid-name">{c.siteName}</span>
+          <span class="vivid-sub">{copy.sub}</span>
+        </span>
+      </a>
     </header>
 
-    <div class="grid">
-      {grades.map((grade) => (
-        <section class={grade.path ? 'card' : 'card wide'}>
-          <h2 class="grade">{grade.label}</h2>
-          {grade.children?.map((child) => {
-            if (child.soon) {
-              return <div class="soon">{child.label}</div>;
-            }
-            if (child.children && child.children.length && !child.path) {
-              const items = child.children.filter((it) => !it.soon);
-              return (
-                <div class="links">
-                  {items.map((it) => (
-                    <a class="item" href={url(it.path)}>
-                      <span class="txt">
-                        <span class="title">{it.label}</span>
-                        {it.desc && <span class="desc">{it.desc}</span>}
-                      </span>
-                      <span class="arrow" aria-hidden="true">→</span>
-                    </a>
-                  ))}
-                </div>
-              );
-            }
-            if (child.children && child.children.length) {
-              const items = child.children.filter((it) => !it.soon);
-              return (
-                <details class="acc">
-                  <summary class="acc-head">
-                    <span class="acc-name">{child.label}</span>
-                    <span class="acc-count">{items.length}</span>
-                    <span class="acc-chev" aria-hidden="true">▾</span>
-                  </summary>
-                  <div class="links">
-                    {items.map((it) => (
-                      <a class="item" href={url(it.path)}>
-                        <span class="txt">
-                          <span class="title">{it.label}</span>
-                          {it.desc && <span class="desc">{it.desc}</span>}
-                        </span>
-                        <span class="arrow" aria-hidden="true">→</span>
-                      </a>
-                    ))}
-                  </div>
-                </details>
-              );
-            }
-            return (
-              <a class="item" href={url(child.path)}>
-                <span class="txt">
-                  <span class="title">{child.label}</span>
-                  {child.desc && <span class="desc">{child.desc}</span>}
-                </span>
-                <span class="arrow" aria-hidden="true">→</span>
-              </a>
-            );
-          })}
-        </section>
-      ))}
-    </div>
+    <section class="vivid-hero">
+      <div class="vivid-hero-glow" aria-hidden="true"></div>
+      <div class="vivid-hero-copy">
+        <div class="vivid-kicker">{copy.kicker}</div>
+        <div class="vivid-sample">7 + 5 <span>= ?</span></div>
+        <p>{copy.heroDesc}</p>
+        <div class="vivid-actions">
+          <a class="vivid-btn vivid-btn-light" href={url(practice.path)}>{copy.continue} <span aria-hidden="true">→</span></a>
+          <a class="vivid-btn vivid-btn-ghost" href={url(math.path)}>{copy.all}</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="vivid-section">
+      <div class="vivid-section-head">
+        <h2>{copy.sections}</h2>
+        <span>{copy.allSections}</span>
+      </div>
+      <div class="vivid-grid">
+        {cards.map((card) => (
+          <a class={`vivid-card tone-${card.tone}`} href={url(card.href)}>
+            <span class="vivid-card-icon" aria-hidden="true">{card.icon}</span>
+            <span class="vivid-card-copy">
+              <span class="vivid-card-title">{card.title}</span>
+              <span class="vivid-card-desc">{card.desc}</span>
+              {card.count > 0 && <span class="vivid-card-meta">{card.count} {isEn ? (card.count === 1 ? 'item' : 'items') : plural(card.count)}</span>}
+            </span>
+            <span class="vivid-card-arrow" aria-hidden="true">›</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <p class="vivid-foot">
+      {isEn ? 'VIVID·SCHOOL · primary school' : 'VIVID·ШКОЛА · начальная школа'}
+    </p>
   </div>
 </BaseLayout>
 
 <style>
-  .home {
-    width: 100%;
-    max-width: 1000px;
+  .vivid-home {
+    position: relative;
+    width: min(100%, 1040px);
     margin: 0 auto;
-    padding: clamp(1.2rem, 4vw, 3rem) clamp(0.9rem, 4vw, 2rem) 4rem;
+    padding: clamp(1.1rem, 4vw, 3rem) clamp(0.9rem, 4vw, 2rem) 4rem;
+    font-family: "Nunito", "DM Sans", "Segoe UI", Roboto, Arial, sans-serif;
   }
-  .hero {
-    text-align: center;
-    margin: 0 0 clamp(1.4rem, 4vw, 2.6rem);
-  }
-  .kicker {
-    display: inline-block;
-    font-size: 0.78rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 700;
-    color: var(--site-teal);
-    background: var(--site-surface);
-    border: 1px solid var(--site-line);
-    border-radius: 999px;
-    padding: 0.35rem 0.8rem;
-    margin-bottom: 1rem;
-  }
-  h1 {
-    margin: 0;
-    font-size: clamp(1.7rem, 5vw, 2.7rem);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-  .sub {
-    margin: 0.7rem 0 0;
-    color: var(--site-muted);
-    font-size: clamp(0.95rem, 2.4vw, 1.08rem);
-  }
-  .grid {
+  .vivid-brand { margin-bottom: clamp(1rem, 3vw, 1.5rem); }
+  .vivid-brand-link { display: inline-flex; align-items: center; gap: .8rem; text-decoration: none; color: inherit; }
+  .vivid-logo {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
-    gap: clamp(1rem, 2.6vw, 1.4rem);
-    align-items: start;
-  }
-  .card {
-    background: var(--site-surface);
-    border: 1px solid var(--site-line);
-    border-radius: 18px;
-    padding: clamp(1rem, 2.8vw, 1.5rem);
-    box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.35);
-  }
-  .card.wide {
-    grid-column: 1 / -1;
-  }
-  .grade {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin: 0 0 1rem;
-    font-size: clamp(1.2rem, 3vw, 1.45rem);
-    letter-spacing: -0.01em;
-  }
-  .grade::before {
-    content: "";
-    width: 0.28rem;
-    height: 1.4em;
-    border-radius: 99px;
-    background: var(--site-teal);
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
     flex: 0 0 auto;
+    border-radius: 1.1rem;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    box-shadow: 0 12px 26px -12px rgba(99, 102, 241, .75);
+    color: #fff;
   }
-  .acc + .acc,
-  .acc + .soon,
-  .soon + .acc {
-    margin-top: 0.7rem;
+  .vivid-logo svg { width: 1.55rem; height: 1.55rem; }
+  .vivid-brand-copy { display: flex; flex-direction: column; gap: .05rem; min-width: 0; }
+  .vivid-name {
+    font-size: clamp(1.25rem, 3.4vw, 1.55rem);
+    font-weight: 900;
+    letter-spacing: -.035em;
+    line-height: 1.05;
+    color: #0f172a;
   }
-  .acc {
-    border: 1px solid var(--site-line);
-    border-radius: 0.9rem;
-    background: var(--site-surface-2);
-    overflow: hidden;
-  }
-  .acc-head {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: clamp(0.7rem, 2.2vw, 0.9rem) clamp(0.85rem, 2.4vw, 1.1rem);
-    cursor: pointer;
-    list-style: none;
-    user-select: none;
-  }
-  .acc-head::-webkit-details-marker {
-    display: none;
-  }
-  .acc-name {
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.09em;
+  .vivid-sub {
+    color: #94a3b8;
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .15em;
     text-transform: uppercase;
-    color: var(--site-ink);
   }
-  .acc-count {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: var(--site-teal-d);
-    background: var(--site-teal-soft);
-    border: 1px solid var(--site-teal-line);
-    border-radius: 999px;
-    padding: 0.05rem 0.5rem;
-    line-height: 1.4;
+
+  .vivid-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.9rem;
+    padding: clamp(1.25rem, 4vw, 2.2rem);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #d946ef);
+    box-shadow: 0 26px 60px -28px rgba(99, 102, 241, .8);
+    color: #fff;
   }
-  .acc-chev {
-    margin-left: auto;
-    color: var(--site-muted);
-    transition: transform 0.18s;
-  }
-  .acc[open] .acc-chev {
-    transform: rotate(180deg);
-  }
-  .links {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-    padding: 0 clamp(0.7rem, 2.2vw, 0.95rem) clamp(0.75rem, 2.2vw, 0.95rem);
-  }
-  .item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.9rem;
-    padding: clamp(0.7rem, 2.2vw, 0.9rem) clamp(0.8rem, 2.4vw, 1rem);
-    border: 1px solid var(--site-line);
-    border-radius: 0.8rem;
-    background: var(--site-surface);
-    color: inherit;
-    text-decoration: none;
-    transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-  }
-  .item + .item {
-    margin-top: 0;
-  }
-  .txt {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    min-width: 0;
-  }
-  .title {
-    font-weight: 700;
-    font-size: clamp(0.98rem, 2.4vw, 1.05rem);
-  }
-  .desc {
-    color: var(--site-muted);
-    font-size: 0.85rem;
-    line-height: 1.25;
-  }
-  .arrow {
-    flex: 0 0 auto;
-    font-size: 1.1rem;
-    color: var(--site-teal);
-    transition: transform 0.15s;
-  }
-  .item:focus-visible {
-    outline: 3px solid var(--site-teal-line);
-    outline-offset: 2px;
-    border-color: var(--site-teal);
-  }
-  @media (hover: hover) {
-    .item:hover {
-      border-color: var(--site-teal);
-      background: var(--site-teal-soft);
-      transform: translateY(-1px);
-      box-shadow: 0 10px 20px -16px rgba(15, 118, 110, 0.5);
-    }
-    .item:hover .arrow {
-      transform: translateX(3px);
-    }
-    .acc-head:hover .acc-name {
-      color: var(--site-teal-d);
-    }
-  }
-  .soon {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: clamp(0.7rem, 2vw, 0.95rem) clamp(0.85rem, 2.4vw, 1.1rem);
-    border: 1px dashed var(--site-line);
-    border-radius: 0.9rem;
-    color: var(--site-muted);
-    font-size: 0.92rem;
-    background: repeating-linear-gradient(135deg, var(--site-surface-3), var(--site-surface-3) 10px, var(--site-surface-4) 10px, var(--site-surface-4) 20px);
-  }
-  .soon::before {
-    content: "";
-    width: 0.55rem;
-    height: 0.55rem;
+  .vivid-hero-glow {
+    position: absolute;
+    right: -3rem;
+    top: -5rem;
+    width: 16rem;
+    height: 16rem;
     border-radius: 50%;
-    background: var(--site-line-strong);
+    background: rgba(255, 255, 255, .18);
+    filter: blur(26px);
+  }
+  .vivid-hero-copy { position: relative; }
+  .vivid-kicker {
+    display: inline-flex;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .16);
+    padding: .3rem .7rem;
+    font-size: .64rem;
+    font-weight: 900;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+  .vivid-sample {
+    margin-top: 1rem;
+    font-size: clamp(2.2rem, 7.4vw, 3.5rem);
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .vivid-sample span { color: rgba(255, 255, 255, .45); }
+  .vivid-hero p { margin: .55rem 0 0; color: rgba(255, 255, 255, .82); font-weight: 700; font-size: .95rem; }
+  .vivid-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.25rem; }
+  .vivid-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    border-radius: 1rem;
+    padding: .75rem 1.1rem;
+    font-size: .92rem;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform .16s ease, background .16s ease;
+  }
+  .vivid-btn:hover { transform: translateY(-1px); }
+  .vivid-btn-light { background: #fff; color: #4f46e5; box-shadow: 0 10px 24px -12px rgba(30, 27, 75, .5); }
+  .vivid-btn-ghost { background: rgba(255, 255, 255, .16); color: #fff; }
+  .vivid-btn-ghost:hover { background: rgba(255, 255, 255, .25); }
+
+  .vivid-section { margin-top: clamp(1.2rem, 3vw, 1.7rem); }
+  .vivid-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 .2rem .55rem;
+  }
+  .vivid-section-head h2 {
+    margin: 0;
+    font-family: inherit;
+    font-size: 1.08rem;
+    font-weight: 900;
+    color: #0f172a;
+  }
+  .vivid-section-head span { color: #94a3b8; font-size: .78rem; font-weight: 700; }
+
+  .vivid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16.5rem), 1fr));
+    gap: .7rem;
+  }
+  .vivid-card {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.25rem;
+    background: #fff;
+    color: #0f172a;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  }
+  .vivid-card:hover {
+    transform: translateY(-2px);
+    border-color: #c7d2fe;
+    box-shadow: 0 14px 28px -18px rgba(79, 70, 229, .5);
+  }
+  .vivid-card-icon {
+    display: grid;
+    place-items: center;
+    width: 2.8rem;
+    height: 2.8rem;
     flex: 0 0 auto;
+    border-radius: .95rem;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 900;
+    box-shadow: 0 8px 18px -10px rgba(15, 23, 42, .5);
+  }
+  .tone-math .vivid-card-icon { background: linear-gradient(135deg, #6366f1, #a855f7); }
+  .tone-time .vivid-card-icon { background: linear-gradient(135deg, #f59e0b, #f97316); }
+  .tone-reading .vivid-card-icon { background: linear-gradient(135deg, #10b981, #14b8a6); }
+  .tone-print .vivid-card-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); }
+  .tone-helper .vivid-card-icon { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+  .vivid-card-copy { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+  .vivid-card-title { font-size: .98rem; font-weight: 900; line-height: 1.2; }
+  .vivid-card-desc { color: #64748b; font-size: .79rem; line-height: 1.35; }
+  .vivid-card-meta { color: #94a3b8; font-size: .7rem; font-weight: 800; margin-top: .1rem; }
+  .vivid-card-arrow { margin-left: auto; color: #cbd5e1; font-size: 1.5rem; line-height: 1; font-weight: 700; }
+  .vivid-card:hover .vivid-card-arrow { color: #6366f1; }
+
+  .vivid-foot {
+    margin: clamp(1.6rem, 4vw, 2.4rem) 0 0;
+    text-align: center;
+    color: #cbd5e1;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 560px) {
+    .vivid-section-head { align-items: flex-start; }
+    .vivid-card { padding: .9rem; }
   }
 </style>

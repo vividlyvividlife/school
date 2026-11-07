@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { siteCopy, type Lang } from '../../i18n/site';
 import '../../styles/trainer.css';
+import '../../styles/vivid-trainer.css';
 import '../../styles/clock.css';
 
 interface Props {
@@ -73,6 +74,9 @@ const copyPayload = {
   dayDay: p.dayDay,
   dayEvening: p.dayEvening,
   mistakes: p.mistakes,
+  skippedTitle: p.skippedTitle,
+  skippedMark: p.skippedMark,
+  capSkip: p.capSkip,
   none: p.none,
   yourAnswer: p.yourAnswer,
   secShort: p.secShort,
@@ -91,102 +95,103 @@ const copyPayload = {
     <h1>{p.h1}</h1>
     <p class="sub">{p.sub}</p>
 
-    <div class="setup-grid">
-      <div class="tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">🕐</span>{p.task}</div>
-        <div class="tile-body">
-          <div class="seg clock-task" data-key="task">
-            <button type="button" data-v="mix">{p.taskMix}</button>
-            <button type="button" data-v="a2d">{p.taskA2D}</button>
-            <button type="button" data-v="d2a">{p.taskD2A}</button>
-            <button type="button" data-v="calc">{p.taskCalc}</button>
-          </div>
-          <div class="hint">{p.taskHint}</div>
+    <div class="v-setup">
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{p.task}</h2><p>{p.taskHint}</p></div>
+        </header>
+        <div class="seg v-tasks-grid" data-key="task">
+          <button type="button" data-v="mix">{p.taskMix}</button>
+          <button type="button" data-v="a2d">{p.taskA2D}</button>
+          <button type="button" data-v="d2a">{p.taskD2A}</button>
+          <button type="button" data-v="calc">{p.taskCalc}</button>
         </div>
-      </div>
+      </section>
 
-      <div class="tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">👣</span>{p.step}</div>
-        <div class="tile-body">
-          <div class="seg clock-step" data-key="step">
-            <button type="button" data-v="30">{p.step30}</button>
-            <button type="button" data-v="5">{p.step5}</button>
-            <button type="button" data-v="1">{p.step1}</button>
-          </div>
-          <div class="hint" id="stepHint">{p.stepHint}</div>
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{p.step}</h2><p id="stepHint">{p.stepHint}</p></div>
+        </header>
+        <div class="seg clock-step v-class" data-key="step">
+          <button type="button" data-v="30">{p.step30}</button>
+          <button type="button" data-v="5">{p.step5}</button>
+          <button type="button" data-v="1">{p.step1}</button>
         </div>
-      </div>
+      </section>
 
-      <div class="tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">🕰️</span>{p.format}</div>
-        <div class="tile-body">
-          <div class="seg mode-seg" data-key="format">
-            <button type="button" data-v="12">{p.format12}</button>
-            <button type="button" data-v="24">{p.format24}</button>
-          </div>
-          <div class="hint">{p.formatHint}</div>
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{p.format}</h2><p>{p.formatHint}</p></div>
+        </header>
+        <div class="seg mode-seg v-seg" data-key="format">
+          <button type="button" data-v="12">{p.format12}</button>
+          <button type="button" data-v="24">{p.format24}</button>
         </div>
-      </div>
-
-      {lang === 'ru' && (
-        <div class="tile">
-          <div class="tile-title"><span class="tico" aria-hidden="true">🎧</span>{p.speech}</div>
-          <div class="tile-body">
-            <div class="seg speech-seg" data-key="speech">
-              <button type="button" data-v="visual">{p.speechVisual}</button>
-              <button type="button" data-v="dictation">{p.speechDictation}</button>
-            </div>
-            <div class="hint" id="speechHint">{p.speechHint}</div>
-          </div>
-        </div>
-      )}
+      </section>
 
       {lang === 'ru' && (
-        <div class="tile" id="voiceTile" hidden>
-          <div class="tile-title"><span class="tico" aria-hidden="true">🎙️</span>{p.voice}</div>
-          <div class="tile-body">
-            <div class="seg voice-seg" data-key="voice">
+        <section class="v-section v-counted">
+          <header class="v-head">
+            <span class="v-num"></span>
+            <div><h2>{p.speech}</h2><p id="speechHint">{p.speechHint}</p></div>
+          </header>
+          <div class="seg speech-seg v-seg" data-key="speech">
+            <button type="button" data-v="visual">{p.speechVisual}</button>
+            <button type="button" data-v="dictation">{p.speechDictation}</button>
+          </div>
+          <div id="voiceTile" hidden>
+            <div class="v-subhead">{p.voice}</div>
+            <div class="seg voice-seg v-seg" data-key="voice">
               <button type="button" data-v="f">{p.voiceFemale}</button>
               <button type="button" data-v="m">{p.voiceMale}</button>
             </div>
             <div class="hint">{p.voiceHint}</div>
           </div>
-        </div>
+        </section>
       )}
 
-      <div class="tile">
-        <div class="tile-title"><span class="tico" aria-hidden="true">⏱️</span>{p.mode}</div>
-        <div class="tile-body">
-          <div class="seg mode-seg" data-key="mode">
-            <button type="button" data-v="free">{p.modeFree}</button>
-            <button type="button" data-v="timed">{p.modeTimed}</button>
-          </div>
-          <div class="duration" id="timeRow" hidden>
-            <span class="duration-label">{p.duration}</span>
-            <span class="numitem"><input id="min" class="num" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{p.minUnit}</span></span>
-            <span class="numitem"><input id="sec" class="num" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{p.secUnit}</span></span>
-          </div>
+      <section class="v-section v-counted">
+        <header class="v-head">
+          <span class="v-num"></span>
+          <div><h2>{p.mode}</h2></div>
+        </header>
+        <div class="seg mode-seg v-seg" data-key="mode">
+          <button type="button" data-v="free">{p.modeFree}</button>
+          <button type="button" data-v="timed">{p.modeTimed}</button>
         </div>
-      </div>
-
-      <div class="tile wide">
-        <div class="tile-title"><span class="tico" aria-hidden="true">🔔</span>{p.sound}</div>
-        <div class="tile-body">
-          <div class="sound-row">
-            <label class="switch">
-              <input id="sound" type="checkbox" checked>
-              <span class="track"></span>
-              <span>{p.soundLabel}</span>
-            </label>
-            <button id="soundTest" class="btn small" type="button">{p.soundTest}</button>
-          </div>
+        <div class="v-time" id="timeRow" hidden>
+          <span class="v-field-label">{p.duration}</span>
+          <span class="numitem"><input id="min" class="v-num-input" type="number" inputmode="numeric" min="0" max="300" value="2"> <span class="dim">{p.minUnit}</span></span>
+          <span class="numitem"><input id="sec" class="v-num-input" type="number" inputmode="numeric" min="0" max="59" value="0"> <span class="dim">{p.secUnit}</span></span>
         </div>
-      </div>
+      </section>
 
-      <div class="tile wide clock-start">
-        <div class="tile-title"><span class="tico" aria-hidden="true">🚀</span>{p.startTitle}</div>
-        <div class="hint">{p.startHint}</div>
-        <button id="startBtn" class="btn primary" type="button">{p.start}</button>
+      <section class="v-section">
+        <header class="v-head">
+          <span class="v-num">🔔</span>
+          <div><h2>{p.sound}</h2></div>
+        </header>
+        <div class="sound-row">
+          <label class="switch v-switch">
+            <input id="sound" type="checkbox" checked>
+            <span class="track"></span>
+            <span>{p.soundLabel}</span>
+          </label>
+          <button id="soundTest" class="btn small" type="button">{p.soundTest}</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="v-startbar">
+      <div class="v-startbar-inner">
+        <div class="v-start-info">
+          <div class="v-start-kicker">{p.startTitle}</div>
+          <div class="hint">{p.startHint}</div>
+        </div>
+        <button id="startBtn" class="btn primary v-start-btn" type="button">{p.start}</button>
       </div>
     </div>
   </div>
@@ -196,6 +201,7 @@ const copyPayload = {
   <div class="gbar">
     <button id="stopBtn" class="btn" type="button">{p.stop}</button>
     <button id="pauseBtn" class="btn pause-btn" type="button" aria-pressed="false" hidden data-pause={p.pause} data-resume={p.resume}>{p.pause}</button>
+    <button id="skipBtn" class="btn skip-btn" type="button">{p.skip}</button>
     <div class="gmeta" id="gInfo"></div>
     <div class="score"><span class="ok" id="scoreOk">0</span><span class="sep">·</span><span class="bad" id="scoreBad">0</span></div>
   </div>
@@ -234,6 +240,7 @@ const copyPayload = {
     <div class="stats">
       <div class="stat good"><span class="tico" aria-hidden="true">✅</span><b id="rOk">0</b><span>{p.rOk}</span></div>
       <div class="stat bad"><span class="tico" aria-hidden="true">❌</span><b id="rBad">0</b><span>{p.rBad}</span></div>
+      <div class="stat skip"><span class="tico" aria-hidden="true">⏭️</span><b id="rSkip">0</b><span>{p.rSkip}</span></div>
       <div class="stat"><span class="tico" aria-hidden="true">🎯</span><b id="rAcc">—</b><span>{p.rAcc}</span></div>
       <div class="stat"><span class="tico" aria-hidden="true">⚡</span><b id="rAvg">—</b><span>{p.rAvg}</span></div>
       <div class="stat"><span class="tico" aria-hidden="true">🐇</span><b id="rFast">—</b><span>{p.rFast}</span></div>
@@ -243,6 +250,11 @@ const copyPayload = {
     <div class="card">
       <div class="lbl"><span class="tico" aria-hidden="true">🐞</span>{p.mistakes}</div>
       <div id="misList" class="mis"></div>
+    </div>
+    <div class="card" id="skippedCard" hidden>
+      <div class="lbl" id="skippedTitle"><span class="tico" aria-hidden="true">⏭️</span>{p.skippedTitle}</div>
+      <div class="hint">{p.skippedHint}</div>
+      <div id="skippedList" class="mis"></div>
     </div>
     <div class="actions">
       <button id="againBtn" class="btn primary" type="button">{p.again}</button>
@@ -277,6 +289,7 @@ const copyPayload = {
     var startBtn = document.getElementById('startBtn');
     var stopBtn = document.getElementById('stopBtn');
     var pauseBtn = document.getElementById('pauseBtn');
+    var skipBtn = document.getElementById('skipBtn');
     var againBtn = document.getElementById('againBtn');
     var toSetupBtn = document.getElementById('toSetupBtn');
     var gInfo = document.getElementById('gInfo');
@@ -301,12 +314,16 @@ const copyPayload = {
     var verdictEl = document.getElementById('verdict');
     var rOk = document.getElementById('rOk');
     var rBad = document.getElementById('rBad');
+    var rSkip = document.getElementById('rSkip');
     var rAcc = document.getElementById('rAcc');
     var rAvg = document.getElementById('rAvg');
     var rFast = document.getElementById('rFast');
     var rSlow = document.getElementById('rSlow');
     var rDur = document.getElementById('rDur');
     var misList = document.getElementById('misList');
+    var skippedCard = document.getElementById('skippedCard');
+    var skippedTitle = document.getElementById('skippedTitle');
+    var skippedList = document.getElementById('skippedList');
 
     var settings = { task: 'mix', step: 5, format: 12, mode: 'free', min: 2, sec: 0, sound: true, speech: 'visual', voice: 'f' };
     var DICT_BANK = 'clock';
@@ -756,7 +773,7 @@ const copyPayload = {
       var options = kind === 'a2d'
         ? [t].concat(pickDistractors(t.h, t.m, settings.step, format))
         : [{ h: dial, m: t.m }].concat(pickDistractors(dial, t.m, settings.step, 12));
-      shuffle(options);
+      options.sort(function (a, b) { return (a.h * 60 + a.m) - (b.h * 60 + b.m); });
 
       game.current = { kind: kind, h: t.h, m: t.m, dial: dial, format: format, startedAt: now, answered: false };
       game.lock = false;
@@ -847,7 +864,7 @@ const copyPayload = {
         format: format, startedAt: now, answered: false
       };
       var opts = [{ h: ansDial, m: st.rM }].concat(calcDistractors(ansDial, st.rM, 12));
-      shuffle(opts);
+      opts.sort(function (a, b) { return (a.h * 60 + a.m) - (b.h * 60 + b.m); });
 
       game.current = q;
       game.lock = false;
@@ -942,6 +959,22 @@ const copyPayload = {
       game.advanceId = window.setTimeout(nextQuestion, ok ? 650 : 1250);
     }
 
+    function skip() {
+      if (!game || game.lock || game.paused || !game.current || game.current.answered) return;
+      var q = game.current;
+      game.lock = true;
+      q.answered = true;
+      stopDict();
+      var qText = q.kind === 'calc' ? q.expr + ' = ' + fmt(q.ansDial, q.ansM)
+        : q.kind === 'a2d' ? fmtTime(q.h, q.m, q.format) : fmt(q.dial, q.m);
+      game.skipped.push({ q: qText });
+      capEl.textContent = copy.capSkip;
+      capEl.className = 'cap note';
+      var buttons = optsEl.querySelectorAll('button');
+      for (var i = 0; i < buttons.length; i++) buttons[i].disabled = true;
+      game.advanceId = window.setTimeout(nextQuestion, 650);
+    }
+
     function tick() {
       if (!game || game.paused) return;
       var now = Date.now();
@@ -972,6 +1005,7 @@ const copyPayload = {
         endsAt: Date.now() + secs * 1000,
         dur: secs * 1000,
         answers: [],
+        skipped: [],
         ok: 0,
         bad: 0,
         lock: false,
@@ -1051,6 +1085,7 @@ const copyPayload = {
       gameEl.classList.remove('paused');
       var endedAt = Date.now();
       var answers = game.answers;
+      var skipped = game.skipped || [];
       var ok = 0;
       var bad = 0;
       var totalMs = 0;
@@ -1070,6 +1105,7 @@ const copyPayload = {
 
       rOk.textContent = String(ok);
       rBad.textContent = String(bad);
+      rSkip.textContent = String(skipped.length);
       rAcc.textContent = answered ? acc + '%' : '—';
       rAvg.textContent = answered ? fmtSec(totalMs / answered) : '—';
       rFast.textContent = fast !== Infinity ? fmtSec(fast) : '—';
@@ -1108,6 +1144,24 @@ const copyPayload = {
         });
       }
 
+      skippedCard.hidden = !skipped.length;
+      skippedList.innerHTML = '';
+      if (skipped.length) {
+        skippedTitle.innerHTML = '<span class="tico" aria-hidden="true">⏭️</span>' + copy.skippedTitle + ': ' + skipped.length;
+        skipped.forEach(function (s) {
+          var row = document.createElement('div');
+          row.className = 'mrow';
+          var b = document.createElement('b');
+          b.textContent = s.q;
+          var ua = document.createElement('span');
+          ua.className = 'ua skipped';
+          ua.textContent = copy.skippedMark;
+          row.appendChild(b);
+          row.appendChild(ua);
+          skippedList.appendChild(row);
+        });
+      }
+
       game = null;
       show('results');
       updatePauseUI();
@@ -1118,6 +1172,7 @@ const copyPayload = {
     toSetupBtn.addEventListener('click', function () { show('setup'); });
     stopBtn.addEventListener('click', finish);
     if (pauseBtn) pauseBtn.addEventListener('click', function () { setPaused(!(game && game.paused)); });
+    if (skipBtn) skipBtn.addEventListener('click', skip);
 
     document.querySelectorAll('.seg[data-key]').forEach(function (seg) {
       seg.addEventListener('click', function (e) {

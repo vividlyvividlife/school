@@ -49,7 +49,11 @@ const pageMeta = pageKind === 'trainer'
         ? c.helperPage
         : pageKind === 'clock'
           ? c.clockPage
-          : c.homePage;
+          : pageKind === 'calendar'
+            ? c.calendarPage
+            : pageKind === 'durations'
+              ? c.durationsPage
+              : c.homePage;
 const desc = description || pageMeta.description;
 const keywordList = keywords || pageMeta.keywords;
 const site = Astro.site ?? new URL('https://example.github.io');
@@ -61,30 +65,36 @@ const enUrl = abs(pair.en);
 const switchTarget = lang === 'ru' ? pair.en : pair.ru;
 const ogImage = abs(lang === 'en' ? '/og/site-preview-en.jpg' : '/og/site-preview-ru.jpg');
 const ogImageAlt = lang === 'en'
-  ? 'Learning Materials — Grade 2: math and Belarusian language'
-  : 'Учебные материалы — 2 класс: математика и беларуская мова';
+  ? 'VIVID·SCHOOL — practice and learning materials for primary school'
+  : 'VIVID·ШКОЛА — тренажёры и учебные материалы для начальной школы';
 const robots = noindex ? 'noindex, nofollow' : 'index, follow';
 const googlebot = noindex
   ? 'noindex, nofollow'
   : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 const ogType = pageKind === 'home' ? 'website' : 'article';
-const resourceType = pageKind === 'trainer' || pageKind === 'clock'
+const resourceType = ['trainer','clock','calendar','durations'].includes(pageKind) || pageKind === 'calendar' || pageKind === 'durations'
   ? (lang === 'ru' ? 'Тренажёр' : 'Trainer')
   : pageKind === 'helper'
     ? (lang === 'ru' ? 'Инструмент' : 'Study tool')
     : pageKind === 'reading'
       ? (lang === 'ru' ? 'Материалы для чтения' : 'Reading materials')
       : (lang === 'ru' ? 'Раздаточный материал' : 'Worksheet');
-const educationalLevel = pageKind === 'helper' || pageKind === 'clock'
+const educationalLevel = pageKind === 'helper'
   ? (lang === 'ru' ? '2–4 класс' : 'Grades 2–4')
-  : (lang === 'ru' ? '2 класс' : 'Grade 2');
+  : pageKind === 'clock' || pageKind === 'calendar' || pageKind === 'durations'
+    ? (lang === 'ru' ? '1–3 класс' : 'Grades 1–3')
+    : (lang === 'ru' ? '2 класс' : 'Grade 2');
 const subject = pageKind === 'helper'
   ? (lang === 'ru' ? 'Планирование занятий' : 'Study planning')
   : pageKind === 'clock'
     ? (lang === 'ru' ? 'Время и часы' : 'Time and clocks')
-    : pageKind === 'reading'
-    ? (lang === 'ru' ? 'Літаратурнае чытанне' : 'Literary Reading')
-    : (lang === 'ru' ? 'Математика' : 'Mathematics');
+    : pageKind === 'calendar'
+      ? (lang === 'ru' ? 'Календарь' : 'Calendar')
+      : pageKind === 'durations'
+        ? (lang === 'ru' ? 'Длительности' : 'Durations')
+        : pageKind === 'reading'
+          ? (lang === 'ru' ? 'Літаратурнае чытанне' : 'Literary Reading')
+          : (lang === 'ru' ? 'Математика' : 'Mathematics');
 const schema: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': pageKind === 'home' ? 'WebSite' : 'LearningResource',
@@ -104,11 +114,11 @@ if (pageKind !== 'home') {
 ---
 
 <!doctype html>
-<html lang={lang} data-base={B}>
+<html lang={lang} data-base={B} class={['trainer','clock','calendar','durations'].includes(pageKind) ? 'trainer-scroll' : undefined}>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0f766e" />
+  <meta name="theme-color" content="#6366f1" />
   <meta name="color-scheme" content="light dark" />
   <script is:inline>
     (function () {
@@ -117,13 +127,13 @@ if (pageKind !== 'home') {
       var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
       document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
       var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', dark ? '#0b1220' : '#0f766e');
+      if (meta) meta.setAttribute('content', dark ? '#0b1220' : '#6366f1');
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="icon" href={url('favicon.svg?v=2')} type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@500;600;700;800;900&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href={url('favicon.svg?v=3')} type="image/svg+xml" />
   <title>{title}</title>
   <meta name="description" content={desc} />
   <meta name="keywords" content={keywordList} />
@@ -161,7 +171,9 @@ if (pageKind !== 'home') {
     <aside id="siteNav" class="site-nav" aria-label={c.sidebar}>
       <div class="site-navhead">
         <a class="site-brand" href={url(lang === 'en' ? 'en/' : '')}>
-          <span class="logo" aria-hidden="true">∑</span>
+          <span class="logo" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="18" height="18"><path d="M5 4h6.2l4.8 15 4.8-15H27l-8.6 24h-4.8L5 4z" fill="currentColor"/></svg>
+          </span>
           <span>{c.siteName}</span>
         </a>
         <button class="site-close" id="navClose" type="button" aria-label={c.closeMenu}>×</button>
@@ -290,7 +302,7 @@ if (pageKind !== 'home') {
         btn.setAttribute('aria-label', dark ? lightLabel : darkLabel);
         btn.setAttribute('title', dark ? lightLabel : darkLabel);
         btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-        if (meta) meta.setAttribute('content', dark ? '#0b1220' : '#0f766e');
+        if (meta) meta.setAttribute('content', dark ? '#0b1220' : '#6366f1');
       }
 
       btn.addEventListener('click', function () {

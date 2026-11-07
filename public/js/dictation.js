@@ -5,8 +5,10 @@ var cfg = global.__DICTATION__ || {};
 var offline = global.__DICTATION_DATA__ || null;
 var ctx = null, gain = null;
 var sources = [];
+var htmlAudio = null, htmlTimer = 0, htmlSeq = 0;
 var banks = {};
 var voice = 'f';
+var rate = 1;
 var OP_KEY = { '+':'add', '−':'sub', '-':'sub', '×':'mul', '*':'mul', '÷':'div', '/':'div' };
 
 function ensureCtx(){
@@ -70,6 +72,7 @@ function load(name){
   var b = banks[key] || (banks[key] = {});
   if(b.buffer && b.meta) return Promise.resolve(true);
   if(b.loading) return b.loading;
+  b.url = getAudioUrl(name);
   b.loading = Promise.all([getTimings(name), getAudio(name)]).then(function(res){
     b.meta = res[0];
     return decode(res[1]);
@@ -91,15 +94,96 @@ function unlock(){
 }
 
 function stop(){
+  htmlSeq++;
+  window.clearTimeout(htmlTimer);
+  htmlTimer = 0;
+  if(htmlAudio){
+    try{ htmlAudio.pause(); }catch(e){}
+    htmlAudio = null;
+  }
   for(var i = 0; i < sources.length; i++){
     try{ sources[i].stop(0); }catch(e){}
   }
   sources = [];
 }
 
+function getAudioUrl(name){
+  var off = offlineFor(name);
+  return (off && off.audio) || (cfgFor(name) || {}).audio || null;
+}
+
+function playKeysHtml(keys, bank, name){
+  var clips = bank.meta.clips, gap = bank.meta.gap || 0.06;
+  var duration = 0;
+  for(var j = 0; j < keys.length; j++){
+    var cl = clips[keys[j]];
+    if(!cl) return null;
+    duration += cl[1] / rate + (j ? gap : 0);
+  }
+  stop();
+  var seq = ++htmlSeq;
+  var el = new Audio(bank.url);
+  el.preservesPitch = true;
+  el.mozPreservesPitch = true;
+  el.webkitPreservesPitch = true;
+  el.playbackRate = rate;
+  el.defaultPlaybackRate = rate;
+  el.volume = 0.95;
+  htmlAudio = el;
+  var i = 0;
+  function next(){
+    if(seq !== htmlSeq) return;
+    if(i >= keys.length){
+      try{ el.pause(); }catch(e){}
+      if(htmlAudio === el) htmlAudio = null;
+      return;
+    }
+    var clip = clips[keys[i]];
+    if(!clip){ stop(); return; }
+    var startAt = clip[0];
+    var endAt = clip[0] + clip[1];
+    var fadeIn = 0.035;
+    var fadeOut = 0.06;
+    var tail = 0.015;
+    el.volume = 0;
+    try{ el.currentTime = startAt; }catch(e){}
+    var p = el.play();
+    if(p && p.catch) p.catch(function(){});
+    var guard = 0;
+    function watch(){
+      if(seq !== htmlSeq) return;
+      var t = el.currentTime;
+      if(t < startAt - 0.02 && guard++ < 60){
+        htmlTimer = window.setTimeout(watch, 10);
+        return;
+      }
+      var left = endAt - t;
+      if(left > 0){
+        el.volume = left <= fadeOut
+          ? 0.95 * left / fadeOut
+          : 0.95 * Math.min(1, Math.max(0, (t - startAt) / fadeIn));
+      } else {
+        el.volume = 0;
+        if(t >= endAt + tail){
+          try{ el.pause(); }catch(e){}
+          i++;
+          htmlTimer = window.setTimeout(next, gap * 1000);
+          return;
+        }
+      }
+      htmlTimer = window.setTimeout(watch, 10);
+    }
+    htmlTimer = window.setTimeout(watch, 10);
+  }
+  if(el.readyState >= 1) next();
+  else el.addEventListener('loadedmetadata', next, { once: true });
+  return { duration: duration, keys: keys };
+}
+
 function playKeys(keys, name){
   name = name || 'light';
   var b = banks[name + ':' + voice];
+  if(rate !== 1 && b && b.meta && b.url) return playKeysHtml(keys, b, name);
   var c = ensureCtx();
   if(!c || !b || !b.buffer || !b.meta) return null;
   if(c.state === 'suspended' && c.resume) c.resume();
@@ -112,10 +196,11 @@ function playKeys(keys, name){
     if(!clip) return null;
     var src = c.createBufferSource();
     src.buffer = b.buffer;
+    src.playbackRate.value = rate;
     src.connect(gain);
     src.start(t, clip[0], clip[1]);
     sources.push(src);
-    t += clip[1] + gap;
+    t += clip[1] / rate + gap;
   }
   return { duration: t - startedAt, keys: keys };
 }
@@ -133,11 +218,21 @@ function setVoice(v){
   stop();
 }
 
+function setRate(v){
+  v = Number(v);
+  if(!isFinite(v) || v < 0.5 || v > 2.5) v = 1;
+  rate = v;
+}
+
+function getRate(){ return rate; }
+
 global.DictationAudio = {
   load: load,
   unlock: unlock,
   setVoice: setVoice,
   getVoice: function(){ return voice; },
+  setRate: setRate,
+  getRate: getRate,
   isReady: function(name){ var b = banks[(name || 'light') + ':' + voice]; return !!(b && b.buffer && b.meta); },
   isSupported: function(){ return !!(global.AudioContext || global.webkitAudioContext); },
   play: play,

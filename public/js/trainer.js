@@ -17,7 +17,7 @@ function pluralErr(n){
   return plural(n, 'ошибка', 'ошибки', 'ошибок');
 }
 
-var S = { limit:18, from:0, ops:['add','sub'], carry:true, miss:'r', answer:'tiles12', mode:'free', min:2, sec:0, sound:true, trickZero:false, format:'visual', voice:'f' };
+var S = { cls:2, limit:18, from:0, ops:['add','sub'], carry:true, miss:'r', answer:'tiles12', mode:'free', min:2, sec:0, sound:true, trickZero:false, format:'visual', voice:'f', rate:1 };
 var OPS_ALL = ['add','sub','mul','div'];
 var OP_SIGN = { add:'+', sub:'−', mul:'×', div:'÷' };
 var SIGN_OP = { '+':'add', '−':'sub', '×':'mul', '÷':'div' };
@@ -39,9 +39,9 @@ var els = {
   histList: $('histList'), clearHist: $('clearHist'),
   gInfo: $('gInfo'), scoreOk: $('scoreOk'), scoreBad: $('scoreBad'),
   timeWrap: $('timeWrap'), tfill: $('tfill'), tclock: $('tclock'),
-  eqw: $('eqw'), eq: $('eq'), cap: $('cap'), pairInfo: $('pairInfo'), pad: $('pad'), tiles: $('tiles'), stopBtn: $('stopBtn'), pauseBtn: $('pauseBtn'), game: $('game'), cannotBtn: $('cannotBtn'),
+  eqw: $('eqw'), eq: $('eq'), cap: $('cap'), pairInfo: $('pairInfo'), pad: $('pad'), tiles: $('tiles'), stopBtn: $('stopBtn'), pauseBtn: $('pauseBtn'), skipBtn: $('skipBtn'), game: $('game'), cannotBtn: $('cannotBtn'),
   dict: $('dict'), dictRepeat: $('dictRepeat'), dictLeft: $('dictLeft'), dictLabel: $('dictLabel'), dictNote: $('dictNote'), dictAnswer: $('dictAnswer'), formatHint: $('formatHint'),
-  verdict: $('verdict'), advice: $('advice'), resTitle: $('resTitle'), rOk: $('rOk'), rBad: $('rBad'), rAcc: $('rAcc'), rAvg: $('rAvg'), rFast: $('rFast'), rSlow: $('rSlow'), rDur: $('rDur'),
+  verdict: $('verdict'), advice: $('advice'), resTitle: $('resTitle'), rOk: $('rOk'), rBad: $('rBad'), rSkip: $('rSkip'), rAcc: $('rAcc'), rAvg: $('rAvg'), rFast: $('rFast'), rSlow: $('rSlow'), rDur: $('rDur'), skippedCard: $('skippedCard'), skippedTitle: $('skippedTitle'), skippedList: $('skippedList'),
   hardInfo: $('hardInfo'), hardList: $('hardList'), hardBtn: $('hardBtn'), clearHard: $('clearHard'), soundTest: $('soundTest'),
   misTitle: $('misTitle'), misList: $('misList'), slowCard: $('slowCard'), slowTitle: $('slowTitle'), slowList: $('slowList'), slowBtn: $('slowBtn'), unsolvedCard: $('unsolvedCard'), unsolvedTitle: $('unsolvedTitle'), unsolvedList: $('unsolvedList'), unsolvedBtn: $('unsolvedBtn'), pairsCard: $('pairsCard'), pairsList: $('pairsList'), retryCard: $('retryCard'), retryEq: $('retryEq'), retryBtns: $('retryBtns'), againBtn: $('againBtn'), toSetupBtn: $('toSetupBtn')
 };
@@ -269,6 +269,8 @@ function loadSettings(){
   if(typeof v.trickZero === 'boolean') S.trickZero = v.trickZero;
   if(v.format === 'visual' || v.format === 'dictation' || v.format === 'dictation-full') S.format = v.format;
   if(v.voice === 'f' || v.voice === 'm') S.voice = v.voice;
+  if([1, 1.5, 2].indexOf(Number(v.rate)) >= 0) S.rate = Number(v.rate);
+  if(v.cls === 1 || v.cls === 2 || v.cls === 3) S.cls = v.cls;
   if(!loadJSON(K_ANSWER12, false)){
     if(v.answer === 'type'){
       S.answer = 'tiles12';
@@ -287,7 +289,6 @@ function enforceDictation(){
   if(!isDictation()) return;
   S.miss = 'r';
   S.trickZero = false;
-  S.mode = 'free';
 }
 
 /* ошибки для повторения: хранятся как {a,b,op,ts}, op — '+', '−', '×' или '÷' */
@@ -416,7 +417,7 @@ function syncSegs(){
 }
 function updateHints(){
   var addsub = hasAddSub(), muldiv = hasMulDiv();
-  els.carry.disabled = !addsub;
+  els.carry.disabled = false;
   els.carryHint.hidden = !muldiv;
   var parts = [];
   if(muldiv){
@@ -429,8 +430,8 @@ function updateHints(){
   els.rangeHint.hidden = !parts.length;
   els.rangeHint.textContent = parts.join(' ');
   var dict = isDictation();
-  var canTrick = S.ops.indexOf('div') >= 0 && !dict;
-  els.trickZero.disabled = !canTrick;
+  var canTrick = S.ops.indexOf('div') >= 0;
+  els.trickZero.disabled = false;
   els.trickHint.hidden = dict || (!canTrick && !S.trickZero);
   els.trickHint.textContent = dict
     ? ''
@@ -440,10 +441,8 @@ function updateHints(){
         ? tr('Иногда в примерах встретится деление на 0. Верный ответ — «Нельзя».', 'Occasionally a problem will divide by zero. The correct answer is “Undefined”.')
         : '';
   var excl = S.miss === 'all' && !dict;
-  els.missHint.hidden = !dict && !excl;
-  if(dict){
-    els.missHint.textContent = tr('В диктанте ответ — только результат примера.', 'In dictation the answer is the result only.');
-  } else if(excl){
+  els.missHint.hidden = !excl;
+  if(excl){
     els.missHint.textContent = tr('Режим «X ★ X»: подбери два числа; подходит любая операция «+ − × ÷».', '“X ★ X” mode: pick two numbers; any of + − × ÷ works.');
   }
 }
@@ -461,11 +460,33 @@ function poolInfo(){
   }
   els.startBtn.disabled = !n;
 }
+var CLASS_PRESETS = {
+  1: { limit: 20, from: 0, ops: ['add', 'sub'], carry: false, miss: 'r', answer: 'tiles12', mode: 'free', trickZero: false },
+  2: { limit: 18, from: 0, ops: ['add', 'sub'], carry: true, miss: 'r', answer: 'tiles12', mode: 'free', trickZero: false },
+  3: { limit: 100, from: 0, ops: ['add', 'sub', 'mul', 'div'], carry: false, miss: 'rab', answer: 'type', mode: 'free', trickZero: false }
+};
+function applyClass(c){
+  var preset = CLASS_PRESETS[c];
+  if(!preset) return;
+  S.cls = c;
+  for(var k in preset){
+    if(Object.prototype.hasOwnProperty.call(preset, k)) S[k] = k === 'ops' ? preset.ops.slice() : preset[k];
+  }
+  enforceDictation();
+  syncUI();
+  saveSettings();
+}
+function syncClass(){
+  each(document.querySelectorAll('.class-seg button'), function(b){
+    b.classList.toggle('on', Number(b.getAttribute('data-c')) === S.cls);
+  });
+}
 function syncUI(){
   els.limitInput.value = S.limit;
   els.fromInput.value = S.from;
   syncChips();
   syncSegs();
+  syncClass();
   els.carry.checked = S.carry;
   updateHints();
   els.minInput.value = S.min;
@@ -477,24 +498,24 @@ function syncUI(){
   poolInfo();
   hardInfo();
 }
+function leaveDictation(){
+  if(!isDictation()) return;
+  S.format = 'visual';
+  syncSegs();
+  syncDictationUI();
+  updateHints();
+  els.trickZero.checked = S.trickZero;
+  saveSettings();
+}
+
 function syncDictationUI(){
   var on = isDictation();
-  each(document.querySelectorAll('.miss-seg button'), function(b){
-    var keep = b.getAttribute('data-v') === 'r';
-    b.disabled = on && !keep;
-    if(on && !keep) b.setAttribute('aria-disabled', 'true');
-    else b.removeAttribute('aria-disabled');
-  });
-  each(document.querySelectorAll('.mode-seg button'), function(b){
-    var timed = b.getAttribute('data-v') === 'timed';
-    b.disabled = on && timed;
-    if(on && timed) b.setAttribute('aria-disabled', 'true');
-    else b.removeAttribute('aria-disabled');
-  });
-  els.timeRow.style.display = (on || S.mode !== 'timed') ? 'none' : '';
+  if(!document.querySelector('.rate-seg')) S.rate = 1;
+  els.timeRow.style.display = S.mode === 'timed' ? '' : 'none';
   if(els.formatHint) els.formatHint.hidden = false;
   if(on && window.DictationAudio){
     DictationAudio.setVoice(S.voice);
+    DictationAudio.setRate(1);
     DictationAudio.load(dictBank()).catch(function(){});
   }
 }
@@ -512,6 +533,7 @@ function start(){
     syncDictationUI();
     if(window.DictationAudio){
       DictationAudio.unlock();
+      DictationAudio.setRate(Number(S.rate) || 1);
       if(!DictationAudio.isSupported()){
         els.poolInfo.textContent = tr('Браузер не поддерживает звук', 'This browser does not support audio');
         return;
@@ -562,7 +584,7 @@ function start(){
     hardMode: false, trackHard: false, listKind: 'review',
     next: null, ops: useOps, drawers: drawers,
     cur: null, typed: '', locked: false, done: false, tok: 0, vmax: S.limit,
-    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], unsolved: [], slow: [],
+    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], skipped: [], unsolved: [], slow: [],
     curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0,
     paused: false, pausedAt: 0, pendingNext: false,
     exCount: 0, trickAt: 5 + Math.floor(Math.random() * 4)
@@ -614,7 +636,7 @@ function startHardList(h, track, kind){
     hardMode: true, trackHard: !!track, listKind: kind,
     next: null, ops: [], drawers: null, hardRemaining: items.slice(),
     cur: null, typed: '', locked: false, done: false, tok: 0, vmax: S.limit,
-    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], unsolved: [], slow: [],
+    ok: 0, bad: 0, tSum: 0, tN: 0, minMs: 0, maxMs: 0, records: [], mistakes: [], skipped: [], unsolved: [], slow: [],
     curDone: false, start: 0, total: 0, deadline: 0, timer: null, shownAt: 0,
     paused: false, pausedAt: 0, pendingNext: false
   };
@@ -712,7 +734,7 @@ function tick(){
     els.tclock.textContent = fmt(left / 1000);
     if(left <= 0) finish('time');
   } else {
-    els.tclock.textContent = tr('Время: ', 'Time: ') + fmt((now - run.start) / 1000);
+    els.tclock.textContent = fmt((now - run.start) / 1000);
   }
 }
 
@@ -786,7 +808,7 @@ function nextExercise(){
   run.typed = '';
   run.curDone = false;
   run.shownAt = Date.now();
-  els.eqw.className = 'eqwrap';
+  els.eqw.className = 'eqwrap eqw v-qcard';
   els.cap.textContent = '';
   els.cap.className = 'cap';
   run.exCount++;
@@ -836,7 +858,7 @@ function startTrick(){
   run.curDone = false;
   run.shownAt = Date.now();
   run.cur = { a: a, b: 0, r: null, op: '÷', miss: 'r', trick: true, cannot: true };
-  els.eqw.className = 'eqwrap';
+  els.eqw.className = 'eqwrap eqw v-qcard';
   els.cap.textContent = '';
   els.cap.className = 'cap';
   els.pairInfo.hidden = true;
@@ -1353,6 +1375,25 @@ function judgeAllNone(){
   }, 1500);
 }
 
+function skipExercise(){
+  if(!run || run.locked || run.done || run.paused || !run.cur || run.curDone) return;
+  var cur = run.cur;
+  var q = cur.trick ? cur.a + ' ÷ 0 = ?'
+    : cur.miss === 'all' ? '□ ' + cur.op + ' □ = ' + cur.r
+    : cur.a + ' ' + cur.op + ' ' + cur.b + ' = ' + cur.r;
+  run.locked = true;
+  run.curDone = true;
+  run.tok++;
+  if(isDictation()) dictStop();
+  run.skipped.push({ q: q });
+  els.cap.textContent = tr('Пропущено', 'Skipped');
+  els.cap.className = 'cap note';
+  var tok = run.tok;
+  setTimeout(function(){
+    if(run && run.tok === tok && !run.done){ run.locked = false; nextExercise(); }
+  }, 500);
+}
+
 function collectErrors(){
   var now = Date.now(), seen = {}, out = [];
   function add(a, b, op){
@@ -1763,9 +1804,12 @@ function showResults(reason, durSec){
             : tr('Все ошибки проработаны!', 'All mistakes reviewed!'))
         : tr('Готово', 'Done'));
   var total = run.ok + run.bad;
+  var skipped = run.skipped || [];
   if(!total){
-    els.verdict.textContent = tr('Ни одного ответа. Давай попробуем ещё раз — всё получится! 🙂', 'No answers yet. Let’s try again — you can do it! 🙂');
-    els.verdict.className = 'verdict g0';
+    els.verdict.textContent = skipped.length
+      ? tr('Все задания пропущены. Это не ошибки — просто вернись, когда будет удобно. 🙂', 'All tasks were skipped. Not mistakes — come back when you feel like it. 🙂')
+      : tr('Ни одного ответа. Давай попробуем ещё раз — всё получится! 🙂', 'No answers yet. Let’s try again — you can do it! 🙂');
+    els.verdict.className = skipped.length ? 'verdict' : 'verdict g0';
     els.advice.hidden = true;
     els.advice.textContent = '';
   } else {
@@ -1791,6 +1835,7 @@ function showResults(reason, durSec){
   }
   els.rOk.textContent = run.ok;
   els.rBad.textContent = run.bad;
+  els.rSkip.textContent = skipped.length;
   els.rAcc.textContent = total ? Math.round(run.ok / total * 100) + '%' : '—';
   els.rAvg.textContent = run.tN ? fmtSec1(run.tSum / run.tN) : '—';
   els.rFast.textContent = run.tN ? fmtSec1(run.minMs) : '—';
@@ -1804,6 +1849,16 @@ function showResults(reason, durSec){
       return '<div class="mrow">' + m.q +
         '<span class="ua">' + tr('вы: ', 'you: ') + m.ua + '</span></div>';
     }).join('');
+  }
+  els.skippedCard.hidden = !skipped.length;
+  if(skipped.length){
+    els.skippedTitle.innerHTML = tico('⏭️') + tr('Пропущено: ', 'Skipped: ') + skipped.length;
+    els.skippedList.innerHTML = skipped.map(function(s){
+      return '<div class="mrow">' + s.q +
+        '<span class="ua skipped">' + tr('пропущено', 'skipped') + '</span></div>';
+    }).join('');
+  } else {
+    els.skippedList.innerHTML = '';
   }
   els.unsolvedCard.hidden = !run.unsolved.length;
   if(run.unsolved.length){
@@ -1876,7 +1931,7 @@ function retryOptions(need, vmax){
     var v = Math.floor(Math.random() * (max + 1));
     if(opts.indexOf(v) < 0) opts.push(v);
   }
-  return shuffle(opts);
+  return opts.sort(function(a, b){ return a - b; });
 }
 function renderRetry(){
   retryState = null;
@@ -1904,7 +1959,7 @@ function saveSession(durSec, hardEx){
     t: Date.now(), mode: S.mode, limit: S.limit, from: S.from, ops: S.ops, carry: S.carry, hard: !!run.hardMode,
     fmt: isDictation() ? (isFullDictation() ? 'full' : 'dictation') : 'visual',
     kind: run.listKind || 'review',
-    dur: durSec, ok: run.ok, bad: run.bad, psec: S.min * 60 + S.sec, hardEx: hex
+    dur: durSec, ok: run.ok, bad: run.bad, skip: run.skipped.length, psec: S.min * 60 + S.sec, hardEx: hex
   });
   saveJSON(K_HIST, h.slice(0, 15));
 }
@@ -1928,8 +1983,10 @@ function renderHistory(){
     desc += r.fmt === 'full'
       ? ' · ' + tr('математический диктант', 'math dictation')
       : r.fmt === 'dictation' ? ' · ' + tr('диктант', 'dictation') : '';
+    var skipN = r.skip || 0;
     var html = '<div class="hrow">' + fmtDate(r.t) + ' · ' + desc +
       ' · ' + mode + ' · ' + tr('верно ', 'correct ') + r.ok + ', ' + r.bad + ' ' + pluralErr(r.bad) +
+      (skipN ? ', ' + skipN + ' ' + tr('пропущено', 'skipped') : '') +
       ' · ' + acc;
     var hex = Array.isArray(r.hardEx) ? r.hardEx : [];
     if(hex.length){
@@ -1991,6 +2048,14 @@ els.fromInput.addEventListener('change', function(){
 });
 els.carry.addEventListener('change', function(){
   S.carry = els.carry.checked;
+  if(S.carry && !hasAddSub()){
+    ['add', 'sub'].forEach(function(op){
+      if(S.ops.indexOf(op) < 0) S.ops.push(op);
+    });
+    S.ops = OPS_ALL.filter(function(o){ return S.ops.indexOf(o) >= 0; });
+    syncSegs();
+    updateHints();
+  }
   poolInfo();
   saveSettings();
 });
@@ -2019,9 +2084,34 @@ if(els.dictRepeat) els.dictRepeat.addEventListener('click', function(){
   speakCurrent(true);
 });
 els.trickZero.addEventListener('change', function(){
+  if(els.trickZero.checked) leaveDictation();
   S.trickZero = els.trickZero.checked;
+  if(S.trickZero && S.ops.indexOf('div') < 0){
+    S.ops.push('div');
+    S.ops = OPS_ALL.filter(function(o){ return S.ops.indexOf(o) >= 0; });
+    syncSegs();
+    poolInfo();
+  }
   saveSettings();
   updateHints();
+});
+
+each(document.querySelectorAll('.class-seg button'), function(b){
+  b.addEventListener('click', function(){
+    applyClass(Number(b.getAttribute('data-c')));
+  });
+});
+
+each(document.querySelectorAll('.v-step'), function(b){
+  b.addEventListener('click', function(){
+    var input = $(b.getAttribute('data-target'));
+    if(!input) return;
+    var value = parseInt(input.value, 10);
+    if(!isFinite(value)) value = 0;
+    input.value = value + (Number(b.getAttribute('data-step')) || 0);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
 });
 
 each(document.querySelectorAll('.seg'), function(seg){
@@ -2030,6 +2120,7 @@ each(document.querySelectorAll('.seg'), function(seg){
     if(!b || !seg.contains(b) || !b.getAttribute('data-v')) return;
     var key = seg.getAttribute('data-key');
     var v = b.getAttribute('data-v');
+    if(isDictation() && key === 'miss' && v !== 'r') leaveDictation();
     if(key === 'ops'){
       var i = S.ops.indexOf(v);
       if(i >= 0){
@@ -2045,7 +2136,7 @@ each(document.querySelectorAll('.seg'), function(seg){
       saveSettings();
       return;
     }
-    S[key] = v;
+    S[key] = key === 'rate' ? Number(v) : v;
     each(seg.querySelectorAll('button'), function(x){
       x.classList.toggle('on', x === b);
     });
@@ -2056,6 +2147,11 @@ each(document.querySelectorAll('.seg'), function(seg){
       updateHints();
       syncDictationUI();
       poolInfo();
+      saveSettings();
+      return;
+    }
+    if(key === 'rate'){
+      if(window.DictationAudio) DictationAudio.setRate(S.rate);
       saveSettings();
       return;
     }
@@ -2136,6 +2232,7 @@ els.hardBtn.addEventListener('click', startHard);
 els.clearHard.addEventListener('click', function(){ saveHard([]); hardInfo(); });
 els.stopBtn.addEventListener('click', function(){ finish('stop'); });
 if(els.pauseBtn) els.pauseBtn.addEventListener('click', function(){ setPaused(!(run && run.paused)); });
+if(els.skipBtn) els.skipBtn.addEventListener('click', skipExercise);
 els.slowBtn.addEventListener('click', function(){
   if(!run || !run.slow || !run.slow.length) return;
   startHardList(run.slow, false, 'fluency');

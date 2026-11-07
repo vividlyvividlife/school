@@ -1,0 +1,134 @@
+/* Календарь и длительности: дополнения к trainer.css */
+.cal-task,.dur-task{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cal-task button:last-child,.dur-task button:last-child{grid-column:1/-1}
+.dur-level,.tiles-seg{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:420px){
+  .dur-level{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+.qbody-cal,.qbody-dur{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:100%}
+
+.cal{
+  width:min(430px,100%);
+  padding:9px 10px 11px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow:var(--shadow-card);
+}
+.cal-head{
+  margin:0 0 7px;
+  text-align:center;
+  font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif;
+  font-size:15px;
+  font-weight:700;
+}
+.calgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.calwd{
+  padding:1px 0 3px;
+  text-align:center;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.calday{
+  padding:3px 0;
+  border-radius:6px;
+  text-align:center;
+  font-size:13.5px;
+  font-variant-numeric:tabular-nums;
+  color:var(--text-soft);
+}
+.calday.off{visibility:hidden}
+@media (max-height:640px){
+  .cal{padding-top:6px;padding-bottom:7px}
+  .cal-head{margin-bottom:4px}
+  .calday{padding:1px 0;font-size:12.5px}
+}
+
+.opts.words{grid-template-columns:repeat(2,minmax(0,1fr));max-width:min(600px,100%)}
+.opts.words .opt-txt{
+  min-height:clamp(54px,9.5dvh,76px);
+  padding:6px 10px;
+  font-size:clamp(20px,4.4vw,28px);
+  font-weight:700;
+  line-height:1.2;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.opts.words.long .opt-txt{
+  font-size:clamp(16px,3.3vw,20px);
+  font-weight:600;
+  line-height:1.25;
+}
+.opts.words[data-count="6"],.opts.words[data-count="9"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+.opts.words[data-count="12"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+.opts.words[data-count="6"] .opt-txt,
+.opts.words[data-count="9"] .opt-txt,
+.opts.words[data-count="12"] .opt-txt{
+  min-height:clamp(46px,8dvh,62px);
+  padding:5px 7px;
+  font-size:clamp(16px,3.2vw,22px);
+}
+.opts.words[data-count="12"] .opt-txt{font-size:clamp(15px,2.9vw,20px)}
+.opts.words[data-count="5"]>.opt:last-child,
+.opts.words[data-count="7"]>.opt:last-child{grid-column:1/-1}
+@media (max-width:600px){
+  .opts.words[data-count="12"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:480px){
+  .opts.words.long{grid-template-columns:1fr}
+}
+
+.freebox{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.freehint{max-width:440px;text-align:center;font-size:14px;font-weight:600;line-height:1.35;color:var(--muted)}
+.freeform{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.freeinput{
+  width:clamp(110px,24vw,160px);
+  padding:12px 14px;
+  border:1px solid var(--line-strong);
+  border-radius:14px;
+  background:var(--surface);
+  color:var(--ink);
+  font-family:inherit;
+  font-size:clamp(26px,6vw,36px);
+  font-weight:700;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  appearance:textfield;
+}
+.freeinput::-webkit-outer-spin-button,
+.freeinput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.freeinput:focus{outline:2px solid var(--blue);outline-offset:1px}
+.freeunit{font-size:clamp(18px,3vw,24px);font-weight:700;color:var(--muted)}
+.freebtn{min-width:150px}
+.cap.note{color:var(--muted)}
+
+.tl{display:flex;align-items:center;gap:11px;width:min(440px,100%);padding:6px 2px}
+.tl-time{
+  min-width:2.4em;
+  text-align:center;
+  font-size:clamp(24px,6.4vw,34px);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.tl-track{position:relative;flex:1;height:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.tl-track::before,.tl-track::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:var(--blue);
+  transform:translateY(-50%);
+}
+.tl-track::before{left:-1px}
+.tl-track::after{right:-1px}
+.tl-fill{position:absolute;top:0;bottom:0;left:0;width:100%;border-radius:8px;background:linear-gradient(90deg,rgba(15,118,110,.18),rgba(15,118,110,.42))}
+html[data-theme="dark"] .tl-track::before,
+html[data-theme="dark"] .tl-track::after{background:var(--blue)}

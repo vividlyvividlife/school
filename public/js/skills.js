@@ -82,14 +82,15 @@ var els = {
   hardInfo: $('hardInfo'), hardList: $('hardList'), hardBtn: $('hardBtn'), clearHard: $('clearHard'),
   histList: $('histList'), clearHist: $('clearHist'),
   gInfo: $('gInfo'), scoreOk: $('scoreOk'), scoreBad: $('scoreBad'),
-  stopBtn: $('stopBtn'), pauseBtn: $('pauseBtn'), timeWrap: $('timeWrap'), tfill: $('tfill'), tclock: $('tclock'),
+  stopBtn: $('stopBtn'), pauseBtn: $('pauseBtn'), skipBtn: $('skipBtn'), timeWrap: $('timeWrap'), tfill: $('tfill'), tclock: $('tclock'),
   eqw: $('eqw'), eq: $('eq'), cap: $('cap'),
   figWrap: $('figWrap'), figSummary: $('figSummary'), fig: $('fig'),
   signpad: $('signpad'), tiles: $('tiles'), pad: $('pad'),
   resTitle: $('resTitle'), verdict: $('verdict'),
-  rOk: $('rOk'), rBad: $('rBad'), rAcc: $('rAcc'), rAvg: $('rAvg'),
+  rOk: $('rOk'), rBad: $('rBad'), rSkip: $('rSkip'), rAcc: $('rAcc'), rAvg: $('rAvg'),
   rFast: $('rFast'), rSlow: $('rSlow'), rDur: $('rDur'),
   misTitle: $('misTitle'), misList: $('misList'),
+  skippedCard: $('skippedCard'), skippedTitle: $('skippedTitle'), skippedList: $('skippedList'),
   slowCard: $('slowCard'), slowTitle: $('slowTitle'), slowList: $('slowList'), slowBtn: $('slowBtn'),
   unsolvedCard: $('unsolvedCard'), unsolvedTitle: $('unsolvedTitle'), unsolvedList: $('unsolvedList'), unsolvedBtn: $('unsolvedBtn'),
   againBtn: $('againBtn'), toSetupBtn: $('toSetupBtn')
@@ -1547,7 +1548,7 @@ function saveSession(durSec){
   if(!Array.isArray(h)) h = [];
   h.unshift({
     t: Date.now(), mode: S.mode, psec: S.min * 60 + S.sec,
-    dur: durSec, ok: run.ok, bad: run.bad, hard: !!run.hardMode,
+    dur: durSec, ok: run.ok, bad: run.bad, skip: run.skipped.length, hard: !!run.hardMode,
     summary: run.summary || summaryText()
   });
   saveJSON(K_HIST, h.slice(0, 12));
@@ -1565,8 +1566,11 @@ function renderHistory(){
     var acc = total ? Math.round(r.ok / total * 100) + '%' : '—';
     var mode = r.mode === 'timed' ? tr('на время ', 'timed ') + fmt(r.psec) : tr('тренировка', 'practice');
     var desc = r.hard ? tr('повторение ошибок', 'mistake review') : (r.summary || '');
+    var skipN = r.skip || 0;
     return '<div class="hrow">' + fmtDate(r.t) + ' · ' + desc + ' · ' + mode + ' · ' +
-      tr('верно ', 'correct ') + r.ok + ', ' + r.bad + ' ' + pluralErr(r.bad) + ' · ' + acc + '</div>';
+      tr('верно ', 'correct ') + r.ok + ', ' + r.bad + ' ' + pluralErr(r.bad) +
+      (skipN ? ', ' + skipN + ' ' + tr('пропущено', 'skipped') : '') +
+      ' · ' + acc + '</div>';
   }).join('');
 }
 
@@ -1648,7 +1652,7 @@ function startRun(list, kind){
   var limitMs = S.mode === 'timed' ? Math.max(10, S.min * 60 + S.sec) * 1000 : 0;
   run = {
     ok: 0, bad: 0, tN: 0, tSum: 0, minMs: 0, maxMs: 0,
-    records: [], mistakes: [], unsolved: [], slow: [], recent: [],
+    records: [], mistakes: [], skipped: [], unsolved: [], slow: [], recent: [],
     done: false, locked: false, typed: '', cur: null, shownAt: 0,
     timer: 0, advanceTimer: 0, start: 0, endAt: 0, limitMs: limitMs,
     paused: false, pausedAt: 0, pendingNext: false,
@@ -1831,6 +1835,19 @@ function submitValue(val, btn){
     if(run && !run.done) next();
   }, e.long ? (ok ? 1300 : 2600) : (ok ? 420 : 1500));
 }
+function skipCurrent(){
+  if(!run || run.locked || run.paused || !run.cur) return;
+  var e = run.cur;
+  run.locked = true;
+  run.skipped.push({ q: e.text || e.prompt, ex: e });
+  if(run.listKind === 'hard' || run.listKind === 'fluency' || run.listKind === 'retry') run.queue.push(e);
+  els.cap.textContent = tr('Пропущено', 'Skipped');
+  els.cap.className = 'cap note';
+  run.advanceTimer = setTimeout(function(){
+    if(run && !run.done) next();
+  }, 500);
+}
+
 function markUnsolved(){
   if(!run.cur || run.locked || !run.tN) return;
   var elapsed = Date.now() - run.shownAt;
@@ -1912,6 +1929,7 @@ var VERDICTS = {
 function showResults(reason, durSec){
   var list = VERDICTS[LANG];
   var total = run.ok + run.bad;
+  var skipped = run.skipped || [];
   els.resTitle.innerHTML = tico(reason === 'time' ? '⏰' : reason === 'stop' ? '✋' : reason === 'done' ? '🌟' : '🎉') + (
     reason === 'time'
     ? tr('Время вышло', 'Time is up')
@@ -1925,8 +1943,10 @@ function showResults(reason, durSec){
               : tr('Готово', 'Done'))
         : tr('Готово', 'Done'));
   if(!total){
-    els.verdict.textContent = tr('Ни одного ответа. Попробуй ещё раз.', 'No answers yet. Try again.');
-    els.verdict.className = 'verdict g0';
+    els.verdict.textContent = skipped.length
+      ? tr('Все задания пропущены. Это не ошибки — просто вернись, когда будет удобно. 🙂', 'All tasks were skipped. Not mistakes — come back when you feel like it. 🙂')
+      : tr('Ни одного ответа. Попробуй ещё раз.', 'No answers yet. Try again.');
+    els.verdict.className = skipped.length ? 'verdict' : 'verdict g0';
   } else {
     var acc = run.ok / total * 100;
     var tier = list[list.length - 1];
@@ -1948,6 +1968,7 @@ function showResults(reason, durSec){
   els.rOk.nextElementSibling.textContent = pluralOk(run.ok);
   els.rBad.textContent = run.bad;
   els.rBad.nextElementSibling.textContent = pluralErr(run.bad);
+  els.rSkip.textContent = skipped.length;
   els.rAcc.textContent = total ? Math.round(run.ok / total * 100) + '%' : '—';
   els.rAvg.textContent = run.tN ? fmtSec1(run.tSum / run.tN) : '—';
   els.rFast.textContent = run.tN ? fmtSec1(run.minMs) : '—';
@@ -1965,6 +1986,15 @@ function showResults(reason, durSec){
         (m.ex.answerText ? '<span class="ua ok">' + tr('верно: ', 'correct: ') + m.ex.answerText + '</span>' : '') +
         '</div>';
     }).join('');
+  }
+  els.skippedCard.hidden = !skipped.length;
+  if(skipped.length){
+    els.skippedTitle.innerHTML = tico('⏭️') + tr('Пропущено: ', 'Skipped: ') + skipped.length;
+    els.skippedList.innerHTML = skipped.map(function(s){
+      return '<div class="mrow">' + s.q + '<span class="ua skipped">' + tr('пропущено', 'skipped') + '</span></div>';
+    }).join('');
+  } else {
+    els.skippedList.innerHTML = '';
   }
   els.unsolvedCard.hidden = !run.unsolved.length;
   if(run.unsolved.length){
@@ -2153,6 +2183,17 @@ els.soundTest.addEventListener('click', function(){
   tone(880, 0, 0.11, 'sine', 0.12);
   tone(1174.7, 0.085, 0.16, 'sine', 0.11);
 });
+each(document.querySelectorAll('.v-step'), function(b){
+  b.addEventListener('click', function(){
+    var input = $(b.getAttribute('data-target'));
+    if(!input) return;
+    var value = parseInt(input.value, 10);
+    if(!isFinite(value)) value = 0;
+    input.value = value + (Number(b.getAttribute('data-step')) || 0);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+});
 els.startBtn.addEventListener('click', function(){
   normalize();
   saveSettings();
@@ -2173,6 +2214,7 @@ els.clearHist.addEventListener('click', function(){
 });
 els.stopBtn.addEventListener('click', function(){ finish('stop'); });
 if(els.pauseBtn) els.pauseBtn.addEventListener('click', function(){ setPaused(!(run && run.paused)); });
+if(els.skipBtn) els.skipBtn.addEventListener('click', skipCurrent);
 els.againBtn.addEventListener('click', function(){ startRun(null, 'normal'); });
 els.toSetupBtn.addEventListener('click', function(){
   renderHard();

@@ -5,10 +5,10 @@
   --site-muted:#64748b;
   --site-line:#e2e8f0;
   --site-link:#334155;
-  --site-teal:#0f766e;
-  --site-teal-d:#115e59;
-  --site-teal-soft:#f0fdfa;
-  --site-teal-line:#99f6e4;
+  --site-teal:#6366f1;
+  --site-teal-d:#4f46e5;
+  --site-teal-soft:#eef2ff;
+  --site-teal-line:#c7d2fe;
   --site-bg:#f8fafc;
   --site-surface:#fff;
   --site-surface-2:#f8fafc;
@@ -28,6 +28,9 @@ body{
   -webkit-text-size-adjust:100%;
 }
 h1,h2,h3,h4,.site-brand{font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif}
+html.trainer-scroll,html.trainer-scroll body{height:100%;overflow:hidden}
+html.trainer-scroll body{position:fixed;inset:0;width:100%;height:100%}
+
 .site-shell{min-height:100vh;min-height:100dvh}
 
 /* выезжающее меню: по умолчанию свёрнуто */
@@ -56,12 +59,13 @@ body.site-nav-open .site-nav{transform:none}
 .site-brand{
   display:flex;align-items:center;gap:.6rem;min-width:0;
   color:var(--site-ink);text-decoration:none;
-  font-weight:800;font-size:1rem;letter-spacing:-.01em;
+  font-family:"Nunito","DM Sans","Segoe UI",Roboto,Arial,sans-serif;
+  font-weight:900;font-size:1rem;letter-spacing:-.02em;
 }
 .site-brand .logo{
   width:2rem;height:2rem;border-radius:.6rem;flex:0 0 auto;
   display:grid;place-items:center;color:#fff;font-size:1rem;
-  background:linear-gradient(135deg,#14b8a6,#0f766e);
+  background:linear-gradient(135deg,#6366f1,#a855f7);
 }
 .site-brand span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -73,6 +77,9 @@ body.site-nav-open .site-nav{transform:none}
   font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   color:var(--site-muted);
 }
+a.site-grade-link{color:var(--site-ink);text-decoration:none}
+a.site-grade-link:hover,a.site-grade-link[aria-current="page"]{color:#4f46e5}
+
 .site-subject{
   display:block;padding:.3rem .5rem .2rem;
   font-size:.82rem;font-weight:700;color:var(--site-ink);
@@ -161,13 +168,21 @@ body.site-nav-open{overflow:hidden}
 
 /* Тренажёры: экраны занимают оставшуюся высоту */
 body[data-page="trainer"] .site-content,
-body[data-page="clock"] .site-content{overflow:hidden}
+body[data-page="clock"] .site-content,
+body[data-page="calendar"] .site-content,
+body[data-page="durations"] .site-content{overflow:hidden}
 body[data-page="trainer"] .site-content>.screen,
-body[data-page="clock"] .site-content>.screen{flex:1 1 auto;min-height:0}
+body[data-page="clock"] .site-content>.screen,
+body[data-page="calendar"] .site-content>.screen,
+body[data-page="durations"] .site-content>.screen{flex:1 1 auto;min-height:0}
 body[data-page="trainer"] #game,
 body[data-page="trainer"] #results,
 body[data-page="clock"] #game,
-body[data-page="clock"] #results{height:auto}
+body[data-page="clock"] #results,
+body[data-page="calendar"] #game,
+body[data-page="calendar"] #results,
+body[data-page="durations"] #game,
+body[data-page="durations"] #results{height:auto}
 
 @media (prefers-reduced-motion:reduce){
   .site-nav{transition:none}
@@ -182,10 +197,10 @@ html[data-theme="dark"]{
   --site-muted:#9aa8bc;
   --site-link:#cbd5e1;
   --site-line:#2a3648;
-  --site-teal:#2dd4bf;
-  --site-teal-d:#5eead4;
-  --site-teal-soft:#12312e;
-  --site-teal-line:#2a5b56;
+  --site-teal:#818cf8;
+  --site-teal-d:#a5b4fc;
+  --site-teal-soft:#1e1b4b;
+  --site-teal-line:#3730a3;
   --site-bg:#0b1220;
   --site-surface:#111a2b;
   --site-surface-2:#0f1726;

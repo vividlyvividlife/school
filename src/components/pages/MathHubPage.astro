@@ -1,0 +1,249 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { navigationByLang } from '../../data/navigation';
+import { siteCopy, type Lang } from '../../i18n/site';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = siteCopy[lang];
+const isEn = lang === 'en';
+const B = import.meta.env.BASE_URL;
+const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const subjects = navigationByLang[lang];
+const math = subjects.find((item) => item.path === (isEn ? '/en/math/' : '/matematika/'));
+if (!math) throw new Error('Math section not found');
+const children = (math.children || []).filter((item) => !item.soon);
+const worksheets = children.filter((item) => item.page === 'examples');
+const trainers = children.filter((item) => item.page !== 'examples');
+const startCard = trainers.find((item) => item.page === 'trainer' && /Примеры|Practice/i.test(item.label)) || trainers[0];
+
+const copy = {
+  kicker: isEn ? 'VIVID·SCHOOL · Math' : 'VIVID·ШКОЛА · Математика',
+  title: isEn ? 'Math' : 'Математика',
+  sub: isEn
+    ? 'Practice tools and printable materials for primary school. Choose a topic — settings are inside the trainer.'
+    : 'Тренажёры и печатные материалы для начальной школы. Выбирай тему — настройки откроются внутри.',
+  trainers: isEn ? 'Trainers' : 'Тренажёры',
+  trainersHint: isEn ? 'Interactive practice with checks and reports.' : 'Интерактивная тренировка с проверкой и отчётами.',
+  worksheets: isEn ? 'Printable' : 'Для печати',
+  worksheetsHint: isEn ? 'Ready-to-print A4 task cards.' : 'Готовые карточки с заданиями на A4.',
+  start: isEn ? 'Start with practice' : 'Начать с примеров',
+  back: isEn ? 'Home' : 'Главная',
+};
+
+---
+
+<BaseLayout title={`${copy.title} — ${c.siteName}`} description={copy.sub} lang={lang} page="home">
+  <div class="vivid-hub">
+    <header class="vivid-hub-head">
+      <div class="vivid-icon" aria-hidden="true">∑</div>
+      <div class="vivid-hub-title">
+        <div class="vivid-kicker">{copy.kicker}</div>
+        <h1>{copy.title}</h1>
+        <p>{copy.sub}</p>
+      </div>
+    </header>
+
+    {startCard && (
+      <a class="vivid-cta" href={url(startCard.path)}>
+        <span class="vivid-cta-copy">
+          <span class="vivid-cta-kicker">{isEn ? 'Core trainer' : 'Основной тренажёр'}</span>
+          <span class="vivid-cta-title">{startCard.label}</span>
+          <span class="vivid-cta-desc">{startCard.desc}</span>
+        </span>
+        <span class="vivid-cta-btn">{copy.start} <span aria-hidden="true">→</span></span>
+      </a>
+    )}
+
+    <section class="vivid-section">
+      <div class="vivid-section-head">
+        <h2>{copy.trainers}</h2>
+        <span>{copy.trainersHint}</span>
+      </div>
+      <div class="vivid-grid">
+        {trainers.map((item, i) => (
+          <a class="vivid-card" href={url(item.path)}>
+            <span class="vivid-card-num">{String(i + 1).padStart(2, '0')}</span>
+            <span class="vivid-card-copy">
+              <span class="vivid-card-title">{item.label}</span>
+              {item.desc && <span class="vivid-card-desc">{item.desc}</span>}
+            </span>
+            <span class="vivid-card-arrow" aria-hidden="true">→</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    {worksheets.length > 0 && (
+      <section class="vivid-section">
+        <div class="vivid-section-head">
+          <h2>{copy.worksheets}</h2>
+          <span>{copy.worksheetsHint}</span>
+        </div>
+        <div class="vivid-grid vivid-grid-one">
+          {worksheets.map((item, i) => (
+            <a class="vivid-card vivid-card-print" href={url(item.path)}>
+              <span class="vivid-card-num">A4</span>
+              <span class="vivid-card-copy">
+                <span class="vivid-card-title">{item.label}</span>
+                {item.desc && <span class="vivid-card-desc">{item.desc}</span>}
+              </span>
+              <span class="vivid-card-arrow" aria-hidden="true">→</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .vivid-hub {
+    position: relative;
+    width: min(100%, 1040px);
+    margin: 0 auto;
+    padding: clamp(1.1rem, 4vw, 3rem) clamp(0.9rem, 4vw, 2rem) 4rem;
+    font-family: "Nunito", "DM Sans", "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  .vivid-hub-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: clamp(1.2rem, 3vw, 1.8rem);
+  }
+  .vivid-icon {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    flex: 0 0 auto;
+    border-radius: 1.15rem;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    box-shadow: 0 12px 26px -10px rgba(99, 102, 241, .7);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 900;
+  }
+  .vivid-kicker {
+    color: #818cf8;
+    font-size: .7rem;
+    font-weight: 900;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    margin-bottom: .25rem;
+  }
+  .vivid-hub-title h1 {
+    margin: 0;
+    font-family: inherit;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.05;
+    letter-spacing: -.035em;
+    font-weight: 900;
+    color: #0f172a;
+  }
+  .vivid-hub-title p {
+    max-width: 38rem;
+    margin: .55rem 0 0;
+    color: #64748b;
+    font-size: clamp(.95rem, 2.2vw, 1.05rem);
+    line-height: 1.55;
+  }
+
+  .vivid-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+    padding: clamp(1.1rem, 3vw, 1.6rem);
+    border-radius: 1.75rem;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #d946ef);
+    box-shadow: 0 24px 55px -24px rgba(99, 102, 241, .7);
+    color: #fff;
+    text-decoration: none;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .vivid-cta:hover { transform: translateY(-2px); box-shadow: 0 28px 60px -22px rgba(99, 102, 241, .8); }
+  .vivid-cta-copy { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+  .vivid-cta-kicker { font-size: .68rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.75); }
+  .vivid-cta-title { font-size: clamp(1.35rem, 3.4vw, 1.8rem); font-weight: 900; letter-spacing: -.02em; }
+  .vivid-cta-desc { font-size: .9rem; color: rgba(255,255,255,.82); }
+  .vivid-cta-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .75rem 1.05rem;
+    border-radius: 1rem;
+    background: #fff;
+    color: #4f46e5;
+    font-size: .9rem;
+    font-weight: 900;
+    box-shadow: 0 8px 20px rgba(30, 27, 75, .18);
+  }
+
+  .vivid-section { margin-top: 1.6rem; }
+  .vivid-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 .2rem .55rem;
+  }
+  .vivid-section-head h2 { margin: 0; font-family: inherit; font-size: 1.05rem; font-weight: 900; color: #0f172a; }
+  .vivid-section-head span { color: #94a3b8; font-size: .78rem; font-weight: 700; text-align: right; }
+
+  .vivid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: .65rem;
+  }
+  .vivid-grid-one { grid-template-columns: 1fr; }
+  .vivid-card {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.15rem;
+    background: #fff;
+    color: #0f172a;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+  .vivid-card:hover {
+    transform: translateY(-2px);
+    border-color: #c7d2fe;
+    box-shadow: 0 12px 26px -18px rgba(79, 70, 229, .45);
+  }
+  .vivid-card-num {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: .8rem;
+    background: #eef2ff;
+    color: #6366f1;
+    font-size: .72rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+  .vivid-card-print .vivid-card-num { background: #ecfeff; color: #0891b2; font-size: .65rem; }
+  .vivid-card-copy { display: flex; flex-direction: column; min-width: 0; gap: .15rem; }
+  .vivid-card-title { font-size: .95rem; font-weight: 900; line-height: 1.25; }
+  .vivid-card-desc { color: #64748b; font-size: .78rem; line-height: 1.35; }
+  .vivid-card-arrow { margin-left: auto; color: #cbd5e1; font-weight: 800; }
+  .vivid-card:hover .vivid-card-arrow { color: #6366f1; }
+
+  @media (max-width: 560px) {
+    .vivid-cta { flex-direction: column; align-items: flex-start; }
+    .vivid-cta-btn { width: 100%; justify-content: center; }
+    .vivid-section-head { flex-direction: column; align-items: flex-start; gap: .2rem; }
+    .vivid-section-head span { text-align: left; }
+  }
+</style>

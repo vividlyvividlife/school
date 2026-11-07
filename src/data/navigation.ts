@@ -174,11 +174,28 @@ const navigationRu: NavItem[] = [
         page: 'helper',
         desc: 'Стрелочные часы и расписание уроков',
       },
+    ],
+  },
+  {
+    label: 'Время',
+    children: [
       {
         label: 'Тренажёр времени',
-        path: '/pomogator/vremya/',
+        path: '/vremya/',
         page: 'clock',
         desc: 'Часы и минуты: чтение, задачи, на время',
+      },
+      {
+        label: 'Календарь',
+        path: '/vremya/kalendar/',
+        page: 'calendar',
+        desc: 'Дни недели, месяцы, даты и промежутки',
+      },
+      {
+        label: 'Длительности',
+        path: '/vremya/dlitelnosti/',
+        page: 'durations',
+        desc: 'Единицы времени, сравнение и промежутки',
       },
     ],
   },
@@ -344,22 +361,79 @@ const navigationEn: NavItem[] = [
         page: 'helper',
         desc: 'Analog clock and lesson schedule',
       },
+    ],
+  },
+  {
+    label: 'Time',
+    children: [
       {
         label: 'Time trainer',
-        path: '/en/helper/time/',
+        path: '/en/time/',
         page: 'clock',
         desc: 'Clocks and minutes: read, calculate, timed',
+      },
+      {
+        label: 'Calendar',
+        path: '/en/time/calendar/',
+        page: 'calendar',
+        desc: 'Weekdays, months, dates and gaps',
+      },
+      {
+        label: 'Durations',
+        path: '/en/time/durations/',
+        page: 'durations',
+        desc: 'Time units, comparison and intervals',
       },
     ],
   },
 ];
 
+function findByLabel(items: NavItem[], label: string): NavItem {
+  const item = items.find((x) => x.label === label);
+  if (!item) throw new Error(`Navigation item not found: ${label}`);
+  return item;
+}
+
+const ruGrade = findByLabel(navigationRu, '2 класс');
+const ruMath = findByLabel(ruGrade.children || [], 'Математика');
+const ruReading = findByLabel(ruGrade.children || [], 'Літаратурнае чытанне');
+const ruTime = findByLabel(navigationRu, 'Время');
+const ruHelper = findByLabel(navigationRu, 'Помогатор');
+
+const ruMathChildren = (ruMath.children || []).map((item) =>
+  item.label === 'Примеры' ? { ...item, path: '/matematika/primery/' } : item,
+);
+
+const subjectNavigationRu: NavItem[] = [
+  { ...ruMath, label: 'Математика', path: '/matematika/', children: ruMathChildren },
+  { ...ruReading, label: 'Літаратурнае чытанне' },
+  ruTime,
+  ruHelper,
+];
+
+const enGrade = findByLabel(navigationEn, 'Grade 2');
+const enMath = findByLabel(enGrade.children || [], 'Math');
+const enReading = findByLabel(enGrade.children || [], 'Literary Reading');
+const enTime = findByLabel(navigationEn, 'Time');
+const enHelper = findByLabel(navigationEn, 'Helper');
+
+const enMathChildren = (enMath.children || []).map((item) =>
+  item.label === 'Practice' ? { ...item, path: '/en/math/practice/' } : item,
+);
+
+const subjectNavigationEn: NavItem[] = [
+  { ...enMath, label: 'Math', path: '/en/math/', children: enMathChildren },
+  { ...enReading, label: 'Literary Reading' },
+  enTime,
+  enHelper,
+];
+
 export const navigationByLang: Record<Lang, NavItem[]> = {
-  ru: navigationRu,
-  en: navigationEn,
+  ru: subjectNavigationRu,
+  en: subjectNavigationEn,
 };
 
-export const navigation = navigationRu;
+export const navigation = subjectNavigationRu;
 
 export function findTrail(
   items: NavItem[],

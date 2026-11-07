@@ -18,7 +18,17 @@ const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, ''
     <li>
       {item.children ? (
         <>
-          <span class={depth === 0 ? 'site-grade' : 'site-subject'}>{item.label}</span>
+          {item.path ? (
+            <a
+              class={`${depth === 0 ? 'site-grade' : 'site-subject'} site-grade-link`}
+              href={url(item.path)}
+              aria-current={normalizePath(item.path) === current ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          ) : (
+            <span class={depth === 0 ? 'site-grade' : 'site-subject'}>{item.label}</span>
+          )}
           <Astro.self items={item.children} current={current} depth={depth + 1} />
         </>
       ) : item.soon ? (
