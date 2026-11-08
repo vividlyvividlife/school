@@ -304,7 +304,6 @@ const copyPayload = {
     var qPrompt = document.getElementById('qPrompt');
     var qDay = document.getElementById('qDay');
     var qBody = document.getElementById('qBody');
-    var qWrap = document.getElementById('qWrap');
     var stepHintEl = document.getElementById('stepHint');
     var voiceTile = document.getElementById('voiceTile');
     var speechHintEl = document.getElementById('speechHint');
@@ -695,7 +694,8 @@ const copyPayload = {
       if (dictEl) dictEl.hidden = !dict;
       if (dictNote) dictNote.textContent = dictNoteText();
       if (qPrompt) qPrompt.hidden = shown;
-      if (qWrap) qWrap.hidden = shown && q.kind === 'd2a';
+      // hide only the digital readout, so the repeat button, feedback and skip stay visible
+      if (qBody) qBody.hidden = shown && q.kind === 'd2a';
     }
 
     function paintDictLeft() {

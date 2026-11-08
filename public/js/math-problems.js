@@ -1005,15 +1005,17 @@ function geoFigureSvg(fig, inline){
     function treeColor(depth){
       return depth === 1 ? '#d24a3a' : depth === 2 ? '#2563eb' : '#16a34a';
     }
-    svg += '<text x="' + cols[0] + '" y="14" text-anchor="middle"' +
+    svg += '<text x="' + cols[0] + '" y="12" text-anchor="middle"' +
       (inline ? ' style="fill:#6b7280;font:600 12px sans-serif"' : ' class="ftree-label"') + '>' +
       tr('начало', 'start') + '</text>';
     for(qi = 0; qi < nLev; qi++){
       var head = labels[qi][LANG === 'en' ? 1 : 0];
-      svg += '<text x="' + cols[qi + 1] + '" y="14" text-anchor="middle"' +
-        (inline ? ' style="fill:' + treeColor(qi + 1) + ';font:600 12px sans-serif"'
-                : ' class="ftree-label ' + (qi === 0 ? 'fa' : qi === 1 ? 'fb' : 'fc') + '"') + '>' +
-        head + '</text>';
+      var hstyle = inline ? ' style="fill:' + treeColor(qi + 1) + ';font:600 12px sans-serif"'
+        : ' class="ftree-label ' + (qi === 0 ? 'fa' : qi === 1 ? 'fb' : 'fc') + '"';
+      var cstyle = inline ? ' style="fill:' + treeColor(qi + 1) + ';font:600 10px sans-serif"'
+        : ' class="ftree-label ftree-count ' + (qi === 0 ? 'fa' : qi === 1 ? 'fb' : 'fc') + '"';
+      svg += '<text x="' + cols[qi + 1] + '" y="12" text-anchor="middle"' + hstyle + '>' + head + '</text>';
+      svg += '<text x="' + cols[qi + 1] + '" y="24" text-anchor="middle"' + cstyle + '>(' + levels[qi] + ')</text>';
     }
     for(qi = 1; qi <= nLev; qi++){
       var parYs = qi === 1 ? [rootY] : yDepth[qi - 1];

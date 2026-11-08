@@ -94,18 +94,23 @@
 .sk-fig .ftree-label.fa{fill:#d24a3a}
 .sk-fig .ftree-label.fb{fill:#2563eb}
 .sk-fig .ftree-label.fc{fill:#16a34a}
+.sk-fig .ftree-count{font-size:10px}
 .sk-fig .fpoint.fa{fill:#d24a3a}
 .sk-fig .fpoint.fb{fill:#2563eb}
 .sk-fig .fpoint.fc{fill:#16a34a}
 .sk-fig .fpoint.froot{fill:var(--muted)}
-.sk-fig svg.ftree-tall{max-height:none}
+.sk-fig svg.ftree-tall{max-height:min(40dvh,320px)}
 .sk-fig text{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
-.playgroup:has(.sk-acc[open]){gap:8px}
-.playgroup:has(.sk-acc[open]) .eq.text{font-size:clamp(16px,min(4.6vw,3.9dvh),26px)}
-.playgroup:has(.sk-acc[open]) .sk-fig svg{max-height:min(21dvh,170px)}
-.playgroup:has(.sk-acc[open]) .sk-fig svg.ftree-tall{max-height:none}
-.playgroup:has(.sk-acc[open]) .sk-fig{padding:6px 8px}
-.playgroup:has(.sk-acc[open]) .pad button{height:clamp(42px,7.6dvh,64px);font-size:clamp(18px,4dvh,27px)}
+.v-game-body:has(.sk-acc[open]){gap:6px}
+.v-game-body:has(.sk-acc[open]) .eq.text{font-size:clamp(16px,min(4.6vw,3.9dvh),26px)}
+.v-game-body:has(.sk-acc[open]) .sk-fig svg{max-height:min(21dvh,170px)}
+.v-game-body:has(.sk-acc[open]) .sk-fig svg.ftree-tall{max-height:clamp(190px,34dvh,280px)}
+.v-game-body:has(.fig-self[open]) .eq .sk-q{display:none}
+.v-game-body:has(.sk-acc[open]) .sk-fig{padding:6px 8px}
+.v-game-body:has(.sk-acc[open]) .v-skip-btn{padding:2px 8px}
+.v-game-body:has(.sk-acc[open]) :is(#pad,#tiles,.signpad) button{height:clamp(42px,7.6dvh,64px);font-size:clamp(18px,4dvh,27px)}
+.v-game-body:has(.eq.text.long) :is(#pad,#tiles,.signpad) button{height:clamp(48px,7dvh,64px);font-size:clamp(17px,3.6dvh,24px)}
+.v-game-body:has(.eq.text.long) .eq.text{font-size:clamp(15px,min(4.2vw,3.4dvh),22px)}
 
 html[data-theme="dark"] .stat{background:var(--surface)}
 html[data-theme="dark"] .mrow{border-bottom-color:var(--line-soft)}
@@ -168,5 +173,6 @@ html[data-theme="dark"] .sk-fig text{stroke:var(--surface)}
   .wp{grid-template-columns:minmax(76px,30%) minmax(0,1fr);gap:6px 10px}
 }
 
-.playgroup:has(.eq.word) .pad button{height:clamp(44px,7.8dvh,64px);font-size:clamp(19px,4.2dvh,29px)}
-.playgroup:has(.eq.word){gap:clamp(6px,1.4dvh,14px)}
+.v-game-body:has(.eq.word) :is(#pad,#tiles,.signpad) button{height:clamp(44px,7.8dvh,64px);font-size:clamp(19px,4.2dvh,29px)}
+.v-game-body:has(.eq.word){gap:clamp(6px,1.4dvh,14px)}
+.v-game-body:has(.eq.word) .poly-svg{max-height:min(26dvh,200px)}

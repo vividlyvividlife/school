@@ -72,7 +72,7 @@ function pluralOk(n){
 
 var els = {
   setup: $('setup'), game: $('game'), results: $('results'),
-  playarea: document.querySelector('.playarea'),
+  playarea: document.querySelector('.v-game-body'),
   from: $('from'), to: $('to'), toChips: $('toChips'),
   types: document.querySelector('#setup .types-seg'),
   ops: document.querySelector('#setup .ops-seg'),
@@ -1712,7 +1712,8 @@ function renderCurrent(){
   els.eq.innerHTML = e.prompt.replace('{{slot}}', '<span class="slot empty" id="skSlot"></span>');
   if(e.figure && e.figure.kind){
     els.figWrap.hidden = false;
-    els.figWrap.open = SKILL === 'geometry' || SKILL === 'tree';
+    els.figWrap.open = SKILL === 'geometry';
+    els.figWrap.classList.toggle('fig-self', SKILL === 'tree');
     els.figSummary.textContent = tr('Показать фигуру', 'Show the shape');
     els.fig.innerHTML = svgShape(e.figure);
   } else {

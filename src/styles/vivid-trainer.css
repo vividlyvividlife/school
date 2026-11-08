@@ -275,8 +275,28 @@ h2{letter-spacing:-.025em;font-weight:900}
 .v-pill span{font-size:14px}
 .v-game .gmeta{font-size:10px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .v-game-body{
-  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   gap:clamp(14px,3dvh,26px);padding:16px 0 0;width:100%;align-items:stretch;
+  overflow-y:auto;overflow-x:hidden;
+}
+/* auto margins center the pair when it fits and collapse to 0 on overflow, keeping both ends reachable */
+.v-game-body > :first-child{margin-top:auto}
+.v-game-body > :last-child{margin-bottom:auto}
+.v-qcard .sk-acc{width:100%;max-width:560px}
+.v-game-body:has(.sk-acc[open]) .v-qcard{padding:10px 0 4px}
+@media (max-width:719px){
+  .v-game-body:has(.sk-acc[open]) #tiles,
+  .v-game-body:has(.poly-svg) #tiles{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .v-game-body:has(.sk-acc[open]) #tiles button,
+  .v-game-body:has(.poly-svg) #tiles button{font-size:clamp(15px,4.2vw,22px)}
+}
+@media (min-width:720px){
+  .v-game-body:has(.sk-acc[open]),
+  .v-game-body:has(.eq.text.long){flex-direction:row;align-items:flex-start;justify-content:center;gap:20px}
+  .v-game-body:has(.sk-acc[open]) > .eqwrap,
+  .v-game-body:has(.eq.text.long) > .eqwrap{flex:0 1 400px;min-width:0;max-width:420px;margin:auto 0}
+  .v-game-body:has(.sk-acc[open]) > .padwrap,
+  .v-game-body:has(.eq.text.long) > .padwrap{flex:0 1 300px;min-width:0;max-width:320px;margin:auto 0}
 }
 .v-qcard{
   position:relative;width:100%;max-width:none;display:flex;flex-direction:column;align-items:center;
@@ -303,20 +323,20 @@ h2{letter-spacing:-.025em;font-weight:900}
 .v-game #tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;width:100%;max-width:none}
 .v-game #tiles.dense{grid-template-columns:repeat(4,minmax(0,1fr))}
 .v-game #tiles button{
-  min-width:0;height:clamp(60px,9dvh,82px);border:2px solid #e2e8f0;border-radius:17px;background:white;
+  min-width:0;height:clamp(60px,9dvh,82px);border:2px solid #e5e8f2;border-radius:17px;background:#fff;
   color:#0f172a;font:inherit;font-size:clamp(22px,4.4vw,30px);font-weight:900;
-  box-shadow:none;transition:background .12s,border-color .12s;
+  box-shadow:0 8px 18px -16px rgba(15,23,42,.45);transition:background .12s,border-color .12s;
 }
-.v-game #tiles button:hover{border-color:#c7d2fe;background:rgba(255,255,255,.55)}
+.v-game #tiles button:hover{border-color:#c7d2fe;background:#f8f9ff}
 .v-game #tiles.dense button{font-size:clamp(18px,3.4vw,26px);height:clamp(54px,8dvh,72px)}
 .v-game #tiles button.correct{background:#d1fae5;border-color:#10b981;color:#047857}
 .v-game #tiles button.wrong{background:#ffe4e6;border-color:#f43f5e;color:#be123c}
 .v-game #tiles button.cannot{font-size:clamp(13px,2.6vw,18px);color:#64748b}
 .v-game .signpad button{
-  border:2px solid #e2e8f0;border-radius:17px;background:transparent;
-  box-shadow:none;transition:background .12s,border-color .12s;
+  border:2px solid #e5e8f2;border-radius:17px;background:#fff;
+  box-shadow:0 8px 18px -16px rgba(15,23,42,.45);transition:background .12s,border-color .12s;
 }
-.v-game .signpad button:hover{border-color:#c7d2fe;background:rgba(255,255,255,.55)}
+.v-game .signpad button:hover{border-color:#c7d2fe;background:#f8f9ff}
 .v-game #pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;width:100%;max-width:none}
 .v-game #pad button{
   height:clamp(48px,8.8dvh,68px);border:2px solid #e5e8f2;border-radius:16px;background:#fff;
@@ -380,6 +400,7 @@ h2{letter-spacing:-.025em;font-weight:900}
 /* VIVID game screen for the Time trainers */
 .v-tgame .playarea{
   flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;
   overflow-y:auto;overflow-x:hidden;
 }
 .v-tgame .playgroup{
@@ -401,11 +422,11 @@ h2{letter-spacing:-.025em;font-weight:900}
 .v-tgame .opts.clocks{max-width:min(440px,86vw,48dvh)}
 .v-tgame .opts.clocks.calc{max-width:min(640px,100%)}
 .v-tgame .opt{
-  border:2px solid #e2e8f0;border-radius:17px;background:transparent;
-  box-shadow:none;
+  border:2px solid #e5e8f2;border-radius:17px;background:#fff;
+  box-shadow:0 8px 18px -16px rgba(15,23,42,.45);
   transition:border-color .12s,background .12s;
 }
-.v-tgame .opt:hover{border-color:#c7d2fe;background:rgba(255,255,255,.55)}
+.v-tgame .opt:hover{border-color:#c7d2fe;background:#f8f9ff}
 .v-tgame .opt-txt{
   font-family:"Nunito","DM Sans","Segoe UI",Roboto,Arial,sans-serif;
   color:#0f172a;font-weight:900;

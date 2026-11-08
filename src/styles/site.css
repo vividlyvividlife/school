@@ -210,3 +210,13 @@ html[data-theme="dark"]{
   --site-line-strong:#475569;
   --site-nav-shadow:0 18px 50px -24px #000;
 }
+
+/* VIVID scrollbars */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--site-surface-2)}
+::-webkit-scrollbar-thumb{background:var(--site-teal-line);border-radius:999px;border:2px solid var(--site-surface-2)}
+::-webkit-scrollbar-thumb:hover{background:var(--site-teal)}
+::-webkit-scrollbar-corner{background:transparent}
+@supports not (selector(::-webkit-scrollbar)){
+  *{scrollbar-width:thin;scrollbar-color:var(--site-teal-line) var(--site-surface-2)}
+}
