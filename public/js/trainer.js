@@ -967,6 +967,7 @@ function renderEq(){
     }
   }
   updateDictUI();
+  updateBeadsBtn();
 }
 
 function dictStop(){
@@ -2285,6 +2286,211 @@ els.retryBtns.addEventListener('click', function(e){
   if(!b || !els.retryBtns.contains(b)) return;
   retryAnswer(b);
 });
+
+/* ---- «На бусинах»: разрядный разбор примера ---- */
+var beadsEls = {
+  btn: document.getElementById('beadsBtn'),
+  panel: document.getElementById('beadsPanel'),
+  eq: document.getElementById('beadsEq'),
+  legend: document.getElementById('beadsLegend'),
+  stage: document.getElementById('beadsStage'),
+  note: document.getElementById('beadsNote'),
+  next: document.getElementById('beadsNext'),
+  close: document.getElementById('beadsClose')
+};
+var beadsState = {
+  cur: null, mode: 'intro',
+  aT: 0, aU: 0, bT: 0, bU: 0,
+  wT: 0, wU: 0,
+  selU: 0, exchanged: false, needEx: false, carry: false,
+  rmT: 0, rmU: 0
+};
+
+function beadsCan(c){
+  return !!c && c.miss === 'r' && (c.op === '+' || c.op === '−') &&
+    c.a < 100 && c.b < 100 && (c.op === '+' ? c.a + c.b <= 100 : c.a >= c.b);
+}
+function beadsRod(cls){
+  var h = '<span class="brod' + (cls || '') + '">', i;
+  for(i = 0; i < 10; i++) h += '<i></i>';
+  return h + '</span>';
+}
+function beadsUnit(cls){ return '<i class="bunit' + (cls || '') + '"></i>'; }
+function beadsRods(n){
+  var h = '', i;
+  for(i = 0; i < n; i++) h += beadsRod();
+  return h || '<span class="bz0">0</span>';
+}
+function beadsUnits(n){
+  var h = '', i;
+  for(i = 0; i < n; i++) h += beadsUnit();
+  return h || '<span class="bz0">0</span>';
+}
+function beadsCard(t, u, live, hot){
+  return '<div class="bcard' + (hot ? ' hot' : '') + '">' +
+    '<div class="bcol"><span class="bcap">' + tr('десятки', 'tens') + '</span>' +
+      '<div class="bz bz-t' + (live ? ' can' : '') + '">' + beadsRods(t) + '</div></div>' +
+    '<div class="bcol"><span class="bcap">' + tr('единицы', 'ones') + '</span>' +
+      '<div class="bz bz-u' + (live ? ' can' : '') + '">' + beadsUnits(u) + '</div></div>' +
+    '</div>';
+}
+function beadsIsDone(){
+  var st = beadsState, c = st.cur;
+  if(!c) return false;
+  if(c.op === '+') return st.exchanged || !st.carry;
+  return st.rmT >= st.bT && st.rmU >= st.bU;
+}
+function beadsRepr(n, t, u){
+  if(t && u) return tr(n + ' — это ' + t + ' дес. и ' + u + ' ед.',
+                         n + ' is ' + t + ' tens and ' + u + ' ones');
+  if(t) return tr(n + ' — это ' + t + ' дес.', n + ' is ' + t + ' tens');
+  if(u) return tr(n + ' — это ' + u + ' ед.', n + ' is ' + u + ' ones');
+  return tr(n + ' — это 0', n + ' is 0');
+}
+function beadsNote(){
+  var st = beadsState, c = st.cur, t;
+  if(!beadsEls.note || !c) return;
+  if(st.mode === 'intro'){
+    t = beadsRepr(c.a, st.aT, st.aU) + ', ' +
+      beadsRepr(c.b, st.bT, st.bU).replace(/\.$/, '') + '. ';
+    t += c.op === '+'
+      ? tr('Складываем единицы с единицами, десятки с десятками.', 'Add ones to ones and tens to tens.')
+      : tr('Вычитаем единицы из единиц, десятки из десятков.', 'Subtract ones from ones and tens from tens.');
+  } else if(c.op === '+'){
+    if(beadsIsDone()){
+      t = tr('Получилось ' + st.wT + ' дес. и ' + st.wU + ' ед. Ответ: ' + c.r + '.',
+             'Result: ' + st.wT + ' tens and ' + st.wU + ' ones. Answer: ' + c.r + '.');
+      if(st.carry) t = tr('Десяток собран. ', 'Ten made. ') + t;
+    } else {
+      t = tr('Собери десяток: нажми на 10 бусин. Выбрано: ' + st.selU + ' из 10.',
+             'Make a ten: tap 10 beads. Selected: ' + st.selU + ' of 10.');
+    }
+  } else if(beadsIsDone()){
+    t = tr('Осталось ' + st.wT + ' дес. и ' + st.wU + ' ед. Ответ: ' + c.r + '.',
+           'Left: ' + st.wT + ' tens and ' + st.wU + ' ones. Answer: ' + c.r + '.');
+  } else if(st.needEx && !st.exchanged){
+    t = tr('Единиц не хватает: ' + st.aU + ' меньше ' + st.bU + '. Нажми на палочку — разменяй её на 10 бусин.',
+           'Not enough ones: ' + st.aU + ' < ' + st.bU + '. Tap a rod to trade it for 10 beads.');
+  } else {
+    t = tr('Убери ' + st.bT + ' дес. и ' + st.bU + ' ед. Убрано: ' + st.rmT + '/' + st.bT + ' дес., ' + st.rmU + '/' + st.bU + ' ед.',
+           'Remove ' + st.bT + ' tens and ' + st.bU + ' ones. Removed: ' + st.rmT + '/' + st.bT + ' tens, ' + st.rmU + '/' + st.bU + ' ones.');
+  }
+  beadsEls.note.textContent = t;
+}
+function beadsRender(){
+  var st = beadsState, c = st.cur;
+  if(!c) return;
+  beadsEls.eq.textContent = c.a + ' ' + c.op + ' ' + c.b;
+  var h = '<div class="brow">';
+  if(st.mode === 'intro'){
+    h += beadsCard(st.aT, st.aU) + '<div class="bsign">' + c.op + '</div>' + beadsCard(st.bT, st.bU);
+  } else {
+    h += beadsCard(st.wT, st.wU, !beadsIsDone(), !beadsIsDone());
+  }
+  beadsEls.stage.innerHTML = h + '</div>';
+  beadsNote();
+  var btn = beadsEls.next;
+  if(st.mode === 'intro'){
+    btn.hidden = false;
+    btn.textContent = tr('Дальше →', 'Next →');
+  } else if(beadsIsDone()){
+    btn.hidden = false;
+    btn.textContent = tr('Понятно', 'Got it');
+  } else {
+    btn.hidden = true;
+  }
+}
+function beadsClick(e){
+  var st = beadsState, c = st.cur;
+  if(!c || st.mode !== 'act') return;
+  var el = e.target.closest ? e.target.closest('.brod, .bunit') : null;
+  if(!el) return;
+  var rod = el.classList.contains('brod'), unit = el.classList.contains('bunit');
+  if(c.op === '+'){
+    if(!unit || !st.carry || st.exchanged || el.classList.contains('sel')) return;
+    el.classList.add('sel');
+    st.selU++;
+    if(st.selU >= 10){
+      st.selU = 0;
+      st.exchanged = true;
+      st.wT += 1;
+      st.wU -= 10;
+      beadsRender();
+    } else {
+      beadsNote();
+    }
+    return;
+  }
+  if(st.needEx && !st.exchanged){
+    if(rod){
+      st.exchanged = true;
+      st.wT -= 1;
+      st.wU += 10;
+      beadsRender();
+    }
+    return;
+  }
+  if(rod && st.rmT < st.bT){
+    st.rmT++; st.wT--; beadsRender();
+  } else if(unit && st.rmU < st.bU){
+    st.rmU++; st.wU--; beadsRender();
+  }
+}
+function beadsStart(){
+  var st = beadsState, c = st.cur;
+  if(!c) return;
+  st.mode = 'act';
+  st.selU = 0; st.rmT = 0; st.rmU = 0; st.exchanged = false;
+  if(c.op === '+'){
+    st.wT = st.aT + st.bT;
+    st.wU = st.aU + st.bU;
+    st.carry = st.wU >= 10;
+    st.needEx = false;
+  } else {
+    st.wT = st.aT;
+    st.wU = st.aU;
+    st.carry = false;
+    st.needEx = st.aU < st.bU;
+  }
+  beadsRender();
+}
+function beadsNext(){
+  if(!beadsState.cur) return;
+  if(beadsState.mode === 'intro'){ beadsStart(); return; }
+  beadsClose();
+}
+function beadsClose(){ if(beadsEls.panel) beadsEls.panel.hidden = true; }
+function beadsOpen(){
+  if(!run || !run.cur || run.done || !beadsCan(run.cur)) return;
+  var st = beadsState, c = run.cur;
+  st.cur = c;
+  st.mode = 'intro';
+  st.aT = Math.floor(c.a / 10); st.aU = c.a % 10;
+  st.bT = Math.floor(c.b / 10); st.bU = c.b % 10;
+  st.wT = st.aT; st.wU = st.aU;
+  st.selU = 0; st.rmT = 0; st.rmU = 0;
+  st.exchanged = false; st.needEx = false; st.carry = false;
+  beadsEls.panel.hidden = false;
+  beadsRender();
+}
+function updateBeadsBtn(){
+  if(!beadsEls.btn) return;
+  var ok = !!(run && run.cur && !run.done && !isDictation() && beadsCan(run.cur));
+  beadsEls.btn.hidden = !ok;
+  if(!ok) beadsClose();
+}
+if(beadsEls.btn){
+  beadsEls.btn.textContent = tr('На бусинах', 'With beads');
+  beadsEls.btn.addEventListener('click', beadsOpen);
+  beadsEls.close.addEventListener('click', beadsClose);
+  beadsEls.next.addEventListener('click', beadsNext);
+  beadsEls.stage.addEventListener('click', beadsClick);
+  if(beadsEls.legend){
+    beadsEls.legend.innerHTML =
+      '<span class="lg">' + beadsRod(' lg-rod') + tr(' = 10 (десяток)', ' = 10 (ten)') + '</span>' +
+      '<span class="lg">' + beadsUnit(' lg-unit') + tr(' = 1 (единица)', ' = 1 (one)') + '</span>';
+  }
+}
 
 loadSettings();
 applyUrl();

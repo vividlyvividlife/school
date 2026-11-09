@@ -538,3 +538,69 @@ h2{letter-spacing:-.025em;font-weight:900}
   #results .actions{grid-template-columns:1fr;padding-top:12px}
   #results .actions .btn{height:50px}
 }
+
+/* «На бусинах» — разрядный разбор примера */
+.v-beads-btn{
+  align-self:center;margin:2px auto 0;padding:4px 12px;border:0;border-radius:999px;
+  background:#eef2ff;color:#4338ca;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;
+}
+.v-beads-btn:hover{background:#e0e7ff}
+.beads-panel{
+  position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
+  padding:14px;background:rgba(246,247,251,.92);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+}
+.beads-panel[hidden]{display:none}
+.beads-card{
+  width:min(560px,100%);max-height:calc(100dvh - 28px);overflow:auto;
+  display:flex;flex-direction:column;gap:12px;padding:16px 18px 14px;
+  background:#fff;border:1px solid #e5e8f2;border-radius:20px;
+  box-shadow:0 24px 60px -30px rgba(15,23,42,.45);
+}
+.beads-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.beads-eq{font-family:"Nunito","DM Sans","Segoe UI",Roboto,Arial,sans-serif;font-size:22px;font-weight:900;color:#0f172a}
+.beads-close{
+  width:32px;height:32px;flex:0 0 auto;border:2px solid #e5e8f2;border-radius:50%;background:#fff;
+  color:#64748b;font:900 16px/1 "Nunito","Segoe UI",sans-serif;cursor:pointer;
+}
+.beads-close:hover{border-color:#c7d2fe;color:#4338ca}
+.beads-legend{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:12px;font-weight:800;color:#64748b}
+.beads-legend .lg{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.beads-stage{
+  display:flex;align-items:center;justify-content:center;min-height:170px;
+  padding:14px 10px;background:#f8f9ff;border:1px solid #eef0f8;border-radius:16px;
+}
+.beads-note{font-size:14px;font-weight:700;color:#475569;line-height:1.45;min-height:3.2em}
+.beads-actions{display:flex;gap:8px}
+.beads-step{
+  flex:1;height:46px;border:2px solid #e5e8f2;border-radius:14px;background:#fff;
+  color:#334155;font:inherit;font-weight:900;cursor:pointer;
+}
+.beads-step.primary{background:#4338ca;border-color:#4338ca;color:#fff}
+.beads-step:disabled{opacity:.35;cursor:default}
+.brow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.bsign{font-family:"Nunito","DM Sans","Segoe UI",Roboto,Arial,sans-serif;font-size:24px;font-weight:900;color:#94a3b8}
+.bcard{display:flex;gap:12px;padding:10px;border:2px solid #eef0f8;border-radius:14px;background:#fff;transition:border-color .15s,background .15s}
+.bcard.hot{border-color:#c7d2fe;background:#fff}
+.bcol{display:flex;flex-direction:column;gap:5px;align-items:center}
+.bcap{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8}
+.bz{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;justify-content:center;min-height:18px}
+.bz-t{max-width:160px}
+.bz-u{max-width:122px}
+.beads-stage .brow > .bcard:only-child .bz-t{max-width:250px}
+.beads-stage .brow > .bcard:only-child .bz-u{max-width:170px}
+.bz0{font-size:12px;font-weight:800;color:#cbd5e1;padding:2px 0}
+.brod{display:inline-flex;gap:1.5px;padding:3px 4px;border-radius:8px;background:#eef2ff;border:1.5px solid #4f46e5}
+.brod i{width:5px;height:5px;border-radius:50%;background:#4f46e5}
+.bunit{width:14px;height:14px;border-radius:50%;background:#f59e0b;box-shadow:0 1px 3px rgba(180,83,9,.35)}
+.can .brod,.can .bunit{cursor:pointer;transition:transform .12s,opacity .12s}
+.can .brod:hover{transform:translateY(-2px)}
+.can .bunit:hover{transform:scale(1.18)}
+.bunit.sel{background:#d97706;transform:scale(1.22);box-shadow:0 0 0 3px rgba(245,158,11,.35)}
+@media (max-width:520px){
+  .beads-card{padding:13px 13px 11px;gap:10px}
+  .beads-eq{font-size:19px}
+  .beads-stage{min-height:150px;padding:10px 6px}
+  .bz-t{max-width:150px}
+  .bz-u{max-width:110px}
+  .bunit{width:13px;height:13px}
+}
