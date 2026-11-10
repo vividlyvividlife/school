@@ -2290,12 +2290,18 @@ els.retryBtns.addEventListener('click', function(e){
 /* ---- «На бусинах»: разрядный разбор примера ---- */
 var beadsEls = {
   btn: document.getElementById('beadsBtn'),
+  place: document.getElementById('placeBtn'),
+  comp: document.getElementById('compBtn'),
+  diff: document.getElementById('diffBtn'),
   panel: document.getElementById('beadsPanel'),
   eq: document.getElementById('beadsEq'),
   legend: document.getElementById('beadsLegend'),
   stage: document.getElementById('beadsStage'),
   note: document.getElementById('beadsNote'),
   next: document.getElementById('beadsNext'),
+  prev: document.getElementById('beadsPrev'),
+  dots: document.getElementById('beadsDots'),
+  title: document.getElementById('beadsTitle'),
   close: document.getElementById('beadsClose')
 };
 var beadsState = {
@@ -2455,14 +2461,22 @@ function beadsStart(){
   beadsRender();
 }
 function beadsNext(){
+  if(beadsState.mode === 'ten' || beadsState.mode === 'place' || beadsState.mode === 'sub' || beadsState.mode === 'comp' || beadsState.mode === 'diff'){ bvNext(); return; }
   if(!beadsState.cur) return;
   if(beadsState.mode === 'intro'){ beadsStart(); return; }
   beadsClose();
 }
-function beadsClose(){ if(beadsEls.panel) beadsEls.panel.hidden = true; }
-function beadsOpen(){
-  if(!run || !run.cur || run.done || !beadsCan(run.cur)) return;
-  var st = beadsState, c = run.cur;
+function beadsClose(){ bvClear(); if(beadsEls.panel) beadsEls.panel.hidden = true; }
+function beadsOpen(mode){
+  if(!run || !run.cur || run.done) return;
+  var c = run.cur;
+  if(mode !== 'beads'){
+    bvOpen(mode);
+    return;
+  }
+  if(!beadsCan(c)) return;
+  bvClear();
+  var st = beadsState;
   st.cur = c;
   st.mode = 'intro';
   st.aT = Math.floor(c.a / 10); st.aU = c.a % 10;
@@ -2472,19 +2486,688 @@ function beadsOpen(){
   st.exchanged = false; st.needEx = false; st.carry = false;
   beadsEls.panel.hidden = false;
   beadsRender();
+  if(beadsEls.prev) beadsEls.prev.hidden = true;
+  if(beadsEls.dots) beadsEls.dots.hidden = true;
+  if(beadsEls.title) beadsEls.title.hidden = true;
 }
 function updateBeadsBtn(){
-  if(!beadsEls.btn) return;
-  var ok = !!(run && run.cur && !run.done && !isDictation() && beadsCan(run.cur));
-  beadsEls.btn.hidden = !ok;
-  if(!ok) beadsClose();
+  var c = run && run.cur;
+  var on = !!(c && !run.done && !isDictation());
+  var okBeads = on && beadsCan(c);
+  var okPlace = on && (bvCanTen(c) || bvCanSub(c));
+  var okComp = on && bvCanComp(c);
+  var okDiff = on && bvCanDiff(c);
+  if(beadsEls.btn) beadsEls.btn.hidden = !okBeads;
+  if(beadsEls.place) beadsEls.place.hidden = !okPlace;
+  if(beadsEls.comp) beadsEls.comp.hidden = !okComp;
+  if(beadsEls.diff) beadsEls.diff.hidden = !okDiff;
+  if(!okBeads && !okPlace && !okComp && !okDiff) beadsClose();
 }
+
+/* ---- разборы: «По разрядам» и «Дополнение» (пошаговые) ---- */
+var bvTimers = [];
+var bvState = { mode: null, c: null, step: 0 };
+function bvCanTen(c){
+  return !!c && c.miss === 'r' && c.op === '+' && c.a < 100 && c.b < 100 &&
+    c.a + c.b <= 100 && c.a % 10 > 0 && c.b % 10 > 0 && (c.a % 10) + (c.b % 10) >= 10;
+}
+function bvClear(){
+  bvTimers = bvTimers || [];
+  bvTimers.forEach(clearTimeout);
+  bvTimers = [];
+}
+function bvParts(){
+  var c = bvState.c, need = 10 - c.a % 10;
+  return {
+    aT: Math.floor(c.a / 10), aU: c.a % 10,
+    bT: Math.floor(c.b / 10), bU: c.b % 10,
+    need: need, rest: (c.b % 10) - need
+  };
+}
+function bvRods(n){
+  var h = '', i;
+  for(i = 0; i < n; i++) h += beadsRod();
+  return h;
+}
+function bvDots(n, cls){
+  var h = '', i;
+  for(i = 0; i < n; i++) h += '<i class="bunit' + (cls ? ' ' + cls : '') + '"></i>';
+  return h;
+}
+function bvFrame(au, need, mode){
+  var h = '<div class="bv-frame">', i;
+  for(i = 0; i < au; i++) h += '<div class="bv-cell filled"><i class="bunit"></i></div>';
+  for(i = 0; i < need; i++){
+    h += mode === 'anim'
+      ? '<div class="bv-cell" data-dst="1"></div>'
+      : mode === 'shown'
+        ? '<div class="bv-cell filled"><i class="bunit acc"></i></div>'
+        : '<div class="bv-cell"></div>';
+  }
+  if(mode === 'anim') h += beadsRod(' bv-ten-rod');
+  return h + '</div>';
+}
+function bvSlotRow(rest, need, withSrc){
+  var h = '<div class="bv-row">', i;
+  for(i = 0; i < rest; i++) h += '<i class="bunit acc"></i>';
+  if(withSrc){
+    for(i = 0; i < need; i++){
+      h += '<span class="bv-slot"><span class="bv-slot-empty"></span>' +
+        '<i class="bunit acc bv-src"></i></span>';
+    }
+  }
+  return h + '</div>';
+}
+function bvPartCard(t, u){
+  return '<div class="bcard bv-pcard">' +
+    '<div class="bcol"><span class="bcap">' + tr('десятки', 'tens') + '</span>' +
+    '<span class="bv-pnum t">' + (t * 10) + '</span>' +
+    '<div class="bz bz-t">' + (t ? bvRods(t) : '<span class="bz0">0</span>') + '</div></div>' +
+    '<div class="bcol"><span class="bcap">' + tr('единицы', 'ones') + '</span>' +
+    '<span class="bv-pnum u">' + u + '</span>' +
+    '<div class="bz bz-u">' + (u ? bvDots(u) : '<span class="bz0">0</span>') + '</div></div>' +
+  '</div>';
+}
+function bvUnitsSum(n){
+  if(!n) return '<div class="bv-row plain"><span class="bz0">0</span></div>';
+  if(n < 10) return '<div class="bv-row plain">' + bvDots(n) + '</div>';
+  return '<div class="bv-row plain"><span class="bv-tenout">' + bvDots(10) +
+    '</span>' + bvDots(n - 10) + '</div>';
+}
+function bvSceneAnim(withTens){
+  var p = bvParts(), h = '<div class="bv-scene">', i, fly = '';
+  if(withTens){
+    h += '<div class="bv-tens"><span class="bv-cap tn-cap">' +
+      tr('десятки · ' + (p.aT * 10) + ' + ' + (p.bT * 10) + ' = ' + ((p.aT + p.bT) * 10),
+         'tens · ' + (p.aT * 10) + ' + ' + (p.bT * 10) + ' = ' + ((p.aT + p.bT) * 10)) +
+      '</span><div class="bv-rods">' + bvRods(p.aT + p.bT) + beadsRod(' bv-extra-rod') + '</div></div>';
+  }
+  h += '<div class="bv-urow">' +
+    '<div class="bv-col"><span class="bv-num in">' + p.aU + '</span>' + bvFrame(p.aU, p.need, 'anim') + '</div>' +
+    '<div class="bv-col"><span class="bv-num out">' + p.bU + '</span>' + bvSlotRow(p.rest, p.need, true) + '</div>' +
+    '</div>';
+  for(i = 0; i < p.need; i++) fly += '<i class="bunit bv-flyer"></i>';
+  return h + fly + (withTens ? beadsRod(' bv-ten-flyer') : '') + '</div>';
+}
+function bvCanSub(c){
+  return !!c && c.miss === 'r' && c.op === '−' && c.a < 100 && c.b < 100 &&
+    c.a >= 10 && c.a > c.b && (c.a % 10) < (c.b % 10);
+}
+function bvSubVals(){
+  var c = bvState.c, au = c.a % 10, bu = c.b % 10;
+  return { au: au, bu: bu, at: Math.floor(c.a / 10), bt: Math.floor(c.b / 10), u2: au + 10, rem: au + 10 - bu };
+}
+function bvSubScene(){
+  var v = bvSubVals(), rods = bvRods(v.at), dst = '', i;
+  for(i = 0; i < 10; i++) dst += '<i class="bunit acc bv-sdst"></i>';
+  return '<div class="bv-scene">' +
+    '<div class="bv-tens"><span class="bv-cap">' + tr('десятки', 'tens') + '</span>' +
+    '<div class="bv-rods">' + rods + '</div><span class="bv-num tn">' + (v.at * 10) + '</span></div>' +
+    '<div class="bv-urow">' +
+    '<div class="bv-col"><span class="bv-num in">' + v.au + '</span>' +
+    '<div class="bv-units">' + bvDots(v.au) + dst + '</div></div>' +
+    '<span class="bsign">−</span>' +
+    '<div class="bv-col"><span class="bv-num out">' + v.bu + '</span>' +
+    '<div class="bv-row plain">' + bvDots(v.bu, 'acc') + '</div></div>' +
+    '</div>' +
+    beadsRod(' bv-rod-flyer') +
+  '</div>';
+}
+function bvSubAnimRun(){
+  var scene = beadsEls.stage.querySelector('.bv-scene');
+  if(!scene) return;
+  var v = bvSubVals();
+  var inNum = scene.querySelector('.bv-num.in');
+  var tnNum = scene.querySelector('.bv-num.tn');
+  var flyer = scene.querySelector('.bv-rod-flyer');
+  var rods = scene.querySelectorAll('.bv-rods .brod');
+  var lastRod = rods[rods.length - 1];
+  var units = scene.querySelectorAll('.bv-sdst');
+  var unitsBox = scene.querySelector('.bv-units');
+  function reset(){
+    inNum.textContent = v.au;
+    tnNum.textContent = v.at * 10;
+    inNum.classList.remove('bump');
+    tnNum.classList.remove('bump');
+    flyer.style.transition = 'none';
+    flyer.style.opacity = '0';
+    flyer.style.transform = 'translate(0,0)';
+    units.forEach(function(b){ b.style.opacity = '0'; });
+    lastRod.style.opacity = '1';
+  }
+  function center(el, fr){
+    var r = el.getBoundingClientRect();
+    return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2 };
+  }
+  function launch(){
+    var fr = scene.getBoundingClientRect();
+    var st = center(lastRod, fr), tt = center(unitsBox, fr);
+    flyer.style.transition = 'none';
+    flyer.style.transform = 'translate(' + (st.x - 28.5) + 'px,' + (st.y - 5) + 'px)';
+    flyer.style.opacity = '1';
+    void scene.offsetWidth;
+    flyer.style.transition = 'transform .85s cubic-bezier(.45,.05,.3,1)';
+    flyer.style.transform = 'translate(' + (tt.x - 28.5) + 'px,' + (tt.y - 5) + 'px)';
+    lastRod.style.opacity = '0';
+    inNum.textContent = v.u2;
+    tnNum.textContent = (v.at - 1) * 10;
+    inNum.classList.add('bump');
+    tnNum.classList.add('bump');
+  }
+  function land(){
+    flyer.style.opacity = '0';
+    lastRod.style.opacity = '0';
+    units.forEach(function(b){ b.style.opacity = '1'; });
+  }
+  function cycle(){
+    reset();
+    bvTimers.push(setTimeout(launch, 2000));
+    bvTimers.push(setTimeout(land, 2900));
+    bvTimers.push(setTimeout(cycle, 4600));
+  }
+  cycle();
+}
+function bvAnimRun(){
+  var scene = beadsEls.stage.querySelector('.bv-scene');
+  if(!scene) return;
+  var p = bvParts();
+  var inNum = scene.querySelector('.bv-num.in');
+  var outNum = scene.querySelector('.bv-num.out');
+  var flyers = scene.querySelectorAll('.bv-flyer');
+  var srcs = scene.querySelectorAll('.bv-src');
+  var dsts = scene.querySelectorAll('.bv-cell[data-dst]');
+  var frameEl = scene.querySelector('.bv-frame');
+  var dots = scene.querySelectorAll('.bv-frame .bunit');
+  var extraRod = scene.querySelector('.bv-extra-rod');
+  var tenFly = scene.querySelector('.bv-ten-flyer');
+  var capEl = scene.querySelector('.tn-cap');
+  var capInit = capEl ? capEl.textContent : '';
+  var frameRod = scene.querySelector('.bv-ten-rod');
+  function reset(){
+    inNum.textContent = p.aU;
+    outNum.textContent = p.bU;
+    inNum.classList.remove('bump');
+    outNum.classList.remove('bump');
+    flyers.forEach(function(f){
+      f.style.transition = 'none';
+      f.style.opacity = '0';
+      f.style.transform = 'translate(0,0)';
+    });
+    srcs.forEach(function(b){ b.style.opacity = '1'; });
+    dsts.forEach(function(c){ c.innerHTML = ''; c.classList.remove('filled'); });
+    if(frameEl) frameEl.classList.remove('to-ten');
+    if(frameRod) frameRod.style.opacity = '0';
+    dots.forEach(function(b){ b.style.opacity = '1'; });
+    if(extraRod) extraRod.style.opacity = '0';
+    if(tenFly){
+      tenFly.style.transition = 'none';
+      tenFly.style.opacity = '0';
+      tenFly.style.transform = 'translate(0,0)';
+    }
+    if(capEl) capEl.textContent = capInit;
+  }
+  function center(el, fr){
+    var r = el.getBoundingClientRect();
+    return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2 };
+  }
+  function launch(){
+    var fr = scene.getBoundingClientRect();
+    flyers.forEach(function(f, i){
+      var s = center(srcs[i], fr);
+      f.style.transition = 'none';
+      f.style.transform = 'translate(' + (s.x - 7) + 'px,' + (s.y - 7) + 'px)';
+      f.style.opacity = '1';
+    });
+    void scene.offsetWidth;
+    flyers.forEach(function(f, i){
+      var t = center(dsts[i], fr);
+      f.style.transition = 'transform .85s cubic-bezier(.45,.05,.3,1)';
+      f.style.transform = 'translate(' + (t.x - 7) + 'px,' + (t.y - 7) + 'px)';
+    });
+    srcs.forEach(function(b){ b.style.opacity = '0'; });
+    inNum.textContent = '10';
+    outNum.textContent = p.rest;
+    inNum.classList.add('bump');
+    outNum.classList.add('bump');
+  }
+  function land(){
+    flyers.forEach(function(f){ f.style.opacity = '0'; });
+    srcs.forEach(function(b){ b.style.opacity = '0'; });
+    dsts.forEach(function(c){ c.innerHTML = '<i class="bunit acc"></i>'; c.classList.add('filled'); });
+  }
+  var isPlace = !!scene.querySelector('.bv-extra-rod');
+  function morph(){
+    if(frameEl) frameEl.classList.add('to-ten');
+  }
+  function flyTen(){
+    if(!tenFly || !extraRod || !frameEl) return;
+    scene.querySelectorAll('.bv-frame .bunit').forEach(function(b){ b.style.opacity = '0'; });
+    var fr = scene.getBoundingClientRect();
+    var st = center(frameEl, fr), tt = center(extraRod, fr);
+    tenFly.style.transition = 'none';
+    tenFly.style.transform = 'translate(' + (st.x - 28.5) + 'px,' + (st.y - 5) + 'px)';
+    tenFly.style.opacity = '1';
+    void scene.offsetWidth;
+    tenFly.style.transition = 'transform .7s cubic-bezier(.45,.05,.3,1)';
+    tenFly.style.transform = 'translate(' + (tt.x - 28.5) + 'px,' + (tt.y - 5) + 'px)';
+  }
+  function tenLand(){
+    if(tenFly) tenFly.style.opacity = '0';
+    if(extraRod) extraRod.style.opacity = '1';
+    if(capEl){
+      var pp = bvParts();
+      capEl.textContent = tr('десятки · ' + ((pp.aT + pp.bT) * 10) + ' + 10 = ' + ((pp.aT + pp.bT + 1) * 10),
+        'tens · ' + ((pp.aT + pp.bT) * 10) + ' + 10 = ' + ((pp.aT + pp.bT + 1) * 10));
+    }
+  }
+  function cycle(){
+    reset();
+    bvTimers.push(setTimeout(launch, 2000));
+    bvTimers.push(setTimeout(land, 2900));
+    if(isPlace){
+      bvTimers.push(setTimeout(morph, 3600));
+      bvTimers.push(setTimeout(flyTen, 4100));
+      bvTimers.push(setTimeout(tenLand, 4850));
+      bvTimers.push(setTimeout(cycle, 6700));
+    } else {
+      bvTimers.push(setTimeout(morph, 3600));
+      bvTimers.push(setTimeout(function(){
+        scene.querySelectorAll('.bv-frame .bunit').forEach(function(b){ b.style.opacity = '0'; });
+        if(frameRod) frameRod.style.opacity = '1';
+      }, 4100));
+      bvTimers.push(setTimeout(cycle, 6000));
+    }
+  }
+  cycle();
+}
+function bvFlowWord(n){
+  if(n === 1) return tr('Одна единица перетекает', '1 one flows');
+  var d = n % 10, r = n % 100;
+  if(d >= 2 && d <= 4 && (r < 12 || r > 14)) return tr(n + ' единицы перетекают', n + ' ones flow');
+  return tr(n + ' единиц перетекают', n + ' ones flow');
+}
+function bvRepr(n, t, u){
+  if(t && u) return tr(n + ' — это ' + t + ' и ' + u, n + ' is ' + t + ' and ' + u);
+  if(t) return tr(n + ' — это ' + t, n + ' is ' + t);
+  return tr(n + ' — это ' + u + ' ед.', n + ' is ' + u + ' ones');
+}
+function bvNote(mode, step){
+  var c = bvState.c, p = bvParts();
+  if(mode === 'comp') return bvCompNote(c, step);
+  if(mode === 'diff') return bvDiffNote(c, step);
+  if(mode === 'sub'){
+    var v = bvSubVals();
+    if(step === 0) return tr(bvRepr(c.a, v.at * 10, v.au) + ', ' + bvRepr(c.b, v.bt * 10, v.bu).replace(/\.$/, '') + '. Вычитаем единицы из единиц, десятки из десятков.',
+      bvRepr(c.a, v.at * 10, v.au) + '; ' + bvRepr(c.b, v.bt * 10, v.bu) + '. Subtract ones from ones and tens from tens.');
+    if(step === 2) return tr('Единиц не хватало: ' + v.au + ' меньше ' + v.bu + ', поэтому разменяли десяток на 10 единиц.',
+      'There were not enough ones: ' + v.au + ' is less than ' + v.bu + ', so we traded a ten for 10 ones.');
+    if(step === 1) return tr('Разменяли десяток: стало ' + v.u2 + ' единиц, а десятков ' + (v.at - 1) + '. Теперь можно вычесть ' + v.bu + '.',
+      'Traded a ten: now ' + v.u2 + ' ones and ' + (v.at - 1) + ' tens. Now we can subtract ' + v.bu + '.');
+    return tr('Убираем ' + v.bu + ': ' + v.u2 + ' − ' + v.bu + ' = ' + v.rem + '. Десятков осталось ' + (v.at - 1 - v.bt) + '. Ответ: ' + c.r + '.',
+      'Take away ' + v.bu + ': ' + v.u2 + ' − ' + v.bu + ' = ' + v.rem + '. Tens left: ' + (v.at - 1 - v.bt) + '. Answer: ' + c.r + '.');
+  }
+  if(mode === 'ten'){
+    if(step === 0) return tr('Дополни ' + p.aU + ' до 10: посмотри, сколько мест свободно в рамке. Не хватает ' + p.need + '.',
+      'Complete ' + p.aU + ' to 10: count the free places. You need ' + p.need + '.');
+    if(step === 1) return tr('Единицы: ' + p.aU + ' + ' + p.bU + ' = ' + (p.aU + p.bU) + '. ' + p.aU + ' + ' + p.need + ' = 10 — это десяток, у ' + p.bU + ' остаётся ' + p.rest + '. Десяток уходит к десяткам.',
+      'Ones: ' + p.aU + ' + ' + p.bU + ' = ' + (p.aU + p.bU) + '. ' + p.aU + ' + ' + p.need + ' = 10 — that is a ten, and ' + p.rest + ' is left of ' + p.bU + '. The ten joins the tens.');
+    return tr('10 + ' + p.rest + ' = ' + (p.aU + p.bU) + '. Десяток и ' + p.rest + ' — вот и весь разряд единиц.',
+      '10 + ' + p.rest + ' = ' + (p.aU + p.bU) + '. That is one ten and ' + p.rest + ' ones.');
+  }
+  if(step === 0) return tr(bvRepr(c.a, p.aT * 10, p.aU) + ', ' + bvRepr(c.b, p.bT * 10, p.bU).replace(/\.$/, '') + '. Складываем единицы с единицами, десятки с десятками.',
+    bvRepr(c.a, p.aT * 10, p.aU) + '; ' + bvRepr(c.b, p.bT * 10, p.bU) + '. Add ones to ones and tens to tens.');
+  if(step === 2) return tr('Десятки: ' + (p.aT * 10) + ' + ' + (p.bT * 10) + ' = ' + ((p.aT + p.bT) * 10) + '. Единицы: ' + p.aU + ' + ' + p.bU + ' = ' + (p.aU + p.bU) + ' — это десяток и ' + p.rest + '.',
+    'Tens: ' + (p.aT * 10) + ' + ' + (p.bT * 10) + ' = ' + ((p.aT + p.bT) * 10) + '. Ones: ' + p.aU + ' + ' + p.bU + ' = ' + (p.aU + p.bU) + ' — a ten and ' + p.rest + '.');
+  if(step === 1) return tr(bvFlowWord(p.need) + ' к ' + p.aU + ' — получается десяток, у ' + p.bU + ' остаётся ' + p.rest + '. Десяток уходит к десяткам: ' + ((p.aT + p.bT) * 10) + ' + 10 = ' + ((p.aT + p.bT + 1) * 10) + '.',
+    'Two ones flow to ' + p.aU + ' — a ten forms, and ' + p.rest + ' is left of ' + p.bU + '. The ten joins the tens: ' + ((p.aT + p.bT) * 10) + ' + 10 = ' + ((p.aT + p.bT + 1) * 10) + '.');
+  return tr(((p.aT + p.bT) * 10) + ' + 10 = ' + ((p.aT + p.bT + 1) * 10) + ', да ещё ' + p.rest + ' — ответ ' + c.r + '.',
+    ((p.aT + p.bT) * 10) + ' + 10 = ' + ((p.aT + p.bT + 1) * 10) + ', plus ' + p.rest + ' — answer ' + c.r + '.');
+}
+function bvStepHtml(mode, step){
+  var c = bvState.c, p = bvParts(), h = '';
+  if(mode === 'comp') return bvCompHtml(c, step);
+  if(mode === 'diff') return bvDiffHtml(c, step);
+  if(mode === 'sub'){
+    var v = bvSubVals();
+    if(step === 0){
+      h = '<div class="bv-scene"><div class="brow">' + bvPartCard(v.at, v.au) +
+        '<div class="bsign">−</div>' + bvPartCard(v.bt, v.bu) + '</div></div>';
+    } else if(step === 2){
+      h = '<div class="bv-scene"><div class="bv-sums">' +
+        '<div class="bv-sum t"><span class="bv-eq">' + tr('десятки', 'tens') + ' · ' + (v.at * 10) + '</span>' +
+        '<div class="bv-rods">' + bvRods(v.at) + '</div></div>' +
+        '<div class="bv-sum u"><span class="bv-eq">' + v.au + ' − ' + v.bu + '</span>' +
+        '<div class="bv-row plain">' + bvDots(v.au) + '</div><b>' + tr('не хватает', 'not enough') + '</b></div>' +
+        '</div></div>';
+    } else if(step === 1){
+      h = bvSubScene();
+    } else {
+      h = '<div class="bv-final">' +
+        '<div class="bv-col"><span class="bv-cap">' + tr('десятки', 'tens') + '</span><div class="bv-rods">' +
+        bvRods(v.at - 1 - v.bt) + '</div><span class="bv-num">' + ((v.at - 1 - v.bt) * 10) + '</span></div>' +
+        '<span class="bsign">+</span>' +
+        '<div class="bv-col"><span class="bv-cap">' + tr('единицы', 'ones') + '</span><div class="bv-row plain">' +
+        (v.rem ? bvDots(v.rem, 'acc') : '<span class="bz0">0</span>') + '</div><span class="bv-num out">' + v.rem + '</span></div>' +
+        '<span class="bsign">=</span><span class="bv-big">' + c.r + '</span></div>';
+    }
+    return h;
+  }
+  if(mode === 'ten'){
+    if(step === 0){
+      h = '<div class="bv-scene"><div class="bv-urow">' +
+        '<div class="bv-col"><span class="bv-num in">' + p.aU + '</span>' + bvFrame(p.aU, p.need, 'empty') + '</div>' +
+        '<div class="bv-col"><span class="bv-num out">' + p.bU + '</span>' + bvSlotRow(p.bU, 0, false) + '</div>' +
+        '</div></div>';
+    } else if(step === 1){
+      h = bvSceneAnim(false);
+    } else {
+      h = '<div class="bv-final">' +
+        '<div class="bv-col"><div class="bv-frame">' + bvDots(p.aU + p.need) + '</div><span class="bv-num">10</span></div>' +
+        '<span class="bsign">+</span>' +
+        '<div class="bv-col"><div class="bv-row plain">' + (p.rest ? bvDots(p.rest, 'acc') : '<span class="bz0">0</span>') + '</div><span class="bv-num out">' + p.rest + '</span></div>' +
+        '</div>';
+    }
+    return h;
+  }
+  if(step === 0){
+    h = '<div class="bv-scene"><div class="brow">' + bvPartCard(p.aT, p.aU) +
+      '<div class="bsign">+</div>' + bvPartCard(p.bT, p.bU) + '</div></div>';
+  } else if(step === 2){
+    h = '<div class="bv-scene"><div class="bv-sums">' +
+      '<div class="bv-sum t"><span class="bv-eq t-eq">' + (p.aT * 10) + ' + ' + (p.bT * 10) + '</span>' +
+      '<div class="bv-rods">' + bvRods(p.aT + p.bT) + beadsRod(' bv-sum-extra') + '</div>' +
+      '<b class="t-res">= ' + ((p.aT + p.bT) * 10) + '</b></div>' +
+      '<div class="bv-sum u"><span class="bv-eq">' + p.aU + ' + ' + p.bU + '</span>' + bvUnitsSum(p.aU + p.bU) +
+      '<b class="u-res">= ' + (p.aU + p.bU) + '</b></div>' +
+      '</div>' + beadsRod(' bv-sum-flyer') + '</div>';
+  } else if(step === 1){
+    h = bvSceneAnim(true);
+  } else {
+    h = '<div class="bv-final">' +
+      '<div class="bv-col"><span class="bv-cap">десятки</span><div class="bv-rods">' +
+      bvRods(p.aT + p.bT + 1) + '</div><span class="bv-num">' + ((p.aT + p.bT + 1) * 10) + '</span></div>' +
+      '<span class="bsign">+</span>' +
+      '<div class="bv-col"><span class="bv-cap">единицы</span><div class="bv-row plain">' +
+      (p.rest ? bvDots(p.rest, 'acc') : '<span class="bz0">0</span>') + '</div><span class="bv-num out">' + p.rest + '</span></div>' +
+      '<span class="bsign">=</span><span class="bv-big">' + c.r + '</span></div>';
+  }
+  return h;
+}
+function bvTitle(mode, step){
+  if(mode === 'comp') return bvCompTitle(bvState.c.op === '−', step);
+  if(mode === 'diff'){
+    if(step === 0) return tr('Уравниваем числа', 'Level both numbers');
+    if(step === 1) return tr('Считаем', 'Count');
+    return tr('Получаем результат', 'Get the result');
+  }
+  if(mode === 'ten'){
+    if(step === 0) return tr('Сколько не хватает до десятка', 'How many to make ten');
+    if(step === 1) return tr('Собираем десяток из единиц', 'Make a ten from ones');
+    return tr('Получаем результат', 'Get the result');
+  }
+  if(mode === 'sub'){
+    if(step === 0) return tr('Раскладываем на десятки и единицы', 'Split into tens and ones');
+    if(step === 1) return tr('Размениваем десяток на единицы', 'Trade a ten for ones');
+    if(step === 2) return tr('Считаем единицы и десятки', 'Count ones and tens');
+    return tr('Получаем результат', 'Get the result');
+  }
+  if(step === 0) return tr('Раскладываем на десятки и единицы', 'Split into tens and ones');
+  if(step === 1) return tr('Считаем единицы и собираем десяток', 'Count ones, make a ten');
+  if(step === 2) return tr('Считаем десятки и вспоминаем единицы', 'Count tens, recall ones');
+  return tr('Получаем результат', 'Get the result');
+}
+function bvSummaryRun(){
+  var scene = beadsEls.stage.querySelector('.bv-scene');
+  if(!scene) return;
+  var p = bvParts();
+  var ten = scene.querySelector('.bv-tenout');
+  var flyer = scene.querySelector('.bv-sum-flyer');
+  var extraRod = scene.querySelector('.bv-sum-extra');
+  var tEq = scene.querySelector('.t-eq');
+  var tRes = scene.querySelector('.t-res');
+  var uRes = scene.querySelector('.u-res');
+  if(!ten || !flyer || !extraRod || !tEq || !tRes || !uRes) return;
+  var eqInit = tEq.textContent, resInit = tRes.textContent, uInit = uRes.textContent;
+  var newEq = ((p.aT + p.bT) * 10) + ' + 10';
+  var newTRes = '= ' + ((p.aT + p.bT + 1) * 10);
+  var newURes = '= ' + p.rest;
+  function reset(){
+    ten.classList.remove('ten-blue');
+    ten.style.opacity = '1';
+    flyer.style.transition = 'none';
+    flyer.style.opacity = '0';
+    flyer.style.transform = 'translate(0,0)';
+    extraRod.style.opacity = '0';
+    extraRod.classList.remove('bump');
+    tEq.textContent = eqInit;
+    tRes.textContent = resInit;
+    tRes.classList.remove('bump');
+    uRes.textContent = uInit;
+  }
+  function center(el, fr){
+    var r = el.getBoundingClientRect();
+    return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2 };
+  }
+  function blue(){
+    ten.classList.add('ten-blue');
+  }
+  function flyTen(){
+    ten.style.opacity = '0';
+    uRes.textContent = newURes;
+    var fr = scene.getBoundingClientRect();
+    var st = center(ten, fr), tt = center(extraRod, fr);
+    flyer.style.transition = 'none';
+    flyer.style.transform = 'translate(' + (st.x - 28.5) + 'px,' + (st.y - 5) + 'px)';
+    flyer.style.opacity = '1';
+    void scene.offsetWidth;
+    flyer.style.transition = 'transform .7s cubic-bezier(.45,.05,.3,1)';
+    flyer.style.transform = 'translate(' + (tt.x - 28.5) + 'px,' + (tt.y - 5) + 'px)';
+  }
+  function land(){
+    flyer.style.opacity = '0';
+    extraRod.style.opacity = '1';
+    extraRod.classList.add('bump');
+    tEq.innerHTML = (p.aT * 10) + ' <span class="bv-plus10">+ 10</span>';
+    tRes.textContent = newTRes;
+    tRes.classList.add('bump');
+  }
+  function cycle(){
+    reset();
+    bvTimers.push(setTimeout(blue, 1200));
+    bvTimers.push(setTimeout(flyTen, 2800));
+    bvTimers.push(setTimeout(land, 3500));
+    bvTimers.push(setTimeout(cycle, 6200));
+  }
+  cycle();
+}
+function bvRender(){
+  var s = bvState.step, mode = bvState.mode;
+  bvClear();
+  beadsEls.eq.textContent = bvState.c.a + ' ' + bvState.c.op + ' ' + bvState.c.b;
+  beadsEls.stage.innerHTML = bvStepHtml(mode, s);
+  beadsEls.note.textContent = bvNote(mode, s);
+  beadsEls.next.hidden = false;
+  var total = (mode === 'ten' || mode === 'diff') ? 3 : 4;
+  beadsEls.next.textContent = s >= total - 1 ? tr('Понятно', 'Got it') : tr('Дальше →', 'Next →');
+  if(beadsEls.prev){ beadsEls.prev.hidden = false; beadsEls.prev.disabled = s <= 0; }
+  if(beadsEls.dots){
+    var dh = '', i;
+    for(i = 0; i < total; i++) dh += '<i' + (i === s ? ' class="on"' : '') + '></i>';
+    beadsEls.dots.innerHTML = dh;
+    beadsEls.dots.hidden = false;
+  }
+  if(beadsEls.title){
+    beadsEls.title.textContent = bvTitle(mode, s);
+    beadsEls.title.hidden = false;
+  }
+  if(mode === 'place' && s === 2) bvSummaryRun();
+  if(s === 1 && mode !== 'comp' && mode !== 'diff'){
+    if(mode === 'sub') bvSubAnimRun();
+    else bvAnimRun();
+  }
+}
+function bvCompVals(c){
+  var d = c.b % 10;
+  var k = d >= 8 ? 10 - d : d <= 2 ? -d : 0;
+  if(!k) return null;
+  var b2 = c.b + k;
+  if(b2 < 10 || b2 > 90) return null;
+  return { k: k, b2: b2 };
+}
+function bvCanComp(c){
+  if(!c || c.miss !== 'r' || (c.op !== '+' && c.op !== '−')) return false;
+  if(c.a >= 100 || c.b >= 100) return false;
+  if(c.op === '+' && c.a + c.b > 100) return false;
+  if(c.op === '−' && c.a < c.b) return false;
+  return !!bvCompVals(c);
+}
+function bvDiffVals(c){
+  if(!c || c.op !== '−') return null;
+  var d = c.b % 10;
+  if(!d) return null;
+  var k = d <= 5 ? -d : 10 - d;
+  var a2 = c.a + k, b2 = c.b + k;
+  if(a2 < 0 || a2 > 100 || b2 < 0 || b2 > 100) return null;
+  return { k: k, a2: a2, b2: b2 };
+}
+function bvCanDiff(c){
+  return !!c && c.miss === 'r' && c.a >= 10 && c.a < 100 && c.b < 100 &&
+    c.a >= c.b && (c.a % 10) < (c.b % 10) && !!bvDiffVals(c);
+}
+function bvCompTitle(sub, step){
+  if(step === 0) return sub ? tr('Округляем вычитаемое', 'Round the subtrahend') : tr('Округляем слагаемое', 'Round the addend');
+  if(step === 1) return tr('Считаем с круглым числом', 'Count with the round number');
+  if(step === 2) return sub ? tr('Возвращаем разницу', 'Add the difference back') : tr('Поправляем результат', 'Adjust the result');
+  return tr('Получаем результат', 'Get the result');
+}
+function bvCompNote(c, step){
+  var v = bvCompVals(c), kk = Math.abs(v.k), b2 = v.b2, d = c.b % 10;
+  var inter = c.op === '+' ? c.a + b2 : c.a - b2;
+  var sub = c.op === '−';
+  if(step === 0){
+    if(!sub) return tr(c.b + ' ближе к ' + b2 + ': округляем — ' + (v.k > 0 ? 'прибавили ' + kk + ' лишних.' : 'прибавили на ' + kk + ' меньше.'),
+      c.b + ' is close to ' + b2 + ': round it — ' + (v.k > 0 ? 'we added ' + kk + ' extra.' : 'we added ' + kk + ' less.'));
+    return tr(c.b + ' ближе к ' + b2 + ': ' + (v.k > 0 ? 'вычли на ' + kk + ' больше — потом вернём.' : 'вычли на ' + kk + ' меньше — потом добавим.'),
+      c.b + ' is close to ' + b2 + ': ' + (v.k > 0 ? 'we subtracted ' + kk + ' too many — we will add it back.' : 'we subtracted ' + kk + ' too few — we will add it.'));
+  }
+  if(step === 1) return tr('Считаем с круглым числом: ' + c.a + ' ' + c.op + ' ' + b2 + ' = ' + inter + '.',
+    'Count with the round number: ' + c.a + ' ' + c.op + ' ' + b2 + ' = ' + inter + '.');
+  if(step === 2){
+    if(!sub) return tr(v.k > 0 ? 'Возвращаем лишнее: ' + inter + ' − ' + kk + ' = ' + c.r + '.' : 'Добавляем недостающее: ' + inter + ' + ' + kk + ' = ' + c.r + '.',
+      v.k > 0 ? 'Take the extra back: ' + inter + ' − ' + kk + ' = ' + c.r + '.' : 'Add what was missing: ' + inter + ' + ' + kk + ' = ' + c.r + '.');
+    return tr(v.k > 0 ? 'Возвращаем разницу: ' + inter + ' + ' + kk + ' = ' + c.r + '.' : 'Убираем лишнее: ' + inter + ' − ' + kk + ' = ' + c.r + '.',
+      v.k > 0 ? 'Add the difference back: ' + inter + ' + ' + kk + ' = ' + c.r + '.' : 'Remove the extra: ' + inter + ' − ' + kk + ' = ' + c.r + '.');
+  }
+  return tr('Ответ: ' + c.r + '.', 'Answer: ' + c.r + '.');
+}
+function bvCompHtml(c, step){
+  var v = bvCompVals(c), kk = Math.abs(v.k), b2 = v.b2;
+  var inter = c.op === '+' ? c.a + b2 : c.a - b2;
+  var sign = c.op === '+' ? (v.k > 0 ? '−' : '+') : (v.k > 0 ? '+' : '−');
+  if(step === 0){
+    return '<div class="bv-scene"><div class="bv-cmp"><span>' + c.a + ' ' + c.op + ' ' + c.b + '</span>' +
+      '<span class="bv-cmp-arrow">→</span><span class="bv-cmp-new">' + c.a + ' ' + c.op + ' ' + b2 + '</span></div></div>';
+  }
+  if(step === 1){
+    return '<div class="bv-final"><span class="bv-big">' + c.a + ' ' + c.op + ' ' + b2 + '</span><span class="bsign">=</span><span class="bv-big">' + inter + '</span></div>';
+  }
+  if(step === 2){
+    return '<div class="bv-final"><span class="bv-big">' + inter + '</span><span class="bsign">' + sign + '</span><span class="bv-big">' + kk + '</span><span class="bsign">=</span><span class="bv-big">' + c.r + '</span></div>';
+  }
+  return '<div class="bv-final"><span class="bv-big">' + c.r + '</span></div>';
+}
+function bvDiffNote(c, step){
+  var v = bvDiffVals(c);
+  if(step === 0) return v.k > 0
+    ? tr('Прибавим ' + v.k + ' к обоим числам — разность не изменится: ' + c.a + ' − ' + c.b + ' = ' + v.a2 + ' − ' + v.b2 + '.',
+      'Add ' + v.k + ' to both numbers — the difference stays the same: ' + c.a + ' − ' + c.b + ' = ' + v.a2 + ' − ' + v.b2 + '.')
+    : tr('Отнимем ' + Math.abs(v.k) + ' от обоих чисел — разность не изменится: ' + c.a + ' − ' + c.b + ' = ' + v.a2 + ' − ' + v.b2 + '.',
+      'Subtract ' + Math.abs(v.k) + ' from both numbers — the difference stays the same: ' + c.a + ' − ' + c.b + ' = ' + v.a2 + ' − ' + v.b2 + '.');
+  if(step === 1) return tr(v.a2 + ' − ' + v.b2 + ' = ' + c.r + '.', v.a2 + ' − ' + v.b2 + ' = ' + c.r + '.');
+  return tr('Ответ: ' + c.r + '.', 'Answer: ' + c.r + '.');
+}
+function bvDiffHtml(c, step){
+  var v = bvDiffVals(c);
+  if(step === 0){
+    return '<div class="bv-scene"><div class="bv-cmp"><span>' + c.a + ' − ' + c.b + '</span>' +
+      '<span class="bv-cmp-arrow">→</span><span class="bv-cmp-new">' + v.a2 + ' − ' + v.b2 + '</span></div>' +
+      '<div class="bv-hint">' + (v.k > 0 ? '+ ' + v.k : '− ' + Math.abs(v.k)) + ' к обоим числам</div></div>';
+  }
+  if(step === 1){
+    return '<div class="bv-final"><span class="bv-big">' + v.a2 + ' − ' + v.b2 + '</span><span class="bsign">=</span><span class="bv-big">' + c.r + '</span></div>';
+  }
+  return '<div class="bv-final"><span class="bv-big">' + c.r + '</span></div>';
+}
+function bvOpen(mode){
+  var c = run && run.cur;
+  if(!c) return;
+  if(mode === 'comp'){
+    if(!bvCanComp(c)) return;
+  } else if(mode === 'diff'){
+    if(!bvCanDiff(c)) return;
+  } else {
+    var isSub = c.op === '−';
+    if(isSub ? !bvCanSub(c) : !bvCanTen(c)) return;
+    mode = isSub ? 'sub' : ((c.a < 10 && c.b < 10) ? 'ten' : 'place');
+  }
+  bvClear();
+  bvState.mode = mode;
+  bvState.c = c;
+  bvState.step = 0;
+  beadsState.mode = mode;
+  beadsEls.panel.hidden = false;
+  bvRender();
+}
+function bvNext(){
+  var total = (bvState.mode === 'ten' || bvState.mode === 'diff') ? 3 : 4;
+  if(bvState.step >= total - 1){ beadsClose(); return; }
+  bvState.step++;
+  bvRender();
+}
+function bvDebug(){
+  var p;
+  try{ p = new URLSearchParams(location.search); }catch(e){ return; }
+  var mode = p.get('bvtest');
+  if(!mode) return;
+  var a = clampInt(p.get('a'), 0, 999, 84);
+  var b = clampInt(p.get('b'), 0, 999, 37);
+  var op = (p.get('op') === 'add' || mode === 'ten' || mode === 'place') ? '+' : '−';
+  var r = op === '+' ? a + b : a - b;
+  var cur = { a: a, b: b, r: r, op: op, miss: 'r' };
+  if(mode === 'comp' && !bvCanComp(cur)) mode = bvCanDiff(cur) ? 'diff' : 'ten';
+  if(mode === 'diff' && !bvCanDiff(cur)) mode = 'comp';
+  bvClear();
+  bvState.mode = mode;
+  bvState.c = cur;
+  bvState.step = 0;
+  beadsState.mode = mode;
+  var panel = document.getElementById('beadsPanel');
+  if(!panel) return;
+  panel.hidden = false;
+  bvRender();
+}
+function bvPrev(){
+  if(bvState.step > 0){
+    bvState.step--;
+    bvRender();
+  }
+}
+
 if(beadsEls.btn){
   beadsEls.btn.textContent = tr('На бусинах', 'With beads');
-  beadsEls.btn.addEventListener('click', beadsOpen);
+  if(beadsEls.place) beadsEls.place.textContent = tr('По разрядам', 'By places');
+  if(beadsEls.comp) beadsEls.comp.textContent = tr('Округли и поправь', 'Round and adjust');
+  if(beadsEls.diff) beadsEls.diff.textContent = tr('Одинаковая разность', 'Same difference');
+  beadsEls.btn.addEventListener('click', function(){ beadsOpen('beads'); });
+  if(beadsEls.place) beadsEls.place.addEventListener('click', function(){ beadsOpen('place'); });
+  if(beadsEls.comp) beadsEls.comp.addEventListener('click', function(){ beadsOpen('comp'); });
+  if(beadsEls.diff) beadsEls.diff.addEventListener('click', function(){ beadsOpen('diff'); });
   beadsEls.close.addEventListener('click', beadsClose);
   beadsEls.next.addEventListener('click', beadsNext);
   beadsEls.stage.addEventListener('click', beadsClick);
+  if(beadsEls.prev) beadsEls.prev.addEventListener('click', function(){
+    if(beadsState.mode === 'ten' || beadsState.mode === 'place' || beadsState.mode === 'sub' || beadsState.mode === 'comp' || beadsState.mode === 'diff') bvPrev();
+  });
   if(beadsEls.legend){
     beadsEls.legend.innerHTML =
       '<span class="lg">' + beadsRod(' lg-rod') + tr(' = 10 (десяток)', ' = 10 (ten)') + '</span>' +
@@ -2496,6 +3179,7 @@ loadSettings();
 applyUrl();
 syncUI();
 renderHistory();
+bvDebug();
 showScreen('setup');
 })();
 

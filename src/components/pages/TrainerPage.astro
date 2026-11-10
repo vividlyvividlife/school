@@ -280,7 +280,12 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
       <div class="cap" id="cap"></div>
       <div class="pairinfo" id="pairInfo" hidden></div>
       <button id="skipBtn" class="v-skip-btn" type="button">{p.skip}</button>
-      <button id="beadsBtn" class="v-beads-btn" type="button" hidden></button>
+      <div class="v-beads-row">
+        <button id="beadsBtn" class="v-beads-btn" type="button" hidden></button>
+        <button id="placeBtn" class="v-beads-btn" type="button" hidden></button>
+        <button id="compBtn" class="v-beads-btn" type="button" hidden></button>
+        <button id="diffBtn" class="v-beads-btn" type="button" hidden></button>
+      </div>
     </div>
 
     <div class="padwrap v-answer">
@@ -309,9 +314,12 @@ const downloadName = lang === 'en' ? 'math-practice.html' : 'primery.html';
         <button class="beads-close" id="beadsClose" type="button" aria-label="×">×</button>
       </div>
       <div class="beads-legend" id="beadsLegend"></div>
+      <div class="beads-step-title" id="beadsTitle" hidden></div>
       <div class="beads-stage" id="beadsStage"></div>
       <div class="beads-note" id="beadsNote"></div>
       <div class="beads-actions">
+        <span class="beads-dots" id="beadsDots" hidden></span>
+        <button class="beads-step" id="beadsPrev" type="button" hidden>←</button>
         <button class="beads-step primary" id="beadsNext" type="button"></button>
       </div>
     </div>
