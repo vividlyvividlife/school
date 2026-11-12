@@ -167,7 +167,17 @@ export const skillCopy: Record<Lang, Record<SkillId, SkillCopy>> = {
         timesCompare: 'Во сколько раз',
         sumDiff: 'Возраст',
         equalize: 'Уравнять',
-        wasUnknown: 'Было сначала'
+        wasUnknown: 'Было сначала',
+        motionDist: 'Движение: путь',
+        motionRate: 'Движение: скорость',
+        workTotal: 'Работа: всего',
+        workRate: 'Работа: за час',
+        perUnit: 'Приведение к единице',
+        areaRect: 'Площадь',
+        perimRect: 'Периметр',
+        partOf: 'Доли',
+        measureAdd: 'Меры: сложение',
+        measureSub: 'Меры: вычитание'
       }
     },
     polylines: {
@@ -474,7 +484,17 @@ export const skillCopy: Record<Lang, Record<SkillId, SkillCopy>> = {
         timesCompare: 'How many times',
         sumDiff: 'Ages',
         equalize: 'Make equal',
-        wasUnknown: 'At first'
+        wasUnknown: 'At first',
+        motionDist: 'Motion: distance',
+        motionRate: 'Motion: speed',
+        workTotal: 'Work: total',
+        workRate: 'Work: per hour',
+        perUnit: 'Unit price',
+        areaRect: 'Area',
+        perimRect: 'Perimeter',
+        partOf: 'Fractions',
+        measureAdd: 'Measures: add',
+        measureSub: 'Measures: subtract'
       }
     },
     polylines: {

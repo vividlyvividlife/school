@@ -22,9 +22,9 @@ function sceneUrl(name){
 }
 
 var UNITS = {
-  kg:      { ru: ['кг', 'кг', 'кг'], en: ['kg', 'kg'] },
-  dm:      { ru: ['дм', 'дм', 'дм'], en: ['dm', 'dm'] },
-  m:       { ru: ['м', 'м', 'м'], en: ['m', 'm'] },
+  kg:      { ru: ['кг', 'кг', 'кг'], en: ['pound', 'pounds'] },
+  dm:      { ru: ['дм', 'дм', 'дм'], en: ['inch', 'inches'] },
+  m:       { ru: ['м', 'м', 'м'], en: ['foot', 'feet'] },
   boats:   { ru: ['катер', 'катера', 'катеров'], en: ['boat', 'boats'] },
   cars:    { ru: ['машина', 'машины', 'машин'], en: ['car', 'cars'] },
   plums:   { ru: ['слива', 'сливы', 'слив'], en: ['plum', 'plums'] },
@@ -34,7 +34,7 @@ var UNITS = {
   boys:    { ru: ['мальчик', 'мальчика', 'мальчиков'], en: ['boy', 'boys'] },
   students:{ ru: ['ученик', 'ученика', 'учеников'], en: ['student', 'students'] },
   pencils: { ru: ['карандаш', 'карандаша', 'карандашей'], en: ['pencil', 'pencils'] },
-  rubles:  { ru: ['рубль', 'рубля', 'рублей'], en: ['rouble', 'roubles'] },
+  rubles:  { ru: ['рубль', 'рубля', 'рублей'], en: ['dollar', 'dollars'] },
   sets:    { ru: ['набор', 'набора', 'наборов'], en: ['set', 'sets'] },
   baskets: { ru: ['корзина', 'корзины', 'корзин'], en: ['basket', 'baskets'] },
   appleTrees: { ru: ['яблоня', 'яблони', 'яблонь'], en: ['apple tree', 'apple trees'] },
@@ -43,7 +43,16 @@ var UNITS = {
   years:   { ru: ['год', 'года', 'лет'], en: ['year', 'years'] },
   fish:    { ru: ['рыбка', 'рыбки', 'рыбок'], en: ['fish', 'fish'] },
   buns:    { ru: ['булочка', 'булочки', 'булочек'], en: ['bun', 'buns'] },
-  plates:  { ru: ['тарелка', 'тарелки', 'тарелок'], en: ['plate', 'plates'] }
+  plates:  { ru: ['тарелка', 'тарелки', 'тарелок'], en: ['plate', 'plates'] },
+  km:      { ru: ['км', 'км', 'км'], en: ['mile', 'miles'] },
+  kmh:     { ru: ['км/ч', 'км/ч', 'км/ч'], en: ['mph', 'mph'] },
+  hour:    { ru: ['час', 'часа', 'часов'], en: ['hour', 'hours'] },
+  liter:   { ru: ['л', 'л', 'л'], en: ['gallon', 'gallons'] },
+  sqm:     { ru: ['м²', 'м²', 'м²'], en: ['sq ft', 'sq ft'] },
+  notebooks:{ ru: ['тетрадь', 'тетради', 'тетрадей'], en: ['notebook', 'notebooks'] },
+  details: { ru: ['деталь', 'детали', 'деталей'], en: ['part', 'parts'] },
+  apples:  { ru: ['яблоко', 'яблока', 'яблок'], en: ['apple', 'apples'] },
+  pears:   { ru: ['груша', 'груши', 'груш'], en: ['pear', 'pears'] }
 };
 
 function pluralRu(n, forms){
@@ -91,7 +100,13 @@ function repSub(total, step){
   return eqLine(subChain(total, step) + ' = 0');
 }
 
+var SCENE_ALTERNATES = [
+  'aquarium', 'bakery', 'classroom', 'forest', 'garden', 'orchard', 'parking',
+  'plums', 'port', 'ribbon', 'road', 'railway', 'workshop', 'stationery',
+  'fence', 'kitchen', 'market'
+];
 function makeProblem(type, id, scene, ruHtml, enHtml, answer, unitKey, explainRu, explainEn, work){
+  if(SCENE_ALTERNATES.indexOf(scene) >= 0 && Math.random() < 0.5) scene = scene + '-2';
   var html = LANG === 'en' ? enHtml : ruHtml;
   var explain = LANG === 'en' ? explainEn : explainRu;
   var unit = unitText(answer, unitKey);
@@ -164,7 +179,8 @@ function sumExact(rnd, count, lo, hi, cap){
 var PROBLEM_TYPES = [
   'total', 'leftover', 'arriveLeave', 'reverse', 'difference', 'moreBy', 'lessBy', 'twoGroups',
   'diffTotal', 'mulAdd', 'price', 'mulTotal', 'share', 'groups',
-  'timesMore', 'timesLess', 'timesCompare', 'sumDiff', 'equalize', 'wasUnknown'
+  'timesMore', 'timesLess', 'timesCompare', 'sumDiff', 'equalize', 'wasUnknown',
+  'motionDist', 'motionRate', 'workTotal', 'workRate', 'perUnit', 'areaRect', 'perimRect', 'partOf', 'measureAdd', 'measureSub'
 ];
 
 var PROBLEM_OPS = {
@@ -187,7 +203,17 @@ var PROBLEM_OPS = {
   timesCompare: ['div'],
   sumDiff: ['sub', 'div'],
   equalize: ['sub', 'div'],
-  wasUnknown: ['add', 'sub']
+  wasUnknown: ['add', 'sub'],
+  motionDist: ['mul'],
+  motionRate: ['div'],
+  workTotal: ['mul'],
+  workRate: ['div'],
+  perUnit: ['div', 'mul'],
+  areaRect: ['mul'],
+  perimRect: ['add', 'mul'],
+  partOf: ['div'],
+  measureAdd: ['add'],
+  measureSub: ['sub']
 };
 
 /* Задачи со звёздочкой: те же сюжеты, но решение — повторное сложение
@@ -783,6 +809,173 @@ function genWasUnknown(rnd, L){
       [[n + ' + ' + a, start]]));
 }
 
+var WP_NAMES = [['Миша', 'Ben'], ['Аня', 'Mia'], ['Саша', 'Sasha'], ['Вера', 'Emma']];
+
+function genMotionDist(rnd, L){
+  var v, t, n, i;
+  for(i = 0; i < 80; i++){
+    v = ri(rnd, 4, 12); t = ri(rnd, 2, 5); n = v * t;
+    if(n <= L.hi) break;
+  }
+  if(n > L.hi){ v = 3; t = 3; n = 9; }
+  var nm = pick(rnd, WP_NAMES);
+  return makeProblem('motionDist', v + ':' + t, 'road',
+    nm[0] + ' едет на велосипеде со скоростью ' + q(v, 'kmh') + '. Сколько километров проедет ' + nm[0] + ' за ' + q(t, 'hour') + '?',
+    nm[1] + ' rides a bike at ' + q(v, 'kmh') + '. How many miles will ' + nm[1] + ' ride in ' + q(t, 'hour') + '?',
+    n, 'km',
+    eqLine(q(v, 'kmh') + ' × ' + q(t, 'hour') + ' = ' + q(n, 'km')) + '<p>Путь = скорость × время.</p>',
+    eqLine(q(v, 'kmh') + ' × ' + q(t, 'hour') + ' = ' + q(n, 'km')) + '<p>Distance = speed × time.</p>',
+    W([['Скорость', pv(v, 'kmh')], ['Время', pv(t, 'hour')], ['Путь', '?']], [[v + ' × ' + t, n]],
+      [['Speed', pv(v, 'kmh')], ['Time', pv(t, 'hour')], ['Distance', '?']], [[v + ' × ' + t, n]]));
+}
+
+function genMotionRate(rnd, L){
+  var v, t, s, i;
+  for(i = 0; i < 80; i++){
+    v = ri(rnd, 4, 12); t = ri(rnd, 2, 5); s = v * t;
+    if(s <= L.hi) break;
+  }
+  if(s > L.hi){ v = 4; t = 3; s = 12; }
+  return makeProblem('motionRate', v + ':' + t, 'railway',
+    'Поезд ехал ' + q(t, 'hour') + ' и проехал ' + q(s, 'km') + '. С какой скоростью ехал поезд?',
+    'A train travelled ' + q(s, 'km') + ' in ' + q(t, 'hour') + '. How fast was the train going?',
+    v, 'kmh',
+    eqLine(q(s, 'km') + ' ÷ ' + q(t, 'hour') + ' = ' + q(v, 'kmh')) + '<p>Скорость = путь ÷ время.</p>',
+    eqLine(q(s, 'km') + ' ÷ ' + q(t, 'hour') + ' = ' + q(v, 'kmh')) + '<p>Speed = distance ÷ time.</p>',
+    W([['Путь', pv(s, 'km')], ['Время', pv(t, 'hour')], ['Скорость', '?']], [[s + ' ÷ ' + t, v]],
+      [['Distance', pv(s, 'km')], ['Time', pv(t, 'hour')], ['Speed', '?']], [[s + ' ÷ ' + t, v]]));
+}
+
+function genWorkTotal(rnd, L){
+  var d, t, n, i;
+  for(i = 0; i < 80; i++){
+    d = ri(rnd, 3, 9); t = ri(rnd, 2, 6); n = d * t;
+    if(n <= L.hi) break;
+  }
+  if(n > L.hi){ d = 3; t = 3; n = 9; }
+  return makeProblem('workTotal', d + ':' + t, 'workshop',
+    'Мастер делает ' + q(d, 'details') + ' в час. Сколько деталей он сделает за ' + q(t, 'hour') + '?',
+    'A worker makes ' + q(d, 'details') + ' per hour. How many parts will the worker make in ' + q(t, 'hour') + '?',
+    n, 'details',
+    eqLine(q(d, 'details') + ' × ' + q(t, 'hour') + ' = ' + q(n, 'details')) + '<p>Работа = деталей в час × время.</p>',
+    eqLine(q(d, 'details') + ' × ' + q(t, 'hour') + ' = ' + q(n, 'details')) + '<p>Work = parts per hour × time.</p>',
+    W([['В час', pv(d, 'details')], ['Время', pv(t, 'hour')], ['Всего', '?']], [[d + ' × ' + t, n]],
+      [['Per hour', pv(d, 'details')], ['Time', pv(t, 'hour')], ['Total', '?']], [[d + ' × ' + t, n]]));
+}
+
+function genWorkRate(rnd, L){
+  var d, t, n, i;
+  for(i = 0; i < 80; i++){
+    d = ri(rnd, 3, 9); t = ri(rnd, 2, 6); n = d * t;
+    if(n <= L.hi) break;
+  }
+  if(n > L.hi){ d = 3; t = 3; n = 9; }
+  return makeProblem('workRate', d + ':' + t, 'workshop',
+    'За ' + q(t, 'hour') + ' мастер сделал ' + q(n, 'details') + '. Сколько деталей он делал за час?',
+    'In ' + q(t, 'hour') + ' a worker made ' + q(n, 'details') + '. How many parts per hour did the worker make?',
+    d, 'details',
+    eqLine(q(n, 'details') + ' ÷ ' + q(t, 'hour') + ' = ' + q(d, 'details')) + '<p>Деталей в час = вся работа ÷ время.</p>',
+    eqLine(q(n, 'details') + ' ÷ ' + q(t, 'hour') + ' = ' + q(d, 'details')) + '<p>Parts per hour = total work ÷ time.</p>',
+    W([['Всего', pv(n, 'details')], ['Время', pv(t, 'hour')], ['В час', '?']], [[n + ' ÷ ' + t, d]],
+      [['Total', pv(n, 'details')], ['Time', pv(t, 'hour')], ['Per hour', '?']], [[n + ' ÷ ' + t, d]]));
+}
+
+function genPerUnit(rnd, L){
+  var p, k, c, m, n, i;
+  for(i = 0; i < 120; i++){
+    p = ri(rnd, 2, 9); k = ri(rnd, 2, 6); c = p * k; m = ri(rnd, 2, 9); n = p * m;
+    if(c <= L.hi && n <= L.hi && m !== k) break;
+  }
+  if(c > L.hi || n > L.hi){ p = 4; k = 3; c = 12; m = 5; n = 20; }
+  return makeProblem('perUnit', p + ':' + k + ':' + m, 'stationery',
+    q(k, 'notebooks') + ' стоят ' + q(c, 'rubles') + '. Сколько стоят ' + q(m, 'notebooks') + '?',
+    q(k, 'notebooks') + ' cost ' + q(c, 'rubles') + '. How much do ' + q(m, 'notebooks') + ' cost?',
+    n, 'rubles',
+    eqLine(q(c, 'rubles') + ' ÷ ' + b(k) + ' = ' + q(p, 'rubles')) +
+      eqLine(q(p, 'rubles') + ' × ' + b(m) + ' = ' + q(n, 'rubles')) +
+      '<p>Сначала узнаём цену одной тетради.</p>',
+    eqLine(q(c, 'rubles') + ' ÷ ' + b(k) + ' = ' + q(p, 'rubles')) +
+      eqLine(q(p, 'rubles') + ' × ' + b(m) + ' = ' + q(n, 'rubles')) +
+      '<p>First find the price of one notebook.</p>',
+    W([['Стоят', pv(c, 'rubles')], ['Тетрадей', k], ['Цена', '?'], ['Нужно', m]], [[c + ' ÷ ' + k, p], [p + ' × ' + m, n]],
+      [['Cost', pv(c, 'rubles')], ['Notebooks', k], ['Price', '?'], ['Needed', m]], [[c + ' ÷ ' + k, p], [p + ' × ' + m, n]]));
+}
+
+function genAreaRect(rnd, L){
+  var a = ri(rnd, 2, 9), bb = ri(rnd, 2, 9), n = a * bb;
+  return makeProblem('areaRect', a + ':' + bb, 'garden',
+    'Сад имеет форму прямоугольника: длина ' + q(a, 'm') + ', ширина ' + q(bb, 'm') + '. Найди площадь сада.',
+    'A garden is a rectangle: ' + q(a, 'm') + ' long and ' + q(bb, 'm') + ' wide. Find its area.',
+    n, 'sqm',
+    eqLine(q(a, 'm') + ' × ' + q(bb, 'm') + ' = ' + q(n, 'sqm')) + '<p>Площадь = длина × ширина.</p>',
+    eqLine(q(a, 'm') + ' × ' + q(bb, 'm') + ' = ' + q(n, 'sqm')) + '<p>Area = length × width.</p>',
+    W([['Длина', pv(a, 'm')], ['Ширина', pv(bb, 'm')], ['Площадь', '?']], [[a + ' × ' + bb, n]],
+      [['Length', pv(a, 'm')], ['Width', pv(bb, 'm')], ['Area', '?']], [[a + ' × ' + bb, n]]));
+}
+
+function genPerimRect(rnd, L){
+  var a = ri(rnd, 2, 9), bb = ri(rnd, 2, 9), n = (a + bb) * 2;
+  return makeProblem('perimRect', a + ':' + bb, 'fence',
+    'Найди периметр прямоугольного сада со сторонами ' + q(a, 'm') + ' и ' + q(bb, 'm') + '.',
+    'Find the perimeter of a rectangular garden with sides ' + q(a, 'm') + ' and ' + q(bb, 'm') + '.',
+    n, 'm',
+    eqLine(b('(' + a + ' + ' + bb + ')') + ' × 2 = ' + q(n, 'm')) + '<p>Периметр = (длина + ширина) × 2.</p>',
+    eqLine(b('(' + a + ' + ' + bb + ')') + ' × 2 = ' + q(n, 'm')) + '<p>Perimeter = (length + width) × 2.</p>',
+    W([['Длина', pv(a, 'm')], ['Ширина', pv(bb, 'm')], ['Периметр', '?']], [[a + ' + ' + bb, a + bb], ['(' + (a + bb) + ') × 2', n]],
+      [['Length', pv(a, 'm')], ['Width', pv(bb, 'm')], ['Perimeter', '?']], [[a + ' + ' + bb, a + bb], ['(' + (a + bb) + ') × 2', n]]));
+}
+
+function genPartOf(rnd, L){
+  var d = ri(rnd, 2, 4), m, n, i;
+  for(i = 0; i < 80; i++){
+    m = ri(rnd, 2, 9); n = d * m;
+    if(n <= L.hi) break;
+  }
+  if(n > L.hi){ d = 2; m = 5; n = 10; }
+  var wordRu = d === 2 ? 'половину' : d === 3 ? 'треть' : 'четверть';
+  var wordEn = d === 2 ? 'a half' : d === 3 ? 'a third' : 'a quarter';
+  return makeProblem('partOf', d + ':' + m, 'plums',
+    'В корзине ' + q(n, 'plums') + '. Взяли ' + wordRu + '. Сколько слив взяли?',
+    'There are ' + q(n, 'plums') + ' in a basket. They took ' + wordEn + '. How many plums were taken?',
+    m, 'plums',
+    eqLine(q(n, 'plums') + ' ÷ ' + b(d) + ' = ' + q(m, 'plums')) +
+      '<p>Половина — делим на 2, треть — на 3, четверть — на 4.</p>',
+    eqLine(q(n, 'plums') + ' ÷ ' + b(d) + ' = ' + q(m, 'plums')) +
+      '<p>A half divides by 2, a third by 3, a quarter by 4.</p>',
+    W([['Было', pv(n, 'plums')], ['Взяли', (d === 2 ? 'половину' : d === 3 ? 'треть' : 'четверть')], ['Взяли', '?']], [[n + ' ÷ ' + d, m]],
+      [['At first', pv(n, 'plums')], ['Took', (d === 2 ? 'a half' : d === 3 ? 'a third' : 'a quarter')], ['Taken', '?']], [[n + ' ÷ ' + d, m]]));
+}
+
+function genMeasureAdd(rnd, L){
+  var a = ri(rnd, 2, 9), bb = ri(rnd, 2, 9), n = a + bb;
+  return makeProblem('measureAdd', a + ':' + bb, 'market',
+    'Купили ' + q(a, 'kg') + ' яблок и ' + q(bb, 'kg') + ' груш. Сколько килограммов фруктов купили?',
+    'They bought ' + q(a, 'kg') + ' of apples and ' + q(bb, 'kg') + ' of pears. How many pounds of fruit did they buy?',
+    n, 'kg',
+    eqLine(q(a, 'kg') + ' + ' + q(bb, 'kg') + ' = ' + q(n, 'kg')),
+    eqLine(q(a, 'kg') + ' + ' + q(bb, 'kg') + ' = ' + q(n, 'kg')),
+    W([['Яблоки', pv(a, 'kg')], ['Груши', pv(bb, 'kg')], ['Всего', '?']], [[a + ' + ' + bb, n]],
+      [['Apples', pv(a, 'kg')], ['Pears', pv(bb, 'kg')], ['Total', '?']], [[a + ' + ' + bb, n]]));
+}
+
+function genMeasureSub(rnd, L){
+  var a, bb, n, i;
+  for(i = 0; i < 80; i++){
+    a = ri(rnd, 6, Math.max(7, Math.min(L.hi, 30))); bb = ri(rnd, 2, a - 1); n = a - bb;
+    if(a <= L.hi) break;
+  }
+  if(a > L.hi){ a = 12; bb = 5; n = 7; }
+  return makeProblem('measureSub', a + ':' + bb, 'kitchen',
+    'В баке было ' + q(a, 'liter') + ' воды. Израсходовали ' + q(bb, 'liter') + '. Сколько литров осталось?',
+    'A tank had ' + q(a, 'liter') + ' of water. They used ' + q(bb, 'liter') + '. How many gallons are left?',
+    n, 'liter',
+    eqLine(q(a, 'liter') + ' − ' + q(bb, 'liter') + ' = ' + q(n, 'liter')),
+    eqLine(q(a, 'liter') + ' − ' + q(bb, 'liter') + ' = ' + q(n, 'liter')),
+    W([['Было', pv(a, 'liter')], ['Израсходовали', pv(bb, 'liter')], ['Осталось', '?']], [[a + ' − ' + bb, n]],
+      [['At first', pv(a, 'liter')], ['Used', pv(bb, 'liter')], ['Left', '?']], [[a + ' − ' + bb, n]]));
+}
+
+
 var GEN = {
   total: genTotal,
   leftover: genLeftover,
@@ -803,7 +996,17 @@ var GEN = {
   timesCompare: genTimesCompare,
   sumDiff: genSumDiff,
   equalize: genEqualize,
-  wasUnknown: genWasUnknown
+  wasUnknown: genWasUnknown,
+  motionDist: genMotionDist,
+  motionRate: genMotionRate,
+  workTotal: genWorkTotal,
+  workRate: genWorkRate,
+  perUnit: genPerUnit,
+  areaRect: genAreaRect,
+  perimRect: genPerimRect,
+  partOf: genPartOf,
+  measureAdd: genMeasureAdd,
+  measureSub: genMeasureSub
 };
 
 function generateProblem(type, rnd, opts){

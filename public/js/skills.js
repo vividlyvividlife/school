@@ -1830,6 +1830,11 @@ function submitValue(val, btn){
     playWrong();
     if(run.listKind === 'hard' || run.listKind === 'fluency' || run.listKind === 'retry') run.queue.push(e);
   }
+  if(SKILL === 'problems'){
+    var hb = document.getElementById('eq');
+    hb = hb && hb.querySelector('.wp-help');
+    if(hb) hb.open = true;
+  }
   els.scoreOk.textContent = run.ok;
   els.scoreBad.textContent = run.bad;
   run.advanceTimer = setTimeout(function(){
