@@ -19,9 +19,12 @@ export const GET: APIRoute = ({ site }) => {
     });
   });
 
+  const extra = ['/1-class/chtenie/razdatochnyy-material/'].map((path) =>
+    '  <url>\n    <loc>' + abs(path) + '</loc>\n  </url>').join('\n');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls.join('\n')}
+${extra}
 </urlset>
 `;
 

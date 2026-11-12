@@ -14,9 +14,10 @@ interface Props {
   crumbs?: string[];
   noindex?: boolean;
   lang?: Lang;
+  pairOverride?: { ru: string; en: string };
 }
 
-const { title, description, keywords, page, crumbs, noindex = false, lang = 'ru' } = Astro.props;
+const { title, description, keywords, page, crumbs, noindex = false, lang = 'ru', pairOverride } = Astro.props;
 const c = siteCopy[lang];
 const otherLang: Lang = lang === 'ru' ? 'en' : 'ru';
 const B = import.meta.env.BASE_URL;
@@ -59,7 +60,7 @@ const keywordList = keywords || pageMeta.keywords;
 const site = Astro.site ?? new URL('https://example.github.io');
 const abs = (path: string) => new URL(`${basePath}${path}`, site).href;
 const canonical = abs(current);
-const pair = pagePairFor(current);
+const pair = pairOverride ?? pagePairFor(current);
 const ruUrl = abs(pair.ru);
 const enUrl = abs(pair.en);
 const switchTarget = lang === 'ru' ? pair.en : pair.ru;

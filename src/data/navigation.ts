@@ -407,6 +407,17 @@ const ruMathChildren = (ruMath.children || []).map((item) =>
 const subjectNavigationRu: NavItem[] = [
   { ...ruMath, label: 'Математика', path: '/matematika/', children: ruMathChildren },
   { ...ruReading, label: 'Літаратурнае чытанне' },
+  {
+    label: 'Чтение',
+    children: [
+      {
+        label: 'Слоги — раздаточный материал',
+        path: '/1-class/chtenie/razdatochnyy-material/',
+        page: 'reading',
+        desc: 'Брошюра А5 для печати'
+      }
+    ]
+  },
   ruTime,
   ruHelper,
 ];
