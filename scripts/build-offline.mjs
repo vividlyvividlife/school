@@ -43,7 +43,20 @@ const pages = [
   ['en/grade-2/math/geometry/index.html', 'offline/en-geometry.html'],
   ['en/grade-2/math/three-digit-numbers/index.html', 'offline/en-three-digit-numbers.html'],
   ['en/grade-2/math/round-numbers/index.html', 'offline/en-round-numbers.html'],
-  ['en/grade-2/math/tree-of-possibilities/index.html', 'offline/en-tree-of-possibilities.html']
+  ['en/grade-2/math/tree-of-possibilities/index.html', 'offline/en-tree-of-possibilities.html'],
+  ['russkiy-yazyk/index.html', 'offline/russkiy-yazyk.html'],
+  ['russkiy-yazyk/2-klass/orfogrammy/index.html', 'offline/russkiy-yazyk-orfogrammy.html'],
+  ['russkiy-yazyk/2-klass/slovarnye-slova/index.html', 'offline/russkiy-yazyk-slovarnye-slova.html'],
+  ['russkiy-yazyk/2-klass/chasti-rechi/index.html', 'offline/russkiy-yazyk-chasti-rechi.html'],
+  ['russkiy-yazyk/2-klass/predlozhenie-i-tekst/index.html', 'offline/russkiy-yazyk-predlozhenie.html'],
+  ['russkiy-yazyk/2-klass/odnokorennye-slova/index.html', 'offline/russkiy-yazyk-odnokorennye.html'],
+  ['russkiy-yazyk/2-klass/zagadki-i-rebusy/index.html', 'offline/russkiy-yazyk-zagadki.html'],
+  ['belaruskaya-mova/index.html', 'offline/belaruskaya-mova.html'],
+  ['belaruskaya-mova/2-klass/guki-i-litary/index.html', 'offline/belaruskaya-mova-guki-i-litary.html'],
+  ['belaruskaya-mova/2-klass/slounikavyya-slova/index.html', 'offline/belaruskaya-mova-slounikavyya-slova.html'],
+  ['belaruskaya-mova/2-klass/slovy-i-skaz/index.html', 'offline/belaruskaya-mova-slovy-i-skaz.html'],
+  ['belaruskaya-mova/2-klass/peranos-i-natsisk/index.html', 'offline/belaruskaya-mova-peranos-i-natsisk.html'],
+  ['belaruskaya-mova/2-klass/zagadki/index.html', 'offline/belaruskaya-mova-zagadki.html']
 ];
 
 const problemsImgDir = path.join(publicDir, 'img', 'problems');

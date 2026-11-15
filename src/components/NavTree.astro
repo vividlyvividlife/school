@@ -11,36 +11,103 @@ interface Props {
 const { items, current, depth = 0 } = Astro.props;
 const B = import.meta.env.BASE_URL;
 const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+
+function containsPath(item: NavItem, path: string): boolean {
+  if (item.path && normalizePath(item.path) === path) return true;
+  return (item.children || []).some((child) => containsPath(child, path));
+}
 ---
 
 <ul class={depth === 0 ? 'site-menu' : undefined}>
-  {items.map((item) => (
-    <li>
-      {item.children ? (
-        <>
+  {items.map((item) => {
+    if (!item.children) {
+      return (
+        <li>
+          {item.soon ? (
+            <span class="site-soon">{item.label}</span>
+          ) : (
+            <a
+              href={url(item.path ?? '')}
+              aria-current={item.path && normalizePath(item.path) === current ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          )}
+        </li>
+      );
+    }
+
+    const open = containsPath(item, current);
+    const headingClass = depth === 0 ? 'site-grade' : 'site-subject';
+
+    return (
+      <li class="site-navgroup" data-open={open ? 'true' : 'false'}>
+        <div class="site-navrow">
           {item.path ? (
             <a
-              class={`${depth === 0 ? 'site-grade' : 'site-subject'} site-grade-link`}
+              class={`${headingClass} site-heading-link`}
               href={url(item.path)}
               aria-current={normalizePath(item.path) === current ? 'page' : undefined}
             >
               {item.label}
             </a>
           ) : (
-            <span class={depth === 0 ? 'site-grade' : 'site-subject'}>{item.label}</span>
+            <span class={headingClass}>{item.label}</span>
           )}
+          <button
+            class="site-navtoggle"
+            type="button"
+            aria-expanded={open ? 'true' : 'false'}
+            aria-label={item.label}
+            title={item.label}
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path d="m5 7 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="site-navchildren" hidden={!open}>
           <Astro.self items={item.children} current={current} depth={depth + 1} />
-        </>
-      ) : item.soon ? (
-        <span class="site-soon">{item.label}</span>
-      ) : (
-        <a
-          href={url(item.path ?? '')}
-          aria-current={item.path && normalizePath(item.path) === current ? 'page' : undefined}
-        >
-          {item.label}
-        </a>
-      )}
-    </li>
-  ))}
+        </div>
+      </li>
+    );
+  })}
 </ul>
+
+<script>
+  (function () {
+    function closeGroup(group) {
+      group.setAttribute('data-open', 'false');
+      var toggle = group.querySelector(':scope > .site-navrow > .site-navtoggle');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      var children = group.querySelector(':scope > .site-navchildren');
+      if (children) children.hidden = true;
+    }
+
+    function init() {
+      document.querySelectorAll('.site-navtoggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var group = btn.closest('.site-navgroup');
+          if (!group) return;
+          var open = group.getAttribute('data-open') !== 'true';
+          if (open && group.parentElement) {
+            Array.prototype.forEach.call(group.parentElement.children, function (sibling) {
+              if (sibling === group || !sibling.classList.contains('site-navgroup')) return;
+              closeGroup(sibling);
+            });
+          }
+          group.setAttribute('data-open', open ? 'true' : 'false');
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          var children = group.querySelector(':scope > .site-navchildren');
+          if (children) children.hidden = !open;
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>

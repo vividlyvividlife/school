@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/lang.css';
+
+interface Card {
+  title: string;
+  desc: string;
+  href: string;
+}
+
+interface Props {
+  title: string;
+  kicker: string;
+  icon: string;
+  sub: string;
+  page: string;
+  path: string;
+  crumbs: string[];
+  schemaSubject?: string;
+  cards: Card[];
+  note?: string;
+  sectionTitle?: string;
+}
+
+const {
+  title,
+  kicker,
+  icon,
+  sub,
+  page,
+  path,
+  crumbs,
+  schemaSubject,
+  cards,
+  note,
+  sectionTitle = 'Материалы',
+} = Astro.props;
+const B = import.meta.env.BASE_URL;
+const url = (value = '') => B.replace(/\/+$/, '') + '/' + value.replace(/^\/+/, '');
+const countLabel = cards.length === 1 ? '1 материал' : cards.length < 5 ? `${cards.length} материала` : `${cards.length} материалов`;
+---
+
+<BaseLayout
+  title={`${title} — VIVID·ШКОЛА`}
+  description={sub}
+  page={page}
+  crumbs={crumbs}
+  schemaSubject={schemaSubject}
+  pairOverride={{ ru: path, en: path }}
+>
+  <div class="lang-hub">
+    <header class="lang-hub-head">
+      <div class="lang-hub-icon" aria-hidden="true">{icon}</div>
+      <div class="lang-hub-title">
+        <div class="lang-kicker">{kicker}</div>
+        <h1>{title}</h1>
+        <p>{sub}</p>
+      </div>
+    </header>
+
+    {note && <p class="lang-note">{note}</p>}
+
+    <section class="lang-hub-section">
+      <div class="lang-hub-section-head">
+        <h2>{sectionTitle}</h2>
+        <span>{countLabel}</span>
+      </div>
+      <div class="lang-hub-grid">
+        {cards.map((item, i) => (
+          <a class="lang-hub-card" href={url(item.href)}>
+            <span class="lang-card-num">{String(i + 1).padStart(2, '0')}</span>
+            <span class="lang-card-copy">
+              <span class="lang-card-title">{item.title}</span>
+              <span class="lang-card-desc">{item.desc}</span>
+            </span>
+            <span class="lang-card-arrow" aria-hidden="true">→</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

@@ -1,4 +1,5 @@
 import type { Lang } from '../i18n/site';
+import { belarusianTrainers, russianTrainers } from './languageTrainers';
 
 export interface NavItem {
   label: string;
@@ -167,6 +168,7 @@ const navigationRu: NavItem[] = [
   },
   {
     label: 'Помогатор',
+    path: '/pomogator/obzor/',
     children: [
       {
         label: 'Таймер уроков',
@@ -178,6 +180,7 @@ const navigationRu: NavItem[] = [
   },
   {
     label: 'Время',
+    path: '/vremya/obzor/',
     children: [
       {
         label: 'Тренажёр времени',
@@ -406,9 +409,34 @@ const ruMathChildren = (ruMath.children || []).map((item) =>
 
 const subjectNavigationRu: NavItem[] = [
   { ...ruMath, label: 'Математика', path: '/matematika/', children: ruMathChildren },
+  {
+    label: 'Русский язык',
+    path: '/russkiy-yazyk/',
+    page: 'language',
+    desc: 'Орфограммы и словарные слова',
+    children: russianTrainers.map((trainer) => ({
+      label: trainer.title,
+      path: trainer.path,
+      page: 'language',
+      desc: trainer.cardDesc,
+    })),
+  },
+  {
+    label: 'Беларуская мова',
+    path: '/belaruskaya-mova/',
+    page: 'language',
+    desc: 'Гукі і літары, слоўнікавыя словы',
+    children: belarusianTrainers.map((trainer) => ({
+      label: trainer.title,
+      path: trainer.path,
+      page: 'language',
+      desc: trainer.cardDesc,
+    })),
+  },
   { ...ruReading, label: 'Літаратурнае чытанне' },
   {
     label: 'Чтение',
+    path: '/chtenie/',
     children: [
       {
         label: 'Слоги — раздаточный материал',

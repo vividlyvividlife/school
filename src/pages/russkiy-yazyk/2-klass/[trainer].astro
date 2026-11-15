@@ -1,0 +1,28 @@
+---
+import LanguageTrainerPage from '../../../components/pages/LanguageTrainerPage.astro';
+import { russianTrainers } from '../../../data/languageTrainers';
+
+export function getStaticPaths() {
+  return russianTrainers
+    .filter((trainer) => trainer.engine === 'pack')
+    .map((trainer) => ({
+      params: { trainer: trainer.slug },
+      props: { meta: trainer },
+    }));
+}
+
+const { meta } = Astro.props;
+---
+
+<LanguageTrainerPage
+  lang="ru"
+  pack={meta.pack}
+  pageTitle={`${meta.title} — русский язык, 2 класс — VIVID·ШКОЛА`}
+  pageDescription={meta.description}
+  pageKeywords={meta.keywords}
+  trainerTitle={meta.title}
+  subtitle={meta.subtitle}
+  crumbs={['Русский язык', '2 класс', meta.title]}
+  path={meta.path}
+  schemaSubject="Русский язык"
+/>

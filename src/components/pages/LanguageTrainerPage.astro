@@ -1,0 +1,169 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { languageSubjects, type LanguageSubjectId } from '../../data/languageTrainers';
+import '../../styles/lang.css';
+
+interface Props {
+  lang: 'ru';
+  pack?: string;
+  pageTitle?: string;
+  pageDescription?: string;
+  pageKeywords?: string;
+  trainerTitle?: string;
+  subtitle?: string;
+  crumbs?: string[];
+  path?: string;
+  subject?: LanguageSubjectId;
+  schemaSubject?: string;
+}
+
+const {
+  lang,
+  pack = '',
+  pageTitle = 'Орфограммы — русский язык, 2 класс — VIVID·ШКОЛА',
+  pageDescription = 'Тренажёр по орфограммам 2 класса: большая буква, жи-ши, ча-ща, чу-щу, чк-чн, парные согласные, безударные гласные и разделительный ь. 92 задания, выбор тем по программе или вручную.',
+  pageKeywords = 'русский язык, 2 класс, орфограммы, большая буква, жи-ши, ча-ща, чу-щу, чк-чн, безударные гласные, парные согласные, разделительный ь, тренажёр',
+  trainerTitle = 'Орфограммы',
+  subtitle = 'Выберите темы, месяц или неделю — задания соберутся только из отмеченных тем.',
+  crumbs = ['Русский язык', '2 класс', 'Орфограммы'],
+  path = '/russkiy-yazyk/2-klass/orfogrammy/',
+  subject = 'russian',
+  schemaSubject,
+} = Astro.props;
+const B = import.meta.env.BASE_URL;
+const asset = (path: string) => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+const subjectMeta = languageSubjects[subject];
+const schema = schemaSubject || subjectMeta.schemaSubject;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  keywords={pageKeywords}
+  page="language"
+  crumbs={crumbs}
+  schemaSubject={schema}
+  pairOverride={{ ru: path, en: path }}
+>
+  <div class="lang-app" data-pack={pack || undefined}>
+    <div class="lang-subject-tabs" aria-label="Предметы">
+      <a
+        class={`lang-subject-tab ${subject === 'russian' ? 'is-active' : ''}`}
+        href={asset(languageSubjects.russian.path)}
+      >Русский язык</a>
+      <a
+        class={`lang-subject-tab ${subject === 'belarusian' ? 'is-active' : ''}`}
+        href={asset(languageSubjects.belarusian.path)}
+      >Беларуская мова</a>
+    </div>
+
+    <header class="lang-pagehead">
+      <div>
+        <div class="lang-kicker">{subjectMeta.label} · 2 класс</div>
+        <h1>{trainerTitle}</h1>
+        <p>{subtitle}</p>
+      </div>
+      <div class="lang-grades" aria-label="Класс">
+        <span class="is-active">2 класс</span>
+        <span class="is-disabled" title="Скоро">3 класс</span>
+        <span class="is-disabled" title="Скоро">4 класс</span>
+      </div>
+    </header>
+
+    <section class="lang-screen lang-setup is-active" id="langSetup">
+      <div class={`lang-setup-grid${pack ? ' is-single' : ''}`}>
+        <section class="lang-panel" id="langPanel" aria-label="Выбор тем">
+          <div class="lang-panel-head">
+            <div>
+              <h2>Что показываем</h2>
+              <div class="lang-count" id="langCount" aria-live="polite"></div>
+            </div>
+            <button class="lang-reset" id="langReset" type="button">Сбросить</button>
+          </div>
+
+          <div class="lang-modes" role="group" aria-label="Режим выбора тем">
+            <button type="button" data-mode="year" class="is-active" aria-pressed="true">Весь год</button>
+            <button type="button" data-mode="program" aria-pressed="false">По программе</button>
+            <button type="button" data-mode="manual" aria-pressed="false">Выбрать темы</button>
+          </div>
+
+          <div class="lang-program" id="langProgram" hidden>
+            <div class="lang-month-row" id="langMonths" aria-label="Месяц"></div>
+            <div class="lang-week-row" id="langWeeks" aria-label="Неделя">
+              <span>неделя</span>
+            </div>
+            <p class="lang-hint" id="langHint"></p>
+          </div>
+
+          <div class="lang-topic-list" id="langTopicList"></div>
+
+          <div class="lang-panel-foot">
+            <button type="button" id="langAll">Выбрать всё</button>
+            <button type="button" id="langClear">Снять всё</button>
+          </div>
+          <p class="lang-panel-note">Темы — это готовый набор галочек. Сайт ничего не напоминает и не переносит темы сам.</p>
+          {!pack && (
+            <p class="lang-panel-note">Орфограммы идут с сентября по февраль. В марте–мае режим «По программе» повторяет эти же темы.</p>
+          )}
+        </section>
+
+        {!pack && (
+          <aside class="lang-options" aria-label="Тип заданий">
+            <div class="lang-options-head">
+              <h2>Задания</h2>
+              <p>Обычные — по школьным правилам. Фантазия — те же орфограммы в небывалых ситуациях.</p>
+            </div>
+            <div class="lang-fantasy" id="langFantasy" role="group" aria-label="Тип заданий">
+              <span>Задания:</span>
+              <button type="button" data-kind="normal" class="is-active" aria-pressed="true">Обычные</button>
+              <button type="button" data-kind="dream" aria-pressed="false">Фантазия</button>
+            </div>
+            <p class="lang-fantasy-note" id="langFantasyNote" hidden>Это фантазия: в предложениях всё может быть небывалым. Букву всё равно выбирай правильно.</p>
+            <p class="lang-options-note">Пять заданий за раунд. После ответа — правило, в конце — разбор ошибок.</p>
+          </aside>
+        )}
+      </div>
+
+      <div class="lang-startbar">
+        <div class="lang-startbar-inner">
+          <div class="lang-start-info" id="langStartInfo" aria-live="polite">
+            <b>Пять заданий</b><span>После ответа — правило, в конце — разбор ошибок.</span>
+          </div>
+          <button class="lang-primary lang-start-btn" id="langStart" type="button" disabled>Начать</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="lang-screen lang-game" id="langGame" hidden>
+      <div class="lang-trainer">
+        <div class="lang-game-head">
+          <button class="lang-back" id="langBack" type="button">← Настройки</button>
+          <div class="lang-score-row" aria-label="Счёт раунда">
+            <span class="lang-score is-ok" title="Верно"><span aria-hidden="true">✓</span><b id="langScoreOk">0</b></span>
+            <span class="lang-score is-bad" title="Ошибки"><span aria-hidden="true">×</span><b id="langScoreBad">0</b></span>
+            <span class="lang-score is-skip" title="Пропущено"><span aria-hidden="true">⏭</span><b id="langScoreSkip">0</b></span>
+          </div>
+        </div>
+        <div class="lang-progress-row">
+          <div class="lang-progress" aria-hidden="true"><span id="langProgressBar"></span></div>
+          <span class="lang-progress-text" id="langProgressText">Задание 1 из 5</span>
+        </div>
+        <div id="langTask"></div>
+        <div class="lang-feedback" id="langFeedback" aria-live="polite"></div>
+        <div class="lang-actions">
+          <button class="lang-ghost" id="langSkip" type="button" disabled>Пропустить</button>
+          <button class="lang-primary" id="langNext" type="button" disabled>Дальше</button>
+        </div>
+        <div class="lang-footnote">Ориентир для 2 класса: 10 минут — и перерыв. Сайт не заменяет урок.</div>
+      </div>
+    </section>
+
+    <section class="lang-screen lang-results" id="langResults" hidden>
+      <div class="lang-trainer lang-result-card" id="langResultBody"></div>
+    </section>
+  </div>
+
+  {pack && <script is:inline src={asset('js/lang-pack-data.js') + '?v=' + jsVersion}></script>}
+  <script is:inline src={asset('js/lang.js') + '?v=' + jsVersion}></script>
+</BaseLayout>

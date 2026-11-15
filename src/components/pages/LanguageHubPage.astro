@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { languageSubjects, trainersBySubject, type LanguageSubjectId } from '../../data/languageTrainers';
+import '../../styles/lang.css';
+
+interface Props {
+  subject?: LanguageSubjectId;
+}
+
+const { subject: subjectId = 'russian' } = Astro.props;
+const B = import.meta.env.BASE_URL;
+const url = (path = '') => B.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+const subject = languageSubjects[subjectId];
+const trainers = trainersBySubject[subjectId];
+const start = trainers.find((item) => item.engine === 'orfogrammy') ?? trainers[0];
+const keywords = [subject.label, '2 класс', 'тренажёры', ...trainers.map((item) => item.title)].join(', ');
+---
+
+<BaseLayout
+  title={`${subject.label} — 2 класс — VIVID·ШКОЛА`}
+  description={subject.hubSub}
+  keywords={keywords}
+  page="language"
+  crumbs={[subject.label]}
+  schemaSubject={subject.schemaSubject}
+  pairOverride={{ ru: subject.path, en: subject.path }}
+>
+  <div class="lang-hub">
+    <div class="lang-subject-tabs" aria-label="Предметы">
+      <a
+        class={`lang-subject-tab ${subjectId === 'russian' ? 'is-active' : ''}`}
+        href={url(languageSubjects.russian.path)}
+      >Русский язык</a>
+      <a
+        class={`lang-subject-tab ${subjectId === 'belarusian' ? 'is-active' : ''}`}
+        href={url(languageSubjects.belarusian.path)}
+      >Беларуская мова</a>
+    </div>
+
+    <header class="lang-hub-head">
+      <div class="lang-hub-icon" aria-hidden="true">{subject.icon}</div>
+      <div class="lang-hub-title">
+        <div class="lang-kicker">{subject.kicker}</div>
+        <h1>{subject.label}</h1>
+        <p>{subject.hubSub}</p>
+      </div>
+    </header>
+
+    <div class="lang-grades" aria-label="Класс">
+      <span class="is-active">2 класс</span>
+      <span class="is-disabled" title="Скоро">3 класс</span>
+      <span class="is-disabled" title="Скоро">4 класс</span>
+    </div>
+
+    {start && (
+      <a class="lang-cta" href={url(start.path)}>
+        <span class="lang-cta-copy">
+          <span class="lang-cta-kicker">Основной тренажёр</span>
+          <span class="lang-cta-title">{start.title}</span>
+          <span class="lang-cta-desc">{start.cardDesc}</span>
+        </span>
+        <span class="lang-cta-btn">Начать <span aria-hidden="true">→</span></span>
+      </a>
+    )}
+
+    <p class="lang-note">
+      <b>Как это работает.</b> Внутри тренажёров можно оставить все темы или выбрать нужные. Это фильтр, а не расписание: сайт ничего не напоминает и не переносит темы сам.
+    </p>
+
+    <section class="lang-hub-section">
+      <div class="lang-hub-section-head">
+        <h2>Тренажёры 2 класса</h2>
+        <span>{trainers.length} тренажёров · {subject.label.toLowerCase()}</span>
+      </div>
+      <div class="lang-hub-grid">
+        {trainers.map((item, i) => (
+          <a class="lang-hub-card" href={url(item.path)}>
+            <span class="lang-card-num">{String(i + 1).padStart(2, '0')}</span>
+            <span class="lang-card-copy">
+              <span class="lang-card-title">{item.title}</span>
+              <span class="lang-card-desc">{item.cardDesc}</span>
+            </span>
+            <span class="lang-card-arrow" aria-hidden="true">→</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

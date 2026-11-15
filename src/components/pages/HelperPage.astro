@@ -58,10 +58,12 @@ const copyPayload = {
   remaining: p.remaining,
   before: p.before,
   finished: p.finished,
+  notStarted: p.notStarted,
   empty: p.empty,
   minUnit: p.minUnit,
   remove: p.remove,
   start: p.start,
+  stop: p.stop,
   restart: p.restart,
   clearAsk: p.clearAsk,
   subjects: subjectDefs.map((s) => ({ key: s.key, name: s.name, color: s.color })),
@@ -116,6 +118,7 @@ const copyPayload = {
           <h2>{p.plan}</h2>
           <div class="pctl">
             <button id="hStart" class="btn" type="button" disabled>{p.start}</button>
+            <button id="hStop" class="btn ghost" type="button" disabled>{p.stop}</button>
             <button id="hClear" class="btn ghost" type="button" disabled>{p.clear}</button>
           </div>
         </div>
@@ -175,6 +178,7 @@ const copyPayload = {
       var statusEl = document.getElementById('hStatus');
       var dotEl = document.getElementById('hDot');
       var startBtn = document.getElementById('hStart');
+      var stopBtn = document.getElementById('hStop');
       var clearBtn = document.getElementById('hClear');
       var form = document.getElementById('hAdd');
       var subjectEl = document.getElementById('hSubject');
@@ -240,12 +244,12 @@ const copyPayload = {
       }
 
       function schedule() {
-        if (state.start == null) return [];
-        var t = state.start;
+        var running = state.start != null;
+        var t = running ? state.start : 0;
         return state.items.map(function (item) {
-          var a = t;
-          var b = t + item.min * 60000;
-          t = b;
+          var a = running ? t : null;
+          var b = running ? t + item.min * 60000 : null;
+          if (running) t = b;
           return { item: item, start: a, end: b };
         });
       }
@@ -299,6 +303,7 @@ const copyPayload = {
       }
 
       function markPassed() {
+        if (state.start == null) return;
         var now = Date.now();
         segments.forEach(function (seg) {
           if (now >= seg.start) started[seg.item.id] = true;
@@ -346,7 +351,7 @@ const copyPayload = {
           track.setAttribute('transform', 'rotate(-90 100 100)');
           track.setAttribute('stroke', color);
           track.setAttribute('stroke-dasharray', sweepOf(seg.item.min) + ' 360');
-          track.setAttribute('stroke-dashoffset', String(-angleOf(seg.start)));
+          track.setAttribute('stroke-dashoffset', String(-angleOf(seg.start || 0)));
           ringsEl.appendChild(track);
 
           var arc = document.createElementNS(NS, 'circle');
@@ -358,7 +363,7 @@ const copyPayload = {
           arc.setAttribute('transform', 'rotate(-90 100 100)');
           arc.setAttribute('stroke', color);
           arc.setAttribute('stroke-dasharray', sweepOf(seg.item.min) + ' 360');
-          arc.setAttribute('stroke-dashoffset', String(-angleOf(seg.start)));
+          arc.setAttribute('stroke-dashoffset', String(-angleOf(seg.start || 0)));
           ringsEl.appendChild(arc);
 
           ringRefs.push({ seg: seg, arc: arc });
@@ -379,7 +384,7 @@ const copyPayload = {
 
         var time = document.createElement('span');
         time.className = 'hrow-time';
-        time.textContent = fmtTime(seg.start) + '–' + fmtTime(seg.end);
+        time.textContent = seg.start == null ? '' : fmtTime(seg.start) + '–' + fmtTime(seg.end);
 
         var dur = document.createElement('span');
         dur.className = 'hrow-dur';
@@ -411,12 +416,21 @@ const copyPayload = {
         buildRings();
 
         emptyEl.hidden = segments.length > 0;
-        startBtn.disabled = segments.length === 0;
+        startBtn.disabled = segments.length === 0 || state.start != null;
+        stopBtn.disabled = state.start == null;
         clearBtn.disabled = segments.length === 0;
-        startBtn.textContent = segments.length ? copy.restart : copy.start;
+        startBtn.textContent = copy.start;
       }
 
       function updateArcs(now) {
+        if (state.start == null) {
+          ringRefs.forEach(function (ref) {
+            ref.arc.setAttribute('stroke-dasharray', sweepOf(ref.seg.item.min) + ' 360');
+            ref.arc.setAttribute('stroke-dashoffset', '0');
+            ref.arc.style.opacity = '1';
+          });
+          return;
+        }
         ringRefs.forEach(function (ref) {
           var seg = ref.seg;
           var sweep;
@@ -438,6 +452,15 @@ const copyPayload = {
         var text = copy.empty;
         var color = '';
         var active = null;
+
+        if (segments.length && state.start == null) {
+          rowRefs.forEach(function (ref) {
+            ref.row.classList.remove('now', 'done');
+          });
+          statusEl.textContent = copy.notStarted;
+          dotEl.hidden = true;
+          return;
+        }
 
         if (segments.length) {
           rowRefs.forEach(function (ref) {
@@ -495,28 +518,40 @@ const copyPayload = {
         updateArcs(now);
         var rangStart = false;
         var rangEnd = false;
-        segments.forEach(function (seg) {
-          if (now >= seg.start && !started[seg.item.id]) {
-            started[seg.item.id] = true;
-            if (!rangStart) {
-              rangStart = true;
-              chime('start');
+        if (state.start != null) {
+          segments.forEach(function (seg) {
+            if (now >= seg.start && !started[seg.item.id]) {
+              started[seg.item.id] = true;
+              if (!rangStart) {
+                rangStart = true;
+                chime('start');
+              }
             }
-          }
-          if (now >= seg.end && !chimed[seg.item.id]) {
-            chimed[seg.item.id] = true;
-            if (!rangEnd) {
-              rangEnd = true;
-              chime('end');
+            if (now >= seg.end && !chimed[seg.item.id]) {
+              chimed[seg.item.id] = true;
+              if (!rangEnd) {
+                rangEnd = true;
+                chime('end');
+              }
             }
-          }
-        });
+          });
+        }
         updateStatus(now);
       }
 
       startBtn.addEventListener('click', function () {
-        if (!state.items.length) return;
+        if (!state.items.length || state.start != null) return;
         state.start = Date.now();
+        chimed = {};
+        started = {};
+        save();
+        renderPlan();
+        tick();
+      });
+
+      stopBtn.addEventListener('click', function () {
+        if (state.start == null) return;
+        state.start = null;
         chimed = {};
         started = {};
         save();
@@ -582,7 +617,6 @@ const copyPayload = {
           min: min
         });
 
-        if (state.start == null) state.start = Date.now();
         if (key === 'custom') {
           customEl.value = '';
           subjectEl.value = 'math';
@@ -597,7 +631,6 @@ const copyPayload = {
       window.addEventListener('storage', function (e) {
         if (e.key !== KEY) return;
         load();
-        if (state.items.length && state.start == null) state.start = Date.now();
         renderPlan();
         markPassed();
         tick();
@@ -606,7 +639,6 @@ const copyPayload = {
       document.addEventListener('pointerdown', ensureAudio, { once: true });
 
       load();
-      if (state.items.length && state.start == null) state.start = Date.now();
       renderPlan();
       markPassed();
       tick();

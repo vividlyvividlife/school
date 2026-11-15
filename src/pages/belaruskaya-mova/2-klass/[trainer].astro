@@ -1,0 +1,29 @@
+---
+import LanguageTrainerPage from '../../../components/pages/LanguageTrainerPage.astro';
+import { belarusianTrainers } from '../../../data/languageTrainers';
+
+export function getStaticPaths() {
+  return belarusianTrainers
+    .filter((trainer) => trainer.engine === 'pack')
+    .map((trainer) => ({
+      params: { trainer: trainer.slug },
+      props: { meta: trainer },
+    }));
+}
+
+const { meta } = Astro.props;
+---
+
+<LanguageTrainerPage
+  lang="ru"
+  pack={meta.pack}
+  pageTitle={`${meta.title} — беларуская мова, 2 клас — VIVID·ШКОЛА`}
+  pageDescription={meta.description}
+  pageKeywords={meta.keywords}
+  trainerTitle={meta.title}
+  subtitle={meta.subtitle}
+  crumbs={['Беларуская мова', '2 клас', meta.title]}
+  path={meta.path}
+  subject="belarusian"
+  schemaSubject="Беларуская мова"
+/>

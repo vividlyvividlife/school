@@ -1,0 +1,33 @@
+---
+import SectionHubPage from '../../components/pages/SectionHubPage.astro';
+---
+
+<SectionHubPage
+  title="Время"
+  kicker="VIVID·ШКОЛА · время"
+  icon="В"
+  sub="Тренажёры времени: часы, календарь и длительности."
+  page="section"
+  path="/vremya/obzor/"
+  crumbs={['Время']}
+  schemaSubject="Время"
+  sectionTitle="Тренажёры"
+  note="Выбери тренажёр: часы, календарь или длительности."
+  cards={[
+    {
+      title: 'Тренажёр времени',
+      desc: 'Часы и минуты: чтение, задачи, на время',
+      href: '/vremya/',
+    },
+    {
+      title: 'Календарь',
+      desc: 'Дни недели, месяцы, даты и промежутки',
+      href: '/vremya/kalendar/',
+    },
+    {
+      title: 'Длительности',
+      desc: 'Единицы времени, сравнение и промежутки',
+      href: '/vremya/dlitelnosti/',
+    },
+  ]}
+/>

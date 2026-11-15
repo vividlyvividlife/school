@@ -15,9 +15,10 @@ interface Props {
   noindex?: boolean;
   lang?: Lang;
   pairOverride?: { ru: string; en: string };
+  schemaSubject?: string;
 }
 
-const { title, description, keywords, page, crumbs, noindex = false, lang = 'ru', pairOverride } = Astro.props;
+const { title, description, keywords, page, crumbs, noindex = false, lang = 'ru', pairOverride, schemaSubject } = Astro.props;
 const c = siteCopy[lang];
 const otherLang: Lang = lang === 'ru' ? 'en' : 'ru';
 const B = import.meta.env.BASE_URL;
@@ -40,9 +41,13 @@ const crumbLabels = crumbs ?? (
       : [title.split(' — ')[0]]
 );
 const pageKind = page ?? active?.page ?? 'home';
-const pageMeta = pageKind === 'trainer'
-  ? c.trainerPage
-  : pageKind === 'examples'
+const pageMeta = pageKind === 'section'
+  ? c.homePage
+  : pageKind === 'language'
+    ? c.trainerPage
+    : pageKind === 'trainer'
+    ? c.trainerPage
+    : pageKind === 'examples'
     ? c.worksheetPage
     : pageKind === 'reading'
       ? c.readingPage
@@ -73,9 +78,11 @@ const googlebot = noindex
   ? 'noindex, nofollow'
   : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 const ogType = pageKind === 'home' ? 'website' : 'article';
-const resourceType = ['trainer','clock','calendar','durations'].includes(pageKind) || pageKind === 'calendar' || pageKind === 'durations'
-  ? (lang === 'ru' ? 'Тренажёр' : 'Trainer')
-  : pageKind === 'helper'
+const resourceType = pageKind === 'section'
+  ? (lang === 'ru' ? 'Раздел' : 'Section')
+  : ['trainer','clock','calendar','durations'].includes(pageKind) || pageKind === 'calendar' || pageKind === 'durations' || pageKind === 'language'
+    ? (lang === 'ru' ? 'Тренажёр' : 'Trainer')
+    : pageKind === 'helper'
     ? (lang === 'ru' ? 'Инструмент' : 'Study tool')
     : pageKind === 'reading'
       ? (lang === 'ru' ? 'Материалы для чтения' : 'Reading materials')
@@ -85,7 +92,7 @@ const educationalLevel = pageKind === 'helper'
   : pageKind === 'clock' || pageKind === 'calendar' || pageKind === 'durations'
     ? (lang === 'ru' ? '1–3 класс' : 'Grades 1–3')
     : (lang === 'ru' ? '2 класс' : 'Grade 2');
-const subject = pageKind === 'helper'
+const defaultSubject = pageKind === 'helper'
   ? (lang === 'ru' ? 'Планирование занятий' : 'Study planning')
   : pageKind === 'clock'
     ? (lang === 'ru' ? 'Время и часы' : 'Time and clocks')
@@ -93,9 +100,12 @@ const subject = pageKind === 'helper'
       ? (lang === 'ru' ? 'Календарь' : 'Calendar')
       : pageKind === 'durations'
         ? (lang === 'ru' ? 'Длительности' : 'Durations')
-        : pageKind === 'reading'
-          ? (lang === 'ru' ? 'Літаратурнае чытанне' : 'Literary Reading')
-          : (lang === 'ru' ? 'Математика' : 'Mathematics');
+        : pageKind === 'language'
+          ? (lang === 'ru' ? 'Русский язык' : 'Russian language')
+          : pageKind === 'reading'
+            ? (lang === 'ru' ? 'Літаратурнае чытанне' : 'Literary Reading')
+            : (lang === 'ru' ? 'Математика' : 'Mathematics');
+const subject = schemaSubject || defaultSubject;
 const schema: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': pageKind === 'home' ? 'WebSite' : 'LearningResource',
@@ -321,5 +331,8 @@ if (pageKind !== 'home') {
     })();
   </script>
   <YandexMetrika />
+  {['trainer', 'clock', 'calendar', 'durations', 'language'].includes(pageKind) && (
+    <script is:inline src={url('js/break-limit.js')}></script>
+  )}
 </body>
 </html>

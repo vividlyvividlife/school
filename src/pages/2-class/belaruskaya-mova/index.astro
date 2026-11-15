@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/lang.css';
+
+const path = '/2-class/belaruskaya-mova/';
+const B = import.meta.env.BASE_URL;
+const url = (value = '') => B.replace(/\/+$/, '') + '/' + value.replace(/^\/+/, '');
+
+const seasons = [
+  {
+    num: '01',
+    title: 'Восень',
+    desc: 'Спіс твораў з тэкстамі',
+    href: '/2-class/belaruskaya-mova/pazaklasnae-chytanne/',
+  },
+  {
+    num: '02',
+    title: 'Зіма',
+    desc: 'Спіс твораў з тэкстамі',
+    href: '/2-class/belaruskaya-mova/zima/',
+  },
+  {
+    num: '03',
+    title: 'Вясна',
+    desc: 'Спіс твораў з тэкстамі',
+    href: '/2-class/belaruskaya-mova/viasna/',
+  },
+];
+---
+
+<BaseLayout
+  title="Літаратурнае чытанне — 2 класс — VIVID·ШКОЛА"
+  description="Спісы твораў для пазакласнага чытання ў 2 класе па сезонах: восень, зіма, вясна. Тэксты і матэрыялы для чытання."
+  keywords="літаратурнае чытанне, 2 класс, пазакласнае чытанне, восень, зіма, вясна, творы, тэксты"
+  page="reading"
+  crumbs={['Літаратурнае чытанне']}
+  pairOverride={{ ru: path, en: path }}
+>
+  <div class="lang-hub">
+    <header class="lang-hub-head">
+      <div class="lang-hub-icon" aria-hidden="true">Ч</div>
+      <div class="lang-hub-title">
+        <div class="lang-kicker">VIVID·ШКОЛА · літаратурнае чытанне</div>
+        <h1>Літаратурнае чытанне</h1>
+        <p>Спісы твораў для пазакласнага чытання ў 2 класе. Выбірай сезон — адкрыецца спіс з тэкстамі.</p>
+      </div>
+    </header>
+
+    <div class="lang-grades" aria-label="Класс">
+      <span class="is-active">2 класс</span>
+      <span class="is-disabled" title="Скоро">3 класс</span>
+      <span class="is-disabled" title="Скоро">4 класс</span>
+    </div>
+
+    <p class="lang-note">
+      <b>Як гэта працуе.</b> Кожны сезон — асобны спіс твораў. Адкрый патрэбны сезон і чытай тэксты; кнопка «Друк» дапаможа раздрукаваць матэрыял.
+    </p>
+
+    <section class="lang-hub-section">
+      <div class="lang-hub-section-head">
+        <h2>Сезоны 2 класа</h2>
+        <span>Восень, зіма, вясна</span>
+      </div>
+      <div class="lang-hub-grid">
+        {seasons.map((item) => (
+          <a class="lang-hub-card" href={url(item.href)}>
+            <span class="lang-card-num">{item.num}</span>
+            <span class="lang-card-copy">
+              <span class="lang-card-title">{item.title}</span>
+              <span class="lang-card-desc">{item.desc}</span>
+            </span>
+            <span class="lang-card-arrow" aria-hidden="true">→</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

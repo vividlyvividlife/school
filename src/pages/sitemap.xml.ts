@@ -19,7 +19,26 @@ export const GET: APIRoute = ({ site }) => {
     });
   });
 
-  const extra = ['/1-class/chtenie/razdatochnyy-material/'].map((path) =>
+  const extra = [
+    '/1-class/chtenie/razdatochnyy-material/',
+    '/chtenie/',
+    '/2-class/belaruskaya-mova/',
+    '/vremya/obzor/',
+    '/pomogator/obzor/',
+    '/russkiy-yazyk/',
+    '/russkiy-yazyk/2-klass/orfogrammy/',
+    '/russkiy-yazyk/2-klass/slovarnye-slova/',
+    '/russkiy-yazyk/2-klass/chasti-rechi/',
+    '/russkiy-yazyk/2-klass/predlozhenie-i-tekst/',
+    '/russkiy-yazyk/2-klass/odnokorennye-slova/',
+    '/russkiy-yazyk/2-klass/zagadki-i-rebusy/',
+    '/belaruskaya-mova/',
+    '/belaruskaya-mova/2-klass/guki-i-litary/',
+    '/belaruskaya-mova/2-klass/slounikavyya-slova/',
+    '/belaruskaya-mova/2-klass/slovy-i-skaz/',
+    '/belaruskaya-mova/2-klass/peranos-i-natsisk/',
+    '/belaruskaya-mova/2-klass/zagadki/'
+  ].map((path) =>
     '  <url>\n    <loc>' + abs(path) + '</loc>\n  </url>').join('\n');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
