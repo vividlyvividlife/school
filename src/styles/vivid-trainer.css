@@ -219,6 +219,7 @@ h2{letter-spacing:-.025em;font-weight:900}
 .v-tasks-grid button{
   min-width:0;border:2px solid #e5e8f2;border-radius:14px;background:#f6f7fc;
   padding:11px 9px;color:#475569;font-weight:800;font-size:12px;line-height:1.25;text-align:center;
+  white-space:normal;overflow-wrap:anywhere;
 }
 .v-tasks-grid button.on{background:#eef2ff;border-color:#6366f1;color:#4338ca}
 .v-star-row{margin-top:10px;padding:10px;border-radius:14px;background:#fffbeb}
@@ -254,6 +255,8 @@ h2{letter-spacing:-.025em;font-weight:900}
   box-shadow:0 4px 10px -8px rgba(15,23,42,.35);
 }
 .v-round-btn:active{transform:scale(.94)}
+.v-stop-btn{color:#be123c;background:#fff1f2;border-color:#fecdd3;white-space:nowrap}
+.v-stop-btn:hover{background:#ffe4e6;border-color:#fda4af}
 .v-game .pause-btn[aria-pressed="true"]{
   border-color:transparent;color:#fff;
   background:linear-gradient(135deg,#6366f1,#8b5cf6);
@@ -682,3 +685,16 @@ h2{letter-spacing:-.025em;font-weight:900}
 .bv-ten-flyer{position:absolute;left:0;top:0;opacity:0;pointer-events:none;z-index:3;transition:transform .7s cubic-bezier(.45,.05,.3,1),opacity .2s}
 .bv-ten-flyer,.bv-rod-flyer{padding:2px 3px;gap:1px}
 .bv-ten-flyer i,.bv-rod-flyer i{width:4px;height:4px}
+
+@media (max-width:420px){
+  .v-game-head{gap:7px}
+  .v-game-head .v-round-btn{font-size:13px;padding:0 9px}
+  .v-score-row .v-pill{padding:5px 8px;font-size:12px;gap:4px}
+  .v-score-row .v-pill span{font-size:15px}
+}
+@media (max-width:340px){
+  .v-game-head{gap:6px}
+  .v-game-head .v-round-btn{font-size:12px;padding:0 8px}
+  .v-score-row .v-pill{padding:5px 7px;font-size:12px;gap:3px}
+  .v-score-row .v-pill span{font-size:14px}
+}

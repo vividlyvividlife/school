@@ -186,6 +186,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-align:c
 .exlist{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .exlist.left{justify-content:flex-start}
 .ex{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 9px;font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ex.ex-long{flex:1 1 100%;min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:left;line-height:1.45}
 .hrow .exlist{margin:5px 0 0}
 .hrow .hbtn{margin-top:6px}
 .mrow .ua.missed{color:var(--amber)}

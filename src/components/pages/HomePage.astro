@@ -18,6 +18,9 @@ if (!math) throw new Error('Math section not found');
 const time = subjects.find((item) => item.label === (isEn ? 'Time' : 'Время'));
 const reading = subjects.find((item) => item.label === (isEn ? 'Literary Reading' : 'Літаратурнае чытанне'));
 const helper = subjects.find((item) => item.label === (isEn ? 'Helper' : 'Помогатор'));
+const russian = isEn ? undefined : subjects.find((item) => item.label === 'Русский язык');
+const belarusian = isEn ? undefined : subjects.find((item) => item.label === 'Беларуская мова');
+const readingHub = isEn ? undefined : subjects.find((item) => item.label === 'Чтение');
 const mathChildren = (math.children || []).filter((item) => !item.soon);
 const practice = mathChildren.find((item) => item.page === 'trainer' && /Примеры|Practice/i.test(item.label)) || mathChildren[0];
 const worksheet = mathChildren.find((item) => item.page === 'examples');
@@ -51,22 +54,6 @@ const cards = [
     href: math.path,
     count: mathChildren.filter((item) => item.page !== 'examples').length,
   },
-  {
-    title: isEn ? 'Time' : 'Время',
-    desc: isEn ? 'Clocks, calendar, durations' : 'Часы, календарь, длительности',
-    icon: '◷',
-    tone: 'time',
-    href: timeFirst?.path || time?.path || '/',
-    count: time?.children?.filter((item) => !item.soon).length || 0,
-  },
-  {
-    title: reading?.label || (isEn ? 'Literary Reading' : 'Літаратурнае чытанне'),
-    desc: isEn ? 'Reading lists with full texts' : 'Чытанне і тэксты',
-    icon: '▤',
-    tone: 'reading',
-    href: reading?.path || '/',
-    count: reading?.children?.filter((item) => !item.soon).length || 0,
-  },
   worksheet
     ? {
         title: worksheet.label,
@@ -77,6 +64,52 @@ const cards = [
         count: 0,
       }
     : null,
+  russian
+    ? {
+        title: russian.label,
+        desc: 'Орфограммы, словарные слова, части речи',
+        icon: 'Аа',
+        tone: 'ru',
+        href: russian.path || '/',
+        count: russian.children?.filter((item) => !item.soon).length || 0,
+      }
+    : null,
+  belarusian
+    ? {
+        title: belarusian.label,
+        desc: 'Гукі і літары, словы і сказ',
+        icon: 'Ў',
+        tone: 'by',
+        href: belarusian.path || '/',
+        count: belarusian.children?.filter((item) => !item.soon).length || 0,
+      }
+    : null,
+  {
+    title: reading?.label || (isEn ? 'Literary Reading' : 'Літаратурнае чытанне'),
+    desc: isEn ? 'Reading lists with full texts' : 'Чытанне і тэксты',
+    icon: '▤',
+    tone: 'reading',
+    href: reading?.path || '/',
+    count: reading?.children?.filter((item) => !item.soon).length || 0,
+  },
+  readingHub
+    ? {
+        title: readingHub.label,
+        desc: 'Слоги — раздаточный материал',
+        icon: 'Сл',
+        tone: 'chtenie',
+        href: readingHub.path || '/',
+        count: readingHub.children?.length || 0,
+      }
+    : null,
+  {
+    title: isEn ? 'Time' : 'Время',
+    desc: isEn ? 'Clocks, calendar, durations' : 'Часы, календарь, длительности',
+    icon: '◷',
+    tone: 'time',
+    href: timeFirst?.path || time?.path || '/',
+    count: time?.children?.filter((item) => !item.soon).length || 0,
+  },
   helperFirst
     ? {
         title: helper?.label || (isEn ? 'Helper' : 'Помогатор'),
@@ -292,6 +325,9 @@ const cards = [
     box-shadow: 0 8px 18px -10px rgba(15, 23, 42, .5);
   }
   .tone-math .vivid-card-icon { background: linear-gradient(135deg, #6366f1, #a855f7); }
+  .tone-ru .vivid-card-icon { background: linear-gradient(135deg, #2563eb, #6366f1); }
+  .tone-by .vivid-card-icon { background: linear-gradient(135deg, #16a34a, #10b981); }
+  .tone-chtenie .vivid-card-icon { background: linear-gradient(135deg, #0891b2, #06b6d4); }
   .tone-time .vivid-card-icon { background: linear-gradient(135deg, #f59e0b, #f97316); }
   .tone-reading .vivid-card-icon { background: linear-gradient(135deg, #10b981, #14b8a6); }
   .tone-print .vivid-card-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); }

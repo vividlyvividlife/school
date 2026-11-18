@@ -1496,7 +1496,10 @@ function renderHard(){
   var list = visibleHard();
   var n = list.length;
   els.hardList.innerHTML = n
-    ? list.map(function(x){ return '<span class="ex">' + x.text + '</span>'; }).join('')
+    ? list.map(function(x){
+        var cls = x.text.length > 24 ? 'ex ex-long' : 'ex';
+        return '<span class="' + cls + '">' + x.text + '</span>';
+      }).join('')
     : '';
   els.hardList.hidden = !n;
   els.hardBtn.disabled = !n;
