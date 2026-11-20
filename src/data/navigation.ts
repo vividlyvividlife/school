@@ -1,5 +1,6 @@
 import type { Lang } from '../i18n/site';
 import { belarusianTrainers, russianTrainers } from './languageTrainers';
+import { readingHubPath, readingThemes } from './belarusianReadingThemes';
 
 export interface NavItem {
   label: string;
@@ -7,6 +8,7 @@ export interface NavItem {
   page?: string;
   soon?: boolean;
   desc?: string;
+  note?: string;
   children?: NavItem[];
 }
 
@@ -14,6 +16,20 @@ export function normalizePath(value: string): string {
   const path = '/' + value.replace(/^\/+/, '').replace(/\/+$/, '');
   return path === '/' ? '/' : path + '/';
 }
+
+const readingThemeNav: NavItem[] = readingThemes.map((theme) => {
+  const first = theme.pages.find((page) => page.available) ?? theme.pages[0];
+  return {
+    label: theme.title,
+    path: first.path,
+    page: 'reading',
+    children: theme.pages.map((page) => ({
+      label: page.label,
+      path: page.path,
+      page: 'reading',
+    })),
+  };
+});
 
 const navigationRu: NavItem[] = [
   {
@@ -136,27 +152,8 @@ const navigationRu: NavItem[] = [
       },
       {
         label: 'Літаратурнае чытанне',
-        path: '/2-class/belaruskaya-mova/',
-        children: [
-          {
-            label: 'Восень',
-            path: '/2-class/belaruskaya-mova/pazaklasnae-chytanne/',
-            page: 'reading',
-            desc: 'Спіс твораў з тэкстамі',
-          },
-          {
-            label: 'Зіма',
-            path: '/2-class/belaruskaya-mova/zima/',
-            page: 'reading',
-            desc: 'Спіс твораў з тэкстамі',
-          },
-          {
-            label: 'Вясна',
-            path: '/2-class/belaruskaya-mova/viasna/',
-            page: 'reading',
-            desc: 'Спіс твораў з тэкстамі',
-          },
-        ],
+        path: readingHubPath,
+        children: readingThemeNav,
       },
       { label: 'Раздел в разработке', soon: true },
     ],
@@ -438,6 +435,12 @@ const subjectNavigationRu: NavItem[] = [
     label: 'Чтение',
     path: '/chtenie/',
     children: [
+      {
+        label: 'Чтение на скорость',
+        path: '/chtenie/na-skorost/',
+        page: 'speedread',
+        desc: 'Тренировка, на время, вопросы по тексту'
+      },
       {
         label: 'Слоги — раздаточный материал',
         path: '/1-class/chtenie/razdatochnyy-material/',

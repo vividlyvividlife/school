@@ -1,0 +1,25 @@
+---
+import BelarusianReadingThemePage from '../../../../../components/pages/BelarusianReadingThemePage.astro';
+import {
+  findReadingTheme,
+  readingThemePages,
+  type ReadingTheme,
+  type ReadingThemePage,
+} from '../../../../../data/belarusianReadingThemes';
+
+export function getStaticPaths() {
+  return readingThemePages.map((themePage) => ({
+    params: { theme: themePage.slug, grade: String(themePage.grade) },
+    props: { theme: findReadingTheme(themePage.slug), themePage },
+  }));
+}
+
+interface Props {
+  theme: ReadingTheme;
+  themePage: ReadingThemePage;
+}
+
+const { theme, themePage } = Astro.props;
+---
+
+<BelarusianReadingThemePage theme={theme} themePage={themePage} />

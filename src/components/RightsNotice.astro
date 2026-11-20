@@ -1,0 +1,88 @@
+<aside class="rights-note" aria-label="Правообладателям">
+  <b>Правообладателям</b>
+  <p>
+    Если вы являетесь правообладателем и считаете, что размещение материала на сайте нарушает ваши
+    права, напишите нам:{' '}
+    <button
+      class="rights-mail"
+      type="button"
+      data-mail-user="dml2aWRseS52aXZpZGxpZmU="
+      data-mail-domain="Z21haWwuY29t"
+      aria-label="Показать адрес электронной почты"
+    >Показать адрес</button>. Укажите произведение
+    и страницу — мы проверим обращение и удалим материал.
+  </p>
+</aside>
+
+<script is:inline>
+  (function () {
+    document.querySelectorAll('.rights-mail').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var user = button.getAttribute('data-mail-user');
+        var domain = button.getAttribute('data-mail-domain');
+        if (!user || !domain) return;
+        var address;
+        try {
+          address = atob(user) + '@' + atob(domain);
+        } catch (error) {
+          return;
+        }
+        var link = document.createElement('a');
+        link.href = 'mailto:' + address;
+        link.textContent = address;
+        button.replaceWith(link);
+        link.focus();
+      });
+    });
+  })();
+</script>
+
+<style>
+  .rights-note {
+    margin: 1.25rem 0 0;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--site-line, #e2e8f0);
+    border-radius: 12px;
+    background: var(--site-surface-3, #fbfcfe);
+    color: var(--site-muted, #64748b);
+    font-size: 0.76rem;
+    line-height: 1.5;
+  }
+  .rights-note b {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--site-ink, #0f172a);
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+  .rights-note p { margin: 0; }
+  .rights-note a {
+    color: var(--site-teal, #6366f1);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .rights-note a:hover { text-decoration: underline; }
+  .rights-note a:focus-visible {
+    outline: 3px solid var(--site-teal-line, #c7d2fe);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .rights-mail {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--site-teal, #6366f1);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .rights-mail:hover { color: var(--site-teal-d, #4f46e5); }
+  .rights-mail:focus-visible {
+    outline: 3px solid var(--site-teal-line, #c7d2fe);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+</style>

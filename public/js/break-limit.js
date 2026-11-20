@@ -1,6 +1,6 @@
 (function () {
   var page = document.body ? document.body.getAttribute('data-page') : '';
-  if (['trainer', 'clock', 'calendar', 'durations', 'language'].indexOf(page) < 0) return;
+  if (['trainer', 'clock', 'calendar', 'durations', 'language', 'speedread'].indexOf(page) < 0) return;
 
   var TEST = /[?&]breaktest=1(?:&|$)/.test(location.search);
   var SESSION_LIMIT = TEST ? 10 : 10 * 60;

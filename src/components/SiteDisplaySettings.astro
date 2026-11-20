@@ -1,0 +1,145 @@
+---
+const siteFonts = [
+  { value: 'nunito', label: 'Nunito (сайт)', stack: '"Nunito", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' },
+];
+const systemFonts = [
+  { value: 'system', label: 'Системный (ПК / Android / iOS)', stack: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' },
+  { value: 'segoe', label: 'Segoe UI (Windows)', stack: '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif' },
+  { value: 'roboto', label: 'Roboto (Android)', stack: 'Roboto, "Noto Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
+  { value: 'sf', label: 'San Francisco (iOS / macOS)', stack: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif' },
+  { value: 'noto', label: 'Noto Sans (Android)', stack: '"Noto Sans", Roboto, system-ui, "Segoe UI", Arial, sans-serif' },
+  { value: 'arial', label: 'Arial / Helvetica', stack: 'Arial, "Helvetica Neue", Helvetica, sans-serif' },
+  { value: 'verdana', label: 'Verdana', stack: 'Verdana, Geneva, "DejaVu Sans", sans-serif' },
+  { value: 'tahoma', label: 'Tahoma', stack: 'Tahoma, Verdana, "DejaVu Sans", sans-serif' },
+  { value: 'trebuchet', label: 'Trebuchet MS', stack: '"Trebuchet MS", "Segoe UI", sans-serif' },
+  { value: 'calibri', label: 'Calibri (Windows)', stack: 'Calibri, "Segoe UI", system-ui, sans-serif' },
+  { value: 'georgia', label: 'Georgia', stack: 'Georgia, "Times New Roman", "Noto Serif", serif' },
+  { value: 'times', label: 'Times New Roman', stack: '"Times New Roman", Times, "Noto Serif", serif' },
+  { value: 'palatino', label: 'Palatino', stack: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif' },
+  { value: 'cambria', label: 'Cambria (Windows)', stack: 'Cambria, Georgia, "Noto Serif", serif' },
+  { value: 'courier', label: 'Courier New', stack: '"Courier New", Courier, "Nimbus Mono PS", monospace' },
+];
+const sizes = [
+  { value: '90', label: '90% — мельче' },
+  { value: '100', label: '100% — обычный' },
+  { value: '110', label: '110%' },
+  { value: '120', label: '120%' },
+  { value: '130', label: '130% — крупнее' },
+];
+---
+
+<div class="site-settings">
+  <button
+    class="site-gear"
+    id="displayToggle"
+    type="button"
+    aria-expanded="false"
+    aria-controls="displayPanel"
+    aria-label="Настройки отображения"
+    title="Настройки отображения"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  </button>
+
+  <section class="display-settings site-display-pop" id="displayPanel" hidden aria-labelledby="displaySettingsTitle">
+    <h2 id="displaySettingsTitle">Внешний вид</h2>
+    <label class="display-row">
+      <span>Шрифт</span>
+      <select data-site-font-select>
+        <optgroup label="Сайт">
+          {siteFonts.map((font) => (
+            <option value={font.value} style={`font-family:${font.stack} !important`}>{font.label}</option>
+          ))}
+        </optgroup>
+        <optgroup label="Системные шрифты">
+          {systemFonts.map((font) => (
+            <option value={font.value} style={`font-family:${font.stack} !important`}>{font.label}</option>
+          ))}
+        </optgroup>
+      </select>
+    </label>
+    <label class="display-row">
+      <span>Размер текста</span>
+      <select data-site-size-select>
+        {sizes.map((size) => <option value={size.value}>{size.label}</option>)}
+      </select>
+    </label>
+    <p class="display-hint">Системный шрифт берётся с устройства; если его нет — похожий. Настройки сохраняются на этом устройстве.</p>
+  </section>
+</div>
+
+<script is:inline>
+  (function () {
+    var root = document.documentElement;
+    var wrap = document.querySelector('.site-settings');
+    var toggle = document.getElementById('displayToggle');
+    var panel = document.getElementById('displayPanel');
+    if (!wrap || !toggle || !panel) return;
+
+    function has(select, value) {
+      for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === value) return true;
+      }
+      return false;
+    }
+
+    function bind(selects, attr, key, fallback) {
+      if (!selects.length) return;
+      function current() {
+        var value = root.getAttribute(attr);
+        return value && has(selects[0], value) ? value : fallback;
+      }
+      function sync(value) {
+        for (var i = 0; i < selects.length; i++) selects[i].value = value;
+      }
+      for (var i = 0; i < selects.length; i++) {
+        (function (select) {
+          select.value = current();
+          select.addEventListener('change', function () {
+            var value = select.value;
+            root.setAttribute(attr, value);
+            try { localStorage.setItem(key, value); } catch (e) {}
+            sync(value);
+          });
+        })(selects[i]);
+      }
+      window.addEventListener('storage', function (event) {
+        if (event.key !== key) return;
+        var value = event.newValue || fallback;
+        if (!has(selects[0], value)) return;
+        root.setAttribute(attr, value);
+        sync(value);
+      });
+    }
+
+    bind(document.querySelectorAll('[data-site-font-select]'), 'data-site-font', 'vivid.siteFont', 'nunito');
+    bind(document.querySelectorAll('[data-site-size-select]'), 'data-site-size', 'vivid.siteSize', '100');
+
+    function setOpen(open, focus) {
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      panel.hidden = !open;
+      if (open) {
+        var select = panel.querySelector('select');
+        if (select) select.focus();
+      } else if (focus) {
+        toggle.focus();
+      }
+    }
+
+    toggle.addEventListener('click', function (event) {
+      event.stopPropagation();
+      setOpen(panel.hidden);
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!panel.hidden && !wrap.contains(event.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !panel.hidden) setOpen(false, true);
+    });
+  })();
+</script>

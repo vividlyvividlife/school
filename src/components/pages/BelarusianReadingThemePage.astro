@@ -1,0 +1,174 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Decor from '../Decor.astro';
+import SeasonIntro from '../SeasonIntro.astro';
+import RightsNotice from '../RightsNotice.astro';
+import '../../styles/belarusian-reading.css';
+import {
+  readingHubPath,
+  textsLabel,
+  worksLabel,
+  type ReadingTheme,
+  type ReadingThemePage,
+} from '../../data/belarusianReadingThemes';
+import { themeArt } from '../../data/belarusianReadingArt';
+
+interface Props {
+  theme: ReadingTheme;
+  themePage: ReadingThemePage;
+}
+
+const { theme, themePage } = Astro.props;
+const { category, grade, label: gradeLabel } = themePage;
+const available = themePage.available;
+const entries = category.entries;
+const hasTexts = themePage.textCount > 0;
+const partial = hasTexts && themePage.textCount < themePage.entryCount;
+const publicDomainSources = [...new Set(entries.map((entry) => entry.publicDomain).filter((source): source is string => Boolean(source)))];
+const availableGrades = theme.pages.filter((page) => page.available).map((page) => page.label);
+const visual = themeArt(theme.title);
+const path = themePage.path;
+const B = import.meta.env.BASE_URL;
+const asset = (value: string) => B.replace(/\/+$/, '') + '/' + value.replace(/^\/+/, '');
+const countLine = `${themePage.entryCount} ${worksLabel(themePage.entryCount)}`;
+const textLine = `${themePage.textCount} ${textsLabel(themePage.textCount)}`;
+const enPair = '/en/grade-2/belarusian/';
+const pageDescription = !available
+  ? `Тэма «${theme.title}» не прадстаўлена ў ${gradeLabel.toLowerCase()}е. Абярыце іншы клас або паглядзіце тэмы ${grade} класа.`
+  : hasTexts
+    ? `${theme.title}: ${countLine} для ${gradeLabel.toLowerCase()}а. Поўныя тэксты на сайце, чытанне анлайн і друк асобных твораў.`
+    : `${theme.title}: ${countLine} для ${gradeLabel.toLowerCase()}а. Спіс твораў для пазакласнага чытання; у крыніцы няма файлаў тэкстаў.`;
+---
+
+<BaseLayout
+  title={available
+    ? `${theme.title} — ${gradeLabel} — Літаратурнае чытанне — VIVID·ШКОЛА`
+    : `${theme.title} — ${gradeLabel} — тэма не прадстаўлена — VIVID·ШКОЛА`}
+  description={pageDescription}
+  noindex={!available}
+  keywords={`${theme.title}, ${gradeLabel}, літаратурнае чытанне, пазакласнае чытанне, беларуская літаратура, тэксты для чытання, друк`}
+  page="reading"
+  crumbs={['Літаратурнае чытанне', theme.title]}
+  schemaSubject="Літаратурнае чытанне"
+  pairOverride={{ ru: path, en: enPair }}
+>
+  {visual.season && <Decor variant="reading" season={visual.season} />}
+  {visual.season && <SeasonIntro season={visual.season} />}
+  <div class="bel-catalog bel-theme-page">
+    <header class="bel-hero bel-theme-hero">
+      <div class="bel-theme-copy">
+        <div class="bel-theme-topline">
+          <a class="bel-backlink" href={asset(readingHubPath)}>← Усе тэмы</a>
+          <span class="bel-kicker">Літаратурнае чытанне · {gradeLabel}</span>
+        </div>
+        <h1>{theme.title}</h1>
+        <p class="bel-theme-sub">
+          {available ? `${countLine} · ${textLine} на сайце` : 'У гэтым класе тэма не прадстаўлена'}
+        </p>
+        <nav class="bel-tabs bel-class-links" aria-label="Клас">
+          {theme.pages.map((item) => (
+            <a
+              class={`bel-tab${item.grade === grade ? ' is-on' : ''}`}
+              href={asset(item.path)}
+              aria-current={item.grade === grade ? 'page' : undefined}
+            >{item.label}</a>
+          ))}
+        </nav>
+      </div>
+      <div class="bel-theme-artwrap" aria-hidden="true">
+        <img
+          class="bel-theme-art"
+          src={visual.image.src}
+          width={visual.image.width}
+          height={visual.image.height}
+          alt=""
+          decoding="async"
+        />
+      </div>
+    </header>
+
+    {!available && (
+      <p class="bel-class-note">
+        Тэма «{theme.title}» не прадстаўлена ў {gradeLabel.toLowerCase()}е.
+        {availableGrades.length > 0 && ` Тэма ёсць у класах: ${availableGrades.join(', ')}.`}
+        {' '}<a class="bel-backlink" href={asset(`${readingHubPath}#class-${grade}`)}>Тэмы {grade} класа</a>.
+      </p>
+    )}
+    {available && !hasTexts && (
+      <p class="bel-class-note">У крыніцы для гэтага класа няма файлаў тэкстаў — даступны спіс твораў.</p>
+    )}
+    {available && partial && (
+      <p class="bel-class-note">Тэксты — у {themePage.textCount} з {themePage.entryCount} твораў; для астатніх у крыніцы няма файлаў.</p>
+    )}
+    {available && publicDomainSources.length > 0 && (
+      <p class="bel-class-note">Творы класікаў — у грамадскім набытку. Крыніцы: {publicDomainSources.join(', ')}.</p>
+    )}
+
+    {available && <section class="bel-class" data-grade={grade}>
+      <div class="bel-theme-block">
+        <ul class="bel-list bel-theme-works">
+          {entries.map((entry, entryIndex) => {
+            const workId = `${theme.slug}-${grade}-${entryIndex}`;
+            if (entry.body && entry.body.length > 0) {
+              return (
+                <li class="bel-work" data-work={workId}>
+                  <details class="bel-work-details">
+                    <summary class="bel-work-sum">
+                      <span class="bel-work-text">{entry.text}</span>
+                      <span class="bel-work-actions">
+                        <span class="bel-read-toggle">
+                          <span class="bel-read-label">Чытаць</span>
+                          <svg class="bel-work-chev" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M5 7.5l5 5 5-5" />
+                          </svg>
+                        </span>
+                        <button
+                          class="bel-print-work"
+                          type="button"
+                          aria-label="Друкаваць"
+                          title="Друкаваць"
+                          data-print-work={workId}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6 9V3h12v6" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <path d="M6 14h12v7H6z" />
+                          </svg>
+                          <span class="bel-print-label">Друкаваць</span>
+                        </button>
+                      </span>
+                    </summary>
+                    <div class="bel-work-print-head" aria-hidden="true">
+                      <h1>{entry.text}</h1>
+                    </div>
+                    <div class="bel-full">
+                      {entry.body.map((paragraph) => <p>{paragraph}</p>)}
+                    </div>
+                  </details>
+                </li>
+              );
+            }
+            return (
+              <li class="bel-work bel-work-empty">
+                <span class="bel-work-text">{entry.text}</span>
+                <span class="bel-no-text">тэкст не размешчаны</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>}
+
+    {available && (
+      <>
+        <p class="bel-source">
+          Спіс складзены па старонцы «Читающая школа» · Бібліявеснік.
+          Тэксты блога публікуюцца з дазволу праваўладальніка. Класічныя творы — у грамадскім набытку.
+        </p>
+        <RightsNotice />
+      </>
+    )}
+  </div>
+</BaseLayout>
+
+<script is:inline src={asset('js/belarusian-reading.js')}></script>

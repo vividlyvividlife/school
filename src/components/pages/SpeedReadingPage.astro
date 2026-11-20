@@ -1,0 +1,314 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/speedreading.css';
+import { speedReadingPassages } from '../../data/speedReading';
+
+const path = '/chtenie/na-skorost/';
+const B = import.meta.env.BASE_URL;
+const asset = (value: string) => B.replace(/\/+$/, '') + '/' + value.replace(/^\/+/, '');
+const jsVersion = Date.now().toString(36);
+const texts = speedReadingPassages;
+const dataJson = JSON.stringify({ texts }).replace(/</g, '\\u003c');
+const totalWords = texts.reduce((n, t) => n + t.wordCount, 0);
+const plural = (n: number) => {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'слово';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'слова';
+  return 'слов';
+};
+const pluralText = (n: number) => {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'текст';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'текста';
+  return 'текстов';
+};
+const sourceLinks = Array.from(
+  new Map(texts.map((t) => [t.source, t.sourceLabel])).entries()
+).map(([href, label]) => ({ href, label }));
+---
+
+<BaseLayout
+  title="Чтение на скорость — тренажёр чтения и понимания текста — VIVID·ШКОЛА"
+  description="Тренажёр скорости чтения для 1–4 класса: чтение полным текстом или по одному слову с заданной скоростью, режим тренировки и на время, вопросы по тексту. 50+ текстов: сказки, рассказы, стихи, басни и народные сказки Пушкина, Крылова, Толстого, Мамина-Сибиряка, Андерсена, Перро и братьев Гримм."
+  keywords="чтение на скорость, скорость чтения, техника чтения, слова в минуту, понимание текста, тренажёр чтения, 1 класс, 2 класс, 3 класс, 4 класс, Пушкин, Толстой, Крылов, Мамин-Сибиряк, Андерсен, Перро, братья Гримм, басни, стихи, народные сказки"
+  page="speedread"
+  crumbs={['Чтение', 'Чтение на скорость']}
+  schemaSubject="Чтение"
+  pairOverride={{ ru: path, en: path }}
+>
+  <div class="sr-app" id="srApp">
+    <section class="sr-screen" id="srSetup">
+      <header class="sr-hero">
+        <div class="sr-kicker">VIVID·ШКОЛА · чтение</div>
+        <h1>Чтение на скорость</h1>
+        <p>Сказки, рассказы, стихи и басни. Читай текст целиком или по одному слову в заданном темпе. В конце — скорость, понимание и разбор. Вопросы можно выключить.</p>
+      </header>
+
+      <div class="sr-tiles">
+        <section class="sr-tile sr-tile-mode">
+          <div class="sr-tilehead"><h2>Режим</h2><span>когда останавливаемся</span></div>
+          <div class="sr-seg sr-seg2" data-seg="mode">
+            <button type="button" data-v="training" class="is-on" aria-pressed="true"><b>Тренировка</b><small>Без лимита времени</small></button>
+            <button type="button" data-v="timed" aria-pressed="false"><b>На время</b><small>1–3 минуты</small></button>
+          </div>
+          <p class="sr-note" id="srModeNote">Засечём время. Нажмёшь «Я дочитал(а)», когда закончишь.</p>
+        </section>
+
+        <section class="sr-tile">
+          <div class="sr-tilehead"><h2>Как читаем</h2><span>что видно на экране</span></div>
+          <div class="sr-seg sr-seg2" data-seg="view">
+            <button type="button" data-v="full" class="is-on" aria-pressed="true"><b>Весь текст</b><small>Страница как в книге</small></button>
+            <button type="button" data-v="word" aria-pressed="false"><b>По словам</b><small>1–5 слов или предложение</small></button>
+          </div>
+          <div class="sr-chunkrow" id="srChunkRow" hidden>
+            <div class="sr-chunkhead">Показывать</div>
+            <div class="sr-chunkseg" data-seg="chunk">
+              <button type="button" data-v="1" class="is-on" aria-pressed="true">1 слово</button>
+              <button type="button" data-v="2" aria-pressed="false">2 слова</button>
+              <button type="button" data-v="3" aria-pressed="false">3 слова</button>
+              <button type="button" data-v="5" aria-pressed="false">5 слов</button>
+              <button type="button" data-v="sentence" aria-pressed="false">Предложение</button>
+            </div>
+          </div>
+          <p class="sr-note" id="srViewNote">Читай спокойно. Скорость посчитаем по времени.</p>
+        </section>
+
+        <section class="sr-tile" id="srSpeedTile" hidden>
+          <div class="sr-tilehead"><h2>Скорость</h2><span>для показа по слову</span></div>
+          <div class="sr-speeder">
+            <button class="sr-stepper" type="button" data-step="-5" aria-label="Медленнее">−</button>
+            <div class="sr-speednum"><b id="srSpeedVal">60</b><span>слов в минуту</span></div>
+            <button class="sr-stepper" type="button" data-step="5" aria-label="Быстрее">+</button>
+          </div>
+          <div class="sr-quick" id="srQuick">
+            <button type="button" data-speed="60" class="is-on">60</button>
+            <button type="button" data-speed="90">90</button>
+            <button type="button" data-speed="120">120</button>
+            <button type="button" data-speed="150">150</button>
+          </div>
+          <p class="sr-note">Запятая — короткая пауза, точка — чуть длиннее. Скорость можно менять на ходу.</p>
+        </section>
+
+        <section class="sr-tile" id="srTimeTile" hidden>
+          <div class="sr-tilehead"><h2>Время</h2><span>на чтение</span></div>
+          <div class="sr-seg sr-seg3" data-seg="time">
+            <button type="button" data-v="1" class="is-on" aria-pressed="true">1 мин</button>
+            <button type="button" data-v="2" aria-pressed="false">2 мин</button>
+            <button type="button" data-v="3" aria-pressed="false">3 мин</button>
+          </div>
+          <p class="sr-note" id="srTimeNote">Когда время выйдет, отметишь последнее прочитанное слово. Вопросы спросим только по прочитанной части.</p>
+        </section>
+
+        <section class="sr-tile sr-tile-info" id="srInfoTile">
+          <div class="sr-tilehead"><h2>Скорость посчитаем сами</h2><span>без спешки</span></div>
+          <p class="sr-note sr-note-lead">Секундомер включится вместе с текстом. Когда закончишь, нажми «Я дочитал(а)» — покажем слова в минуту. Если включены вопросы, сразу проверим понимание.</p>
+        </section>
+      </div>
+
+      <section class="sr-tile sr-texts" id="srTexts">
+        <div class="sr-tilehead"><h2>Текст</h2><span id="srTextCount">{texts.length} {pluralText(texts.length)} · {totalWords} {plural(totalWords)}</span></div>
+        <div class="sr-kindfilter" id="srKindFilter" role="group" aria-label="Категория текстов">
+          <button type="button" data-kind="all" class="is-on" aria-pressed="true">Все</button>
+          <button type="button" data-kind="tale" aria-pressed="false">Сказки</button>
+          <button type="button" data-kind="story" aria-pressed="false">Рассказы</button>
+          <button type="button" data-kind="poem" aria-pressed="false">Стихи</button>
+          <button type="button" data-kind="fable" aria-pressed="false">Басни</button>
+          <button type="button" data-kind="folk" aria-pressed="false">Народные</button>
+        </div>
+        <div class="sr-textgrid">
+          {texts.map((t) => (
+            <button class="sr-textcard" type="button" data-id={t.id} data-kind={t.kind} data-words={t.wordCount} aria-pressed="false">
+              <span class="sr-tc-top"><span class="sr-tc-author">{t.author}</span><span class="sr-tc-check" aria-hidden="true">✓</span></span>
+              <span class="sr-tc-title">{t.title}</span>
+              <span class="sr-tc-meta">{t.kindLabel} · {t.wordCount} {plural(t.wordCount)}</span>
+            </button>
+          ))}
+          <button class="sr-textcard is-random" type="button" data-id="random" data-kind="random" aria-pressed="false">
+            <span class="sr-tc-top"><span class="sr-tc-author">сюрприз</span><span class="sr-tc-check" aria-hidden="true">✓</span></span>
+            <span class="sr-tc-title">Любой текст</span>
+            <span class="sr-tc-meta" id="srRandomMeta">выберется случайно</span>
+          </button>
+        </div>
+        <details class="sr-sources">
+          <summary>Откуда тексты</summary>
+          <ul>
+            {sourceLinks.map((link) => (
+              <li><a href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a></li>
+            ))}
+          </ul>
+        </details>
+      </section>
+
+      <section class="sr-tile sr-qtile">
+        <div class="sr-tilehead"><h2>Вопросы по тексту</h2><span>опция</span></div>
+        <div class="sr-qrow">
+          <div class="sr-seg sr-seg2" data-seg="questions">
+            <button type="button" data-v="off" aria-pressed="false">Без вопросов</button>
+            <button type="button" data-v="on" class="is-on" aria-pressed="true">С вопросами</button>
+          </div>
+          <p class="sr-note">После чтения проверим, что запомнилось. Пропуск не считается ошибкой.</p>
+        </div>
+      </section>
+
+      <div class="sr-startbar">
+        <div class="sr-startbar-inner">
+          <div class="sr-startcopy">
+            <b id="srStartTitle">«{texts[0].title}» · {texts[0].wordCount} {plural(texts[0].wordCount)}</b>
+            <span id="srStartSub">Тренировка · весь текст · с вопросами</span>
+          </div>
+          <button class="sr-primary" id="srStart" type="button">Начать чтение</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sr-screen" id="srRead" hidden>
+      <div class="sr-game">
+        <div class="sr-readtop">
+          <div class="sr-gamebar">
+            <button class="sr-iconbtn" id="srStop" type="button" title="Вернуться к настройкам" aria-label="Вернуться к настройкам">×</button>
+            <div class="sr-gamemeta"><b id="srReadTitle">Косточка</b><span id="srReadSub">Л. Н. Толстой · 146 слов</span></div>
+            <button class="sr-ghost" id="srPause" type="button">Пауза</button>
+          </div>
+          <div class="sr-timerrow">
+            <div class="sr-clock" id="srClock">0:00</div>
+            <div class="sr-clockbar" id="srClockBar"><span id="srClockFill"></span></div>
+            <div class="sr-clocknote" id="srClockNote">идут секунды</div>
+          </div>
+        </div>
+
+        <div class="sr-stage" id="srStage">
+          <div class="sr-page" id="srPage">
+            <div class="sr-pagehead">
+              <div class="sr-pageauthor" id="srPageAuthor">Л. Н. Толстой</div>
+              <h2 id="srPageTitle">Косточка</h2>
+            </div>
+            <div class="sr-pagetext" id="srPageText"></div>
+          </div>
+
+          <div class="sr-rsvp" id="srRsvp" hidden>
+            <div class="sr-rsvp-label"><span id="srRsvpChunk">по одному слову</span> · скорость <b id="srRsvpSpeed">60</b> слов в минуту</div>
+            <div class="sr-word" id="srWord">…</div>
+            <div class="sr-rsvp-progress"><span id="srRsvpFill"></span></div>
+          </div>
+
+          <div class="sr-pauseover" id="srPauseOver" hidden>
+            <div><b>Пауза</b><span>Продолжим с этого же места.</span></div>
+            <button class="sr-primary" id="srResume" type="button">Продолжить</button>
+          </div>
+        </div>
+
+        <div class="sr-readfoot">
+          <div class="sr-footinfo" id="srFootInfo">Читай спокойно. Кнопка — когда закончишь.</div>
+          <button class="sr-primary" id="srFinish" type="button">Я дочитал(а)</button>
+        </div>
+
+        <div class="sr-speedbar" id="srSpeedBar" hidden>
+          <button class="sr-stepper" id="srSlow" type="button" aria-label="Медленнее">−</button>
+          <span><b id="srLiveSpeed">60</b> слов в минуту</span>
+          <button class="sr-stepper" id="srFast" type="button" aria-label="Быстрее">+</button>
+          <span class="sr-livehint">можно менять на ходу</span>
+        </div>
+      </div>
+
+      <div class="sr-markbar" id="srMarkBar" hidden>
+        <div class="sr-markbar-inner">
+          <div class="sr-markcopy"><b>Время вышло</b><span id="srMarkText">Отметь последнее прочитанное слово.</span></div>
+          <button class="sr-ghost" id="srMarkSkip" type="button">Ни одного слова</button>
+          <button class="sr-primary" id="srMarkNext" type="button" disabled>Дальше →</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sr-screen" id="srQuiz" hidden>
+      <div class="sr-game sr-quiz">
+        <div class="sr-gamebar">
+          <button class="sr-iconbtn" id="srQuizExit" type="button" title="Закончить вопросы" aria-label="Закончить вопросы">×</button>
+          <div class="sr-gamemeta"><b>Вопросы по тексту</b><span id="srQuizMeta">Косточка</span></div>
+          <div class="sr-pills" aria-live="polite">
+            <span class="sr-pill is-ok"><span aria-hidden="true">✓</span><b id="srPillOk">0</b></span>
+            <span class="sr-pill is-bad"><span aria-hidden="true">×</span><b id="srPillBad">0</b></span>
+            <span class="sr-pill is-skip"><span aria-hidden="true">⏭</span><b id="srPillSkip">0</b></span>
+          </div>
+        </div>
+
+        <div class="sr-timerrow">
+          <div class="sr-progress"><span id="srQuizFill"></span></div>
+          <div class="sr-clocknote" id="srQuizCount">Вопрос 1 из 3</div>
+        </div>
+
+        <div class="sr-question" id="srQuestion"></div>
+        <div class="sr-options" id="srOptions"></div>
+        <div class="sr-feedback" id="srFeedback" hidden aria-live="polite"></div>
+
+        <div class="sr-actions">
+          <button class="sr-ghost" id="srQSkip" type="button">Пропустить</button>
+          <button class="sr-primary" id="srQNext" type="button" disabled>Дальше</button>
+        </div>
+        <div class="sr-footnote">Пропуск не считается ошибкой. В конце покажем разбор.</div>
+      </div>
+    </section>
+
+    <section class="sr-screen" id="srDone" hidden>
+      <div class="sr-game sr-result">
+        <div class="sr-resulthead">
+          <div>
+            <div class="sr-kicker">Результат чтения</div>
+            <div class="sr-big" id="srWpm">0 <span>слов/мин</span></div>
+            <p class="sr-resultsub" id="srResultSub"></p>
+          </div>
+          <div class="sr-verdict" id="srVerdict"></div>
+        </div>
+
+        <div class="sr-norm">
+          <div class="sr-normhead"><h3>Ориентиры скорости</h3><span>слов в минуту</span></div>
+          <div class="sr-scale">
+            <div class="sr-track">
+              <span class="sr-zone sr-z1" style="width:20.8%"></span>
+              <span class="sr-zone sr-z2" style="width:12.5%"></span>
+              <span class="sr-zone sr-z3" style="width:16.7%"></span>
+              <span class="sr-zone sr-z4" style="width:16.7%"></span>
+              <span class="sr-zone sr-z5" style="width:16.6%"></span>
+              <span class="sr-zone sr-z6" style="width:16.7%"></span>
+              <b class="sr-markmark" id="srMarkmark" style="left:0%"></b>
+              <span class="sr-marklabel" id="srMarklabel" style="left:0%">0</span>
+            </div>
+            <div class="sr-ticks"><span style="left:0%">0</span><span style="left:20.8%">25</span><span style="left:33.3%">40</span><span style="left:50%">60</span><span style="left:66.7%">80</span><span style="left:83.3%">100</span><span style="left:100%">120</span></div>
+          </div>
+          <div class="sr-legend">
+            <span>1 класс <b>25–30</b></span>
+            <span>2 класс <b>40–60</b></span>
+            <span>3 класс <b>70–80</b></span>
+            <span>4 класс <b>90–100</b></span>
+          </div>
+          <p class="sr-note">Ориентиры примерные: программы и школы считают по-разному. Это не оценка.</p>
+        </div>
+
+        <div class="sr-compr" id="srCompr">
+          <div class="sr-comprhead"><h3>Понимание текста</h3><b id="srPercent">—</b></div>
+          <div class="sr-quizstats" id="srQuizStats">
+            <span class="sr-qstat is-ok"><span aria-hidden="true">✓</span>Верно: <b id="srResOk">0</b></span>
+            <span class="sr-qstat is-bad"><span aria-hidden="true">×</span>Ошибки: <b id="srResBad">0</b></span>
+            <span class="sr-qstat is-skip"><span aria-hidden="true">⏭</span>Пропущено: <b id="srResSkip">0</b></span>
+          </div>
+          <div class="sr-review" id="srReview"></div>
+          <p class="sr-note" id="srComprNote" hidden></p>
+        </div>
+
+        <div class="sr-resultactions">
+          <button class="sr-primary" id="srAgain" type="button">Ещё раз</button>
+          <button class="sr-ghost" id="srAnother" type="button">Другой текст</button>
+          <button class="sr-ghost" id="srSettings" type="button">Настройки</button>
+        </div>
+      </div>
+    </section>
+
+    <noscript>
+      <p class="sr-noscript">Для тренажёра нужен JavaScript. Включите его в браузере и обновите страницу.</p>
+    </noscript>
+  </div>
+
+  <script is:inline type="application/json" id="srData" set:html={dataJson}></script>
+  <script is:inline src={asset('js/speedread.js') + '?v=' + jsVersion}></script>
+</BaseLayout>

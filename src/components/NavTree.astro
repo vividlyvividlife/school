@@ -27,10 +27,12 @@ function containsPath(item: NavItem, path: string): boolean {
             <span class="site-soon">{item.label}</span>
           ) : (
             <a
+              class="site-navleaf"
               href={url(item.path ?? '')}
               aria-current={item.path && normalizePath(item.path) === current ? 'page' : undefined}
             >
-              {item.label}
+              <span class="site-navleaf-label">{item.label}</span>
+              {item.note && <span class="site-navnote">{item.note}</span>}
             </a>
           )}
         </li>
@@ -54,6 +56,7 @@ function containsPath(item: NavItem, path: string): boolean {
           ) : (
             <span class={headingClass}>{item.label}</span>
           )}
+          {item.note && <span class="site-navnote">{item.note}</span>}
           <button
             class="site-navtoggle"
             type="button"

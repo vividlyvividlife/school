@@ -1,6 +1,7 @@
 ---
 import '../styles/site.css';
 import NavTree from '../components/NavTree.astro';
+import SiteDisplaySettings from '../components/SiteDisplaySettings.astro';
 import YandexMetrika from '../components/YandexMetrika.astro';
 import { findTrail, navigationByLang, normalizePath } from '../data/navigation';
 import { siteCopy, type Lang } from '../i18n/site';
@@ -47,6 +48,8 @@ const pageMeta = pageKind === 'section'
     ? c.trainerPage
     : pageKind === 'trainer'
     ? c.trainerPage
+    : pageKind === 'speedread'
+    ? c.trainerPage
     : pageKind === 'examples'
     ? c.worksheetPage
     : pageKind === 'reading'
@@ -80,7 +83,7 @@ const googlebot = noindex
 const ogType = pageKind === 'home' ? 'website' : 'article';
 const resourceType = pageKind === 'section'
   ? (lang === 'ru' ? 'Раздел' : 'Section')
-  : ['trainer','clock','calendar','durations'].includes(pageKind) || pageKind === 'calendar' || pageKind === 'durations' || pageKind === 'language'
+  : ['trainer','clock','calendar','durations','speedread'].includes(pageKind) || pageKind === 'calendar' || pageKind === 'durations' || pageKind === 'language'
     ? (lang === 'ru' ? 'Тренажёр' : 'Trainer')
     : pageKind === 'helper'
     ? (lang === 'ru' ? 'Инструмент' : 'Study tool')
@@ -89,9 +92,11 @@ const resourceType = pageKind === 'section'
       : (lang === 'ru' ? 'Раздаточный материал' : 'Worksheet');
 const educationalLevel = pageKind === 'helper'
   ? (lang === 'ru' ? '2–4 класс' : 'Grades 2–4')
-  : pageKind === 'clock' || pageKind === 'calendar' || pageKind === 'durations'
-    ? (lang === 'ru' ? '1–3 класс' : 'Grades 1–3')
-    : (lang === 'ru' ? '2 класс' : 'Grade 2');
+  : pageKind === 'speedread'
+    ? (lang === 'ru' ? '1–4 класс' : 'Grades 1–4')
+    : pageKind === 'clock' || pageKind === 'calendar' || pageKind === 'durations'
+      ? (lang === 'ru' ? '1–3 класс' : 'Grades 1–3')
+      : (lang === 'ru' ? '2 класс' : 'Grade 2');
 const defaultSubject = pageKind === 'helper'
   ? (lang === 'ru' ? 'Планирование занятий' : 'Study planning')
   : pageKind === 'clock'
@@ -102,9 +107,11 @@ const defaultSubject = pageKind === 'helper'
         ? (lang === 'ru' ? 'Длительности' : 'Durations')
         : pageKind === 'language'
           ? (lang === 'ru' ? 'Русский язык' : 'Russian language')
-          : pageKind === 'reading'
-            ? (lang === 'ru' ? 'Літаратурнае чытанне' : 'Literary Reading')
-            : (lang === 'ru' ? 'Математика' : 'Mathematics');
+          : pageKind === 'speedread'
+            ? (lang === 'ru' ? 'Чтение' : 'Reading')
+            : pageKind === 'reading'
+              ? (lang === 'ru' ? 'Літаратурнае чытанне' : 'Literary Reading')
+              : (lang === 'ru' ? 'Математика' : 'Mathematics');
 const subject = schemaSubject || defaultSubject;
 const schema: Record<string, unknown> = {
   '@context': 'https://schema.org',
@@ -139,6 +146,12 @@ if (pageKind !== 'home') {
       document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
       var meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute('content', dark ? '#0b1220' : '#6366f1');
+      try {
+        var siteFont = localStorage.getItem('vivid.siteFont');
+        if (siteFont) document.documentElement.setAttribute('data-site-font', siteFont);
+        var siteSize = localStorage.getItem('vivid.siteSize');
+        if (siteSize) document.documentElement.setAttribute('data-site-size', siteSize);
+      } catch (e) {}
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -240,6 +253,8 @@ if (pageKind !== 'home') {
           <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
         </button>
 
+        <SiteDisplaySettings />
+
         <a
           class="site-lang"
           href={url(switchTarget)}
@@ -331,7 +346,7 @@ if (pageKind !== 'home') {
     })();
   </script>
   <YandexMetrika />
-  {['trainer', 'clock', 'calendar', 'durations', 'language'].includes(pageKind) && (
+  {['trainer', 'clock', 'calendar', 'durations', 'language', 'speedread'].includes(pageKind) && (
     <script is:inline src={url('js/break-limit.js')}></script>
   )}
 </body>

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { pagePairs } from '../i18n/routes';
+import { readingThemePages } from '../data/belarusianReadingThemes';
 
 export const GET: APIRoute = ({ site }) => {
   const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
@@ -22,7 +23,9 @@ export const GET: APIRoute = ({ site }) => {
   const extra = [
     '/1-class/chtenie/razdatochnyy-material/',
     '/chtenie/',
+    '/chtenie/na-skorost/',
     '/2-class/belaruskaya-mova/',
+    ...readingThemePages.filter((page) => page.available).map((page) => page.path),
     '/vremya/obzor/',
     '/pomogator/obzor/',
     '/russkiy-yazyk/',

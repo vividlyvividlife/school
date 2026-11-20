@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Decor from '../Decor.astro';
 import SeasonIntro from '../SeasonIntro.astro';
+import RightsNotice from '../RightsNotice.astro';
 import { siteCopy, type Lang } from '../../i18n/site';
 import { readingWorksBySeason, type ReadingSeason } from '../../data/reading';
 import mapleLeaf from '../../assets/decor/maple-leaf.webp';
@@ -117,6 +118,7 @@ const art = artBySeason[season];
         </li>
       ))}
     </ul>
+    <RightsNotice />
   </main>
 </BaseLayout>
 
@@ -474,6 +476,7 @@ const art = artBySeason[season];
     body.printing-work .site-scrim,
     body.printing-work .rhero,
     body.printing-work .book,
+    body.printing-work .rights-note,
     body.printing-work .works > li:not(.is-printing) {
       display: none !important;
     }
@@ -508,18 +511,19 @@ const art = artBySeason[season];
     body.printing-work .is-printing .wtext p {
       margin: 0 0 0.8em;
       color: #000;
-      font-size: 12pt;
+      font-size: calc(12pt * var(--site-scale, 1));
       line-height: 1.5;
     }
     body.printing-work .is-printing .wauthor {
       color: #444;
-      font-size: 9pt;
+      font-size: calc(9pt * var(--site-scale, 1));
     }
     body.printing-work .is-printing .wtitle {
       color: #000;
-      font-size: 16pt;
+      font-size: calc(16pt * var(--site-scale, 1));
     }
     @page {
+      size: A4 portrait;
       margin: 16mm;
     }
   }

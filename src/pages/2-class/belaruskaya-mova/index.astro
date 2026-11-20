@@ -1,78 +1,255 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import RightsNotice from '../../../components/RightsNotice.astro';
 import '../../../styles/lang.css';
+import '../../../styles/belarusian-reading.css';
+import { belarusianReadingCatalog } from '../../../data/belarusianReadingCatalog';
+import {
+  readingThemesByGrade,
+  textsLabel,
+  worksLabel,
+} from '../../../data/belarusianReadingThemes';
+import { themeArt } from '../../../data/belarusianReadingArt';
 
 const path = '/2-class/belaruskaya-mova/';
 const B = import.meta.env.BASE_URL;
 const url = (value = '') => B.replace(/\/+$/, '') + '/' + value.replace(/^\/+/, '');
-
-const seasons = [
-  {
-    num: '01',
-    title: 'Восень',
-    desc: 'Спіс твораў з тэкстамі',
-    href: '/2-class/belaruskaya-mova/pazaklasnae-chytanne/',
-  },
-  {
-    num: '02',
-    title: 'Зіма',
-    desc: 'Спіс твораў з тэкстамі',
-    href: '/2-class/belaruskaya-mova/zima/',
-  },
-  {
-    num: '03',
-    title: 'Вясна',
-    desc: 'Спіс твораў з тэкстамі',
-    href: '/2-class/belaruskaya-mova/viasna/',
-  },
-];
+const grades = readingThemesByGrade;
 ---
 
 <BaseLayout
-  title="Літаратурнае чытанне — 2 класс — VIVID·ШКОЛА"
-  description="Спісы твораў для пазакласнага чытання ў 2 класе па сезонах: восень, зіма, вясна. Тэксты і матэрыялы для чытання."
-  keywords="літаратурнае чытанне, 2 класс, пазакласнае чытанне, восень, зіма, вясна, творы, тэксты"
+  title="Літаратурнае чытанне — тэмы 2–4 класаў — VIVID·ШКОЛА"
+  description="Тэмы пазакласнага чытання для 2–4 класаў: творы па класах, поўныя тэксты на сайце, чытанне анлайн і друк. Заданне «Маёй Радзімы дзіўны свет»."
+  keywords="літаратурнае чытанне, 2 клас, 3 клас, 4 клас, пазакласнае чытанне, тэмы чытання, творы, тэксты для чытання, Маёй Радзімы дзіўны свет"
   page="reading"
   crumbs={['Літаратурнае чытанне']}
-  pairOverride={{ ru: path, en: path }}
+  pairOverride={{ ru: path, en: '/en/grade-2/belarusian/' }}
 >
-  <div class="lang-hub">
+  <div class="lang-hub bel-reading-hub">
     <header class="lang-hub-head">
       <div class="lang-hub-icon" aria-hidden="true">Ч</div>
       <div class="lang-hub-title">
         <div class="lang-kicker">VIVID·ШКОЛА · літаратурнае чытанне</div>
         <h1>Літаратурнае чытанне</h1>
-        <p>Спісы твораў для пазакласнага чытання ў 2 класе. Выбірай сезон — адкрыецца спіс з тэкстамі.</p>
+        <p>Тэмы пазакласнага чытання па класах. Выберыце клас і тэму: дзе ёсць тэкст, яго можна прачытаць на сайце і раздрукаваць.</p>
       </div>
     </header>
 
-    <div class="lang-grades" aria-label="Класс">
-      <span class="is-active">2 класс</span>
-      <span class="is-disabled" title="Скоро">3 класс</span>
-      <span class="is-disabled" title="Скоро">4 класс</span>
-    </div>
+    <nav class="lang-grades" aria-label="Клас">
+      {grades.map((grade) => (
+        <a href={`#class-${grade.grade}`}>{grade.label}</a>
+      ))}
+    </nav>
 
     <p class="lang-note">
-      <b>Як гэта працуе.</b> Кожны сезон — асобны спіс твораў. Адкрый патрэбны сезон і чытай тэксты; кнопка «Друк» дапаможа раздрукаваць матэрыял.
+      <b>Як гэта працуе.</b> Спачатку клас, унутры — тэмы. Тэксты 2 класа адкрываюцца ў картках і друкуюцца цалкам;
+      для 3 і 4 класа ў крыніцы ёсць толькі спісы твораў.
     </p>
 
-    <section class="lang-hub-section">
-      <div class="lang-hub-section-head">
-        <h2>Сезоны 2 класа</h2>
-        <span>Восень, зіма, вясна</span>
-      </div>
-      <div class="lang-hub-grid">
-        {seasons.map((item) => (
-          <a class="lang-hub-card" href={url(item.href)}>
-            <span class="lang-card-num">{item.num}</span>
-            <span class="lang-card-copy">
-              <span class="lang-card-title">{item.title}</span>
-              <span class="lang-card-desc">{item.desc}</span>
+    {grades.map((grade) => (
+      <section class="lang-hub-section bel-grade-section" id={`class-${grade.grade}`}>
+        <div class="lang-hub-section-head bel-grade-head">
+          <div>
+            <h2>{grade.label}</h2>
+            <span>
+              {grade.themes.length} тэм · {grade.entryCount} {worksLabel(grade.entryCount)} ·
+              {grade.textCount > 0 ? ` ${grade.textCount} ${textsLabel(grade.textCount)} на сайце` : ' тэксты не размешчаны'}
             </span>
-            <span class="lang-card-arrow" aria-hidden="true">→</span>
-          </a>
-        ))}
-      </div>
-    </section>
+          </div>
+          <button class="bel-print-btn" type="button" data-print-hub-class={grade.grade}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 9V3h12v6" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <path d="M6 14h12v7H6z" />
+            </svg>
+            Друкаваць спіс класа
+          </button>
+        </div>
+
+        <div class="lang-hub-grid bel-theme-grid">
+          {grade.themes.map(({ theme, page }, index) => {
+            const art = themeArt(theme.title);
+            return (
+              <a class="lang-hub-card bel-theme-card" href={url(page.path)}>
+                <span class="bel-theme-arttile" aria-hidden="true">
+                  <img
+                    src={art.image.src}
+                    width={art.image.width}
+                    height={art.image.height}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span class="bel-theme-num">{String(index + 1).padStart(2, '0')}</span>
+                </span>
+                <span class="lang-card-copy">
+                  <span class="lang-card-title">{theme.title}</span>
+                  <span class="lang-card-desc">
+                    {page.entryCount} {worksLabel(page.entryCount)} ·
+                    {page.textCount > 0 ? ` ${page.textCount} ${textsLabel(page.textCount)} на сайце` : ' толькі спіс'}
+                  </span>
+                </span>
+                <span class="lang-card-arrow" aria-hidden="true">→</span>
+              </a>
+            );
+          })}
+        </div>
+
+        {grade.grade === 2 && grade.textCount < grade.entryCount && (
+          <p class="bel-class-note">Тэксты — у {grade.textCount} з {grade.entryCount} твораў; для астатніх у крыніцы няма файлаў.</p>
+        )}
+        {grade.grade !== 2 && (
+          <p class="bel-class-note">
+            {grade.textCount > 0
+              ? `Класічныя творы дададзены (${grade.textCount}); для астатніх у крыніцы толькі спіс.`
+              : 'Тэксты для гэтага класа ў крыніцы не размешчаны: даступны спіс твораў.'}
+          </p>
+        )}
+      </section>
+    ))}
+
+    <p class="bel-source">
+      Спісы складзены па старонцы «Читающая школа» · Бібліявеснік.
+      Тэксты блога публікуюцца з дазволу праваўладальніка. Класічныя творы — у грамадскім набытку.
+    </p>
+    <RightsNotice />
   </div>
+
+  <div class="hub-print" aria-hidden="true">
+    <div class="bel-catalog">
+      {belarusianReadingCatalog.map((cls) => (
+        <section class="bel-class" data-hub-print={cls.grade}>
+          <div class="bel-print-head">
+            <h1>{cls.label}. Спіс твораў для чытання</h1>
+            <div class="bel-print-meta">
+              <span>Імя: ____________________</span>
+              <span>Клас: ________</span>
+              <span>Дата: ____________</span>
+            </div>
+            <p>Адзнач прачытаныя творы.</p>
+          </div>
+          {cls.categories.map((cat) => (
+            <div class="bel-cat">
+              <div class="bel-cat-sum">
+                <span class="bel-cat-copy">
+                  <span class="bel-cat-title">{cat.title}</span>
+                </span>
+              </div>
+              <ul class="bel-list">
+                {cat.entries.map((entry) => (
+                  <li class="bel-work"><span class="bel-work-text">{entry.text}</span></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      ))}
+    </div>
+  </div>
+
+  <script is:inline src={url('js/belarusian-reading.js')}></script>
 </BaseLayout>
+
+<style>
+  .bel-reading-hub {
+    --bel-ink: var(--site-ink, #0f172a);
+    --bel-muted: var(--site-muted, #64748b);
+    --bel-line: var(--site-line, #e2e8f0);
+    --bel-card: var(--site-surface, #ffffff);
+    --bel-soft: var(--site-surface-2, #f8fafc);
+    --bel-accent: #6366f1;
+    --bel-accent-2: #8b5cf6;
+  }
+  .bel-grade-section {
+    scroll-margin-top: 1rem;
+  }
+  .bel-grade-head {
+    align-items: center;
+  }
+  .bel-grade-head > div {
+    min-width: 0;
+  }
+  .bel-grade-head h2 {
+    font-size: clamp(1.35rem, 3vw, 1.7rem);
+    letter-spacing: -0.02em;
+  }
+  .bel-theme-grid {
+    margin-top: .55rem;
+  }
+  .bel-theme-arttile {
+    position: relative;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border: 1px solid var(--lang-line);
+    border-radius: .85rem;
+    background: linear-gradient(135deg, var(--lang-soft), var(--lang-card));
+  }
+  .bel-theme-arttile img {
+    width: 2rem;
+    height: 2rem;
+    object-fit: contain;
+    filter: drop-shadow(0 3px 7px rgba(15, 23, 42, .14));
+    transition: transform .28s ease;
+  }
+  .bel-theme-num {
+    position: absolute;
+    right: -.22rem;
+    bottom: -.22rem;
+    display: grid;
+    place-items: center;
+    min-width: 1.02rem;
+    height: 1.02rem;
+    padding: 0 .18rem;
+    border: 1px solid var(--lang-line);
+    border-radius: 999px;
+    background: var(--lang-card);
+    color: var(--lang-muted);
+    font-size: .5rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: .02em;
+  }
+  .bel-theme-card:hover .bel-theme-arttile img {
+    transform: translateY(-2px) rotate(-5deg) scale(1.06);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bel-theme-arttile img,
+    .bel-theme-card:hover .bel-theme-arttile img {
+      transition: none;
+      transform: none;
+    }
+  }
+  .bel-reading-hub .lang-grades > a {
+    border: 1px solid var(--lang-line);
+    background: var(--lang-card);
+    color: var(--lang-ink);
+  }
+  .bel-reading-hub .lang-grades > a:hover {
+    border-color: #c7d2fe;
+    color: var(--lang-accent);
+  }
+  .hub-print {
+    display: none;
+  }
+  @media (max-width: 720px) {
+    .bel-grade-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .bel-grade-head .bel-print-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  @media print {
+    body.printing-hub-class .lang-hub {
+      display: none !important;
+    }
+    body.printing-hub-class .hub-print {
+      display: block !important;
+    }
+  }
+</style>
