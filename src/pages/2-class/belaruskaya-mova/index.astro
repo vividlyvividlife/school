@@ -41,11 +41,6 @@ const grades = readingThemesByGrade;
       ))}
     </nav>
 
-    <p class="lang-note">
-      <b>Як гэта працуе.</b> Спачатку клас, унутры — тэмы. Тэксты 2 класа адкрываюцца ў картках і друкуюцца цалкам;
-      для 3 і 4 класа ў крыніцы ёсць толькі спісы твораў.
-    </p>
-
     {grades.map((grade) => (
       <section class="lang-hub-section bel-grade-section" id={`class-${grade.grade}`}>
         <div class="lang-hub-section-head bel-grade-head">
@@ -70,7 +65,7 @@ const grades = readingThemesByGrade;
           {grade.themes.map(({ theme, page }, index) => {
             const art = themeArt(theme.title);
             return (
-              <a class="lang-hub-card bel-theme-card" href={url(page.path)}>
+              <a class="lang-hub-card bel-theme-card" href={url(page.path)} data-motif={art.motif}>
                 <span class="bel-theme-arttile" aria-hidden="true">
                   <img
                     src={art.image.src}
@@ -94,24 +89,9 @@ const grades = readingThemesByGrade;
             );
           })}
         </div>
-
-        {grade.grade === 2 && grade.textCount < grade.entryCount && (
-          <p class="bel-class-note">Тэксты — у {grade.textCount} з {grade.entryCount} твораў; для астатніх у крыніцы няма файлаў.</p>
-        )}
-        {grade.grade !== 2 && (
-          <p class="bel-class-note">
-            {grade.textCount > 0
-              ? `Класічныя творы дададзены (${grade.textCount}); для астатніх у крыніцы толькі спіс.`
-              : 'Тэксты для гэтага класа ў крыніцы не размешчаны: даступны спіс твораў.'}
-          </p>
-        )}
       </section>
     ))}
 
-    <p class="bel-source">
-      Спісы складзены па старонцы «Читающая школа» · Бібліявеснік.
-      Тэксты блога публікуюцца з дазволу праваўладальніка. Класічныя творы — у грамадскім набытку.
-    </p>
     <RightsNotice />
   </div>
 
@@ -215,12 +195,24 @@ const grades = readingThemesByGrade;
   .bel-theme-card:hover .bel-theme-arttile img {
     transform: translateY(-2px) rotate(-5deg) scale(1.06);
   }
+  .bel-theme-card[data-motif='snow']:hover .bel-theme-arttile img { transform: translateY(-2px) rotate(7deg) scale(1.04); }
+  .bel-theme-card[data-motif='nature']:hover .bel-theme-arttile img { transform: translateY(-2px) rotate(-7deg) scale(1.06); }
+  .bel-theme-card[data-motif='spring']:hover .bel-theme-arttile img,
+  .bel-theme-card[data-motif='magic']:hover .bel-theme-arttile img,
+  .bel-theme-card[data-motif='sparkles']:hover .bel-theme-arttile img,
+  .bel-theme-card[data-motif='hearts']:hover .bel-theme-arttile img { transform: translateY(-2px) scale(1.1); }
+  .bel-theme-card[data-motif='cranes']:hover .bel-theme-arttile img,
+  .bel-theme-card[data-motif='birds']:hover .bel-theme-arttile img,
+  .bel-theme-card[data-motif='doves']:hover .bel-theme-arttile img,
+  .bel-theme-card[data-motif='planes']:hover .bel-theme-arttile img { transform: translate(4px, -3px) rotate(3deg) scale(1.05); }
+  .bel-theme-card[data-motif='butterflies']:hover .bel-theme-arttile img,
+  .bel-theme-card[data-motif='bees']:hover .bel-theme-arttile img { transform: translateY(-4px) rotate(-7deg) scale(1.08); }
+  .bel-theme-card[data-motif='letters']:hover .bel-theme-arttile img,
+  .bel-theme-card[data-motif='notes']:hover .bel-theme-arttile img { transform: translateY(-2px) rotate(5deg) scale(1.06); }
   @media (prefers-reduced-motion: reduce) {
     .bel-theme-arttile img,
-    .bel-theme-card:hover .bel-theme-arttile img {
-      transition: none;
-      transform: none;
-    }
+    .bel-theme-card:hover .bel-theme-arttile img,
+    .bel-theme-card[data-motif]:hover .bel-theme-arttile img { transition: none; transform: none; }
   }
   .bel-reading-hub .lang-grades > a {
     border: 1px solid var(--lang-line);

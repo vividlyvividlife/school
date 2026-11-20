@@ -32,11 +32,12 @@ const artBySeason = {
   spring: [springBlossom, springButterfly, springBee],
 } as const;
 const art = artBySeason[season];
+const motif = season === 'autumn' ? 'leaves' : season === 'winter' ? 'snow' : 'spring';
 ---
 
 <BaseLayout title={head.pageTitle} description={head.pageDescription} page="reading" lang={lang}>
-  <Decor variant="reading" season={season} />
-  <SeasonIntro season={season} />
+  <Decor variant="reading" motif={motif} season={season} />
+  <SeasonIntro motif={motif} />
   <main class="reading">
     <header class="rhero">
       <div class="rkicker">{head.kicker}</div>

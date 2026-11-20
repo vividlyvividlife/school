@@ -253,6 +253,16 @@ if (pageKind !== 'home') {
           <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
         </button>
 
+        <button
+          class="site-searchbtn"
+          id="siteSearchOpen"
+          type="button"
+          aria-label={c.searchOpen}
+          title={c.searchOpen}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4.2-4.2" /></svg>
+        </button>
+
         <SiteDisplaySettings />
 
         <a
@@ -272,6 +282,40 @@ if (pageKind !== 'home') {
   </div>
 
   <div id="navScrim" class="site-scrim"></div>
+
+  <div
+    id="siteSearch"
+    class="site-search"
+    hidden
+    data-index={url('search-index.json')}
+    data-loading={c.searchLoading}
+    data-empty={c.searchEmpty}
+    data-error={c.searchError}
+    data-found={c.searchFound}
+    data-work={c.searchWork}
+    data-page={c.searchPage}
+    data-theme={c.searchTheme}
+  >
+    <div class="site-search-backdrop" data-search-close></div>
+    <section class="site-search-panel" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle">
+      <h2 id="siteSearchTitle" class="site-search-title">{c.searchTitle}</h2>
+      <div class="site-search-box">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4.2-4.2" /></svg>
+        <input
+          id="siteSearchInput"
+          type="search"
+          placeholder={c.searchPlaceholder}
+          aria-label={c.searchPlaceholder}
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="site-search-close" type="button" data-search-close aria-label={c.closeMenu}>×</button>
+      </div>
+      <p id="siteSearchStatus" class="site-search-status" aria-live="polite"></p>
+      <ul id="siteSearchResults" class="site-search-results"></ul>
+      <p class="site-search-hint">{c.searchHint}</p>
+    </section>
+  </div>
 
   <script>
     (function () {
@@ -345,6 +389,7 @@ if (pageKind !== 'home') {
       apply(root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
     })();
   </script>
+  <script is:inline src={url('js/site-search.js')}></script>
   <YandexMetrika />
   {['trainer', 'clock', 'calendar', 'durations', 'language', 'speedread'].includes(pageKind) && (
     <script is:inline src={url('js/break-limit.js')}></script>

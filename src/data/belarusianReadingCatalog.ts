@@ -3,6 +3,7 @@ export interface BelarusianReadingEntry {
   url: string;
   body?: string[];
   publicDomain?: string;
+  source?: string;
 }
 
 export interface BelarusianReadingCategory {

@@ -18,16 +18,19 @@ export function normalizePath(value: string): string {
 }
 
 const readingThemeNav: NavItem[] = readingThemes.map((theme) => {
-  const first = theme.pages.find((page) => page.available) ?? theme.pages[0];
+  const pages = theme.pages.filter((page) => page.available);
   return {
     label: theme.title,
-    path: first.path,
+    path: pages[0].path,
     page: 'reading',
-    children: theme.pages.map((page) => ({
-      label: page.label,
-      path: page.path,
-      page: 'reading',
-    })),
+    note: pages.map((page) => page.label).join(', '),
+    children: pages.length > 1
+      ? pages.map((page) => ({
+          label: page.label,
+          path: page.path,
+          page: 'reading',
+        }))
+      : undefined,
   };
 });
 

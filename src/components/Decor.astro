@@ -7,8 +7,24 @@ import winterSnowflake from '../assets/decor/winter-snowflake.webp';
 import winterSpruce from '../assets/decor/winter-spruce.webp';
 import springBlossom from '../assets/decor/spring-blossom.webp';
 import springButterfly from '../assets/decor/spring-butterfly.webp';
+import leafOak from '../assets/fx/leaf-oak.webp';
+import leafMaple from '../assets/fx/leaf-maple.webp';
+import bee from '../assets/fx/bee.webp';
+import heart from '../assets/fx/heart.webp';
+import book from '../assets/fx/book.webp';
+import brush from '../assets/fx/brush.webp';
+import boat from '../assets/fx/boat.webp';
+import firefly from '../assets/fx/firefly.webp';
+import dandelion from '../assets/fx/dandelion.webp';
+import butterfly from '../assets/fx/butterfly.webp';
+import bird from '../assets/fx/bird.webp';
+import stork from '../assets/fx/stork.webp';
+import dove from '../assets/fx/dove.webp';
+import petal from '../assets/fx/petal.webp';
+import type { ThemeMotif } from '../data/belarusianReadingArt';
 
-type Motif = 'abacus' | 'calc' | 'parens' | 'pencil' | 'ruler' | 'shapes' | 'signs' | 'maple' | 'rowan' | 'mushroom' | 'snowflake' | 'tree' | 'flower' | 'butterfly';
+type Motif = 'abacus' | 'calc' | 'parens' | 'pencil' | 'ruler' | 'shapes' | 'signs' | 'maple' | 'rowan' | 'mushroom' | 'snowflake' | 'tree' | 'flower' | 'butterfly'
+  | 'leaf' | 'bee' | 'heart' | 'book' | 'brush' | 'boat' | 'firefly' | 'dandelion' | 'bird' | 'stork' | 'dove' | 'petal';
 type Pos = 'tl' | 'tr' | 'bl' | 'br';
 type DecorSet = SkillId | 'reading';
 type Season = 'autumn' | 'winter' | 'spring';
@@ -18,15 +34,25 @@ interface Item {
   pos: Pos;
   size?: string;
   img?: ImageMetadata;
+  rotate?: number;
+  flip?: boolean;
+  byHeight?: boolean;
 }
 
 interface Props {
   variant: DecorSet;
   season?: Season;
+  motif?: ThemeMotif;
 }
 
-const { variant, season = 'autumn' } = Astro.props;
+const { variant, season = 'autumn', motif } = Astro.props;
+const seasonToMotif: Record<Season, ThemeMotif> = { autumn: 'leaves', winter: 'snow', spring: 'spring' };
 const tone = variant === 'reading' ? season : 'math';
+const big = 'clamp(150px, 17vw, 240px)';
+const mid = 'clamp(120px, 13vw, 190px)';
+const small = 'clamp(90px, 10vw, 150px)';
+const tiny = 'clamp(80px, 9vw, 130px)';
+const tall = 'clamp(120px, 14vw, 190px)';
 const skillSets: Record<SkillId, Item[]> = {
   digits: [{ name: 'abacus', pos: 'tr' }, { name: 'pencil', pos: 'bl' }],
   compare: [{ name: 'signs', pos: 'tr' }, { name: 'shapes', pos: 'bl' }],
@@ -45,21 +71,109 @@ const skillSets: Record<SkillId, Item[]> = {
   round: [{ name: 'calc', pos: 'tr' }, { name: 'abacus', pos: 'bl' }],
   tree: [{ name: 'shapes', pos: 'tr' }, { name: 'calc', pos: 'bl' }],
 };
-const readingSets: Record<Season, Item[]> = {
-  autumn: [
-    { name: 'maple', pos: 'tr', size: 'clamp(150px, 17vw, 240px)', img: mapleLeaf },
-    { name: 'rowan', pos: 'bl', size: 'clamp(120px, 13vw, 190px)', img: rowanBranch }
+const readingSets: Record<ThemeMotif, Item[]> = {
+  leaves: [
+    { name: 'maple', pos: 'tr', size: big, img: mapleLeaf },
+    { name: 'rowan', pos: 'bl', size: mid, img: rowanBranch },
+    { name: 'leaf', pos: 'tl', size: small, img: leafOak, rotate: -18 },
+    { name: 'leaf', pos: 'br', size: tiny, img: leafMaple, rotate: 20, flip: true }
   ],
-  winter: [
-    { name: 'snowflake', pos: 'tr', size: 'clamp(150px, 17vw, 240px)', img: winterSnowflake },
-    { name: 'tree', pos: 'bl', size: 'clamp(120px, 13vw, 190px)', img: winterSpruce }
+  snow: [
+    { name: 'snowflake', pos: 'tr', size: big, img: winterSnowflake },
+    { name: 'tree', pos: 'bl', size: mid, img: winterSpruce },
+    { name: 'snowflake', pos: 'tl', size: small, img: winterSnowflake, rotate: -14 },
+    { name: 'snowflake', pos: 'br', size: tiny, img: winterSnowflake, rotate: 16, flip: true }
   ],
   spring: [
-    { name: 'flower', pos: 'tr', size: 'clamp(150px, 17vw, 240px)', img: springBlossom },
-    { name: 'butterfly', pos: 'bl', size: 'clamp(120px, 13vw, 190px)', img: springButterfly }
+    { name: 'flower', pos: 'tr', size: big, img: springBlossom },
+    { name: 'butterfly', pos: 'bl', size: mid, img: springButterfly },
+    { name: 'petal', pos: 'tl', size: small, img: petal, rotate: -22 },
+    { name: 'butterfly', pos: 'br', size: tiny, img: springButterfly, flip: true }
+  ],
+  nature: [
+    { name: 'leaf', pos: 'tr', size: big, img: leafOak, rotate: -6 },
+    { name: 'butterfly', pos: 'bl', size: mid, img: springButterfly },
+    { name: 'leaf', pos: 'tl', size: small, img: leafMaple, rotate: -20 },
+    { name: 'butterfly', pos: 'br', size: tiny, img: butterfly, flip: true }
+  ],
+  magic: [
+    { name: 'butterfly', pos: 'tr', size: big, img: butterfly },
+    { name: 'firefly', pos: 'bl', size: mid, img: firefly },
+    { name: 'firefly', pos: 'tl', size: small, img: firefly, rotate: -12 },
+    { name: 'butterfly', pos: 'br', size: tiny, img: butterfly, flip: true }
+  ],
+  sparkles: [
+    { name: 'dandelion', pos: 'tr', size: big, img: dandelion, rotate: -4 },
+    { name: 'petal', pos: 'bl', size: mid, img: petal, rotate: -12 },
+    { name: 'firefly', pos: 'tl', size: small, img: firefly },
+    { name: 'dandelion', pos: 'br', size: tiny, img: dandelion, flip: true }
+  ],
+  cranes: [
+    { name: 'stork', pos: 'tr', size: big, img: stork },
+    { name: 'rowan', pos: 'bl', size: mid, img: rowanBranch },
+    { name: 'leaf', pos: 'tl', size: small, img: leafOak },
+    { name: 'stork', pos: 'br', size: tiny, img: stork, flip: true }
+  ],
+  birds: [
+    { name: 'bird', pos: 'tr', size: big, img: bird },
+    { name: 'rowan', pos: 'bl', size: mid, img: rowanBranch },
+    { name: 'leaf', pos: 'tl', size: small, img: leafOak },
+    { name: 'bird', pos: 'br', size: tiny, img: bird, flip: true }
+  ],
+  butterflies: [
+    { name: 'butterfly', pos: 'tr', size: big, img: butterfly },
+    { name: 'butterfly', pos: 'bl', size: mid, img: butterfly, flip: true },
+    { name: 'petal', pos: 'tl', size: small, img: petal },
+    { name: 'butterfly', pos: 'br', size: tiny, img: butterfly }
+  ],
+  hearts: [
+    { name: 'flower', pos: 'tr', size: big, img: springBlossom },
+    { name: 'heart', pos: 'bl', size: mid, img: heart },
+    { name: 'heart', pos: 'tl', size: small, img: heart, rotate: -10 },
+    { name: 'rowan', pos: 'br', size: tiny, img: rowanBranch }
+  ],
+  letters: [
+    { name: 'book', pos: 'tr', size: big, img: book },
+    { name: 'rowan', pos: 'bl', size: mid, img: rowanBranch },
+    { name: 'book', pos: 'tl', size: small, img: book, rotate: -8 },
+    { name: 'leaf', pos: 'br', size: tiny, img: leafOak }
+  ],
+  notes: [
+    { name: 'brush', pos: 'tr', size: tall, img: brush, byHeight: true },
+    { name: 'butterfly', pos: 'bl', size: mid, img: butterfly },
+    { name: 'brush', pos: 'tl', size: 'clamp(90px, 10vw, 150px)', img: brush, byHeight: true, rotate: 10 },
+    { name: 'petal', pos: 'br', size: tiny, img: petal }
+  ],
+  planes: [
+    { name: 'boat', pos: 'tr', size: big, img: boat },
+    { name: 'leaf', pos: 'bl', size: mid, img: leafOak },
+    { name: 'rowan', pos: 'tl', size: small, img: rowanBranch },
+    { name: 'boat', pos: 'br', size: tiny, img: boat, flip: true }
+  ],
+  doves: [
+    { name: 'dove', pos: 'tr', size: big, img: dove },
+    { name: 'rowan', pos: 'bl', size: mid, img: rowanBranch },
+    { name: 'dove', pos: 'tl', size: small, img: dove, flip: true },
+    { name: 'leaf', pos: 'br', size: tiny, img: leafOak }
+  ],
+  bees: [
+    { name: 'flower', pos: 'tr', size: big, img: springBlossom },
+    { name: 'bee', pos: 'bl', size: mid, img: bee },
+    { name: 'bee', pos: 'tl', size: small, img: bee },
+    { name: 'rowan', pos: 'br', size: tiny, img: rowanBranch }
   ]
 };
-const items = variant === 'reading' ? readingSets[season] : skillSets[variant as SkillId];
+const activeMotif = motif ?? seasonToMotif[season];
+const items = variant === 'reading' ? readingSets[activeMotif] : skillSets[variant as SkillId];
+
+function imgStyle(it: Item) {
+  const size = it.size ?? 'clamp(92px, 11vw, 148px)';
+  const base = it.byHeight ? `height:${size}` : `width:${size}`;
+  const transforms: string[] = [];
+  if (it.rotate) transforms.push(`rotate(${it.rotate}deg)`);
+  if (it.flip) transforms.push('scaleX(-1)');
+  return `${base};${transforms.length ? `transform:${transforms.join(' ')};` : ''}`;
+}
 ---
 
 <div class="page-decor" data-tone={tone} aria-hidden="true">
@@ -67,7 +181,7 @@ const items = variant === 'reading' ? readingSets[season] : skillSets[variant as
     it.img ? (
       <img
         class={`pd-art pd-img pos-${it.pos}`}
-        style={`width:${it.size ?? 'clamp(92px, 11vw, 148px)'}`}
+        style={imgStyle(it)}
         src={it.img.src}
         width={it.img.width}
         height={it.img.height}
@@ -409,6 +523,12 @@ const items = variant === 'reading' ? readingSets[season] : skillSets[variant as
     right: clamp(8px, 2.4vw, 36px);
   }
 
+  @media (max-width: 1100px) {
+    .page-decor .pos-tl,
+    .page-decor .pos-br {
+      display: none;
+    }
+  }
   @media (max-width: 760px) {
     .page-decor {
       display: none;

@@ -3,6 +3,8 @@ import {
   type BelarusianReadingCategory,
 } from './belarusianReadingCatalog';
 import { publicDomainTexts } from './belarusianReadingPublicDomain';
+import { anthologyTexts } from './belarusianReadingAnthology';
+import { webTexts } from './belarusianReadingWeb';
 
 export interface ReadingThemePage {
   grade: 2 | 3 | 4;
@@ -62,8 +64,15 @@ export const textsLabel = (n: number) => plural(n, 'тэкст', 'тэксты',
 
 function hydrateCategory(grade: number, category: BelarusianReadingCategory): BelarusianReadingCategory {
   const entries = category.entries.map((entry) => {
-    const pd = publicDomainTexts[`${grade}|${category.title}|${entry.text}`];
-    return pd ? { ...entry, body: pd.body, publicDomain: pd.source } : entry;
+    if (entry.body && entry.body.length > 0) return entry;
+    const key = `${grade}|${category.title}|${entry.text}`;
+    const pd = publicDomainTexts[key];
+    if (pd) return { ...entry, body: pd.body, publicDomain: pd.source };
+    const anthology = anthologyTexts[key];
+    if (anthology) return { ...entry, body: anthology.body, source: anthology.source };
+    const web = webTexts[key];
+    if (web) return { ...entry, body: web.body, source: web.source };
+    return entry;
   });
   return { ...category, entries };
 }
@@ -101,20 +110,6 @@ for (const cls of belarusianReadingCatalog) {
 }
 
 for (const theme of themes.values()) {
-  for (const grade of [2, 3, 4] as const) {
-    if (theme.pages.some((page) => page.grade === grade)) continue;
-    theme.pages.push({
-      grade,
-      label: `${grade} клас`,
-      title: theme.title,
-      slug: theme.slug,
-      path: `${readingHubPath}tema/${theme.slug}/${grade}/`,
-      category: { title: theme.title, entries: [] },
-      entryCount: 0,
-      textCount: 0,
-      available: false,
-    });
-  }
   theme.pages.sort((a, b) => a.grade - b.grade);
 }
 

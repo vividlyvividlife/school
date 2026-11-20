@@ -23,9 +23,8 @@ const { category, grade, label: gradeLabel } = themePage;
 const available = themePage.available;
 const entries = category.entries;
 const hasTexts = themePage.textCount > 0;
-const partial = hasTexts && themePage.textCount < themePage.entryCount;
-const publicDomainSources = [...new Set(entries.map((entry) => entry.publicDomain).filter((source): source is string => Boolean(source)))];
 const availableGrades = theme.pages.filter((page) => page.available).map((page) => page.label);
+const classPages = theme.pages.filter((page) => page.available);
 const visual = themeArt(theme.title);
 const path = themePage.path;
 const B = import.meta.env.BASE_URL;
@@ -52,8 +51,8 @@ const pageDescription = !available
   schemaSubject="Літаратурнае чытанне"
   pairOverride={{ ru: path, en: enPair }}
 >
-  {visual.season && <Decor variant="reading" season={visual.season} />}
-  {visual.season && <SeasonIntro season={visual.season} />}
+  <Decor variant="reading" motif={visual.motif} season={visual.season} />
+  <SeasonIntro motif={visual.motif} />
   <div class="bel-catalog bel-theme-page">
     <header class="bel-hero bel-theme-hero">
       <div class="bel-theme-copy">
@@ -65,17 +64,19 @@ const pageDescription = !available
         <p class="bel-theme-sub">
           {available ? `${countLine} · ${textLine} на сайце` : 'У гэтым класе тэма не прадстаўлена'}
         </p>
-        <nav class="bel-tabs bel-class-links" aria-label="Клас">
-          {theme.pages.map((item) => (
-            <a
-              class={`bel-tab${item.grade === grade ? ' is-on' : ''}`}
-              href={asset(item.path)}
-              aria-current={item.grade === grade ? 'page' : undefined}
-            >{item.label}</a>
-          ))}
-        </nav>
+        {classPages.length > 1 && (
+          <nav class="bel-tabs bel-class-links" aria-label="Клас">
+            {classPages.map((item) => (
+              <a
+                class={`bel-tab${item.grade === grade ? ' is-on' : ''}`}
+                href={asset(item.path)}
+                aria-current={item.grade === grade ? 'page' : undefined}
+              >{item.label}</a>
+            ))}
+          </nav>
+        )}
       </div>
-      <div class="bel-theme-artwrap" aria-hidden="true">
+      <div class="bel-theme-artwrap" data-motif={visual.motif} aria-hidden="true">
         <img
           class="bel-theme-art"
           src={visual.image.src}
@@ -94,16 +95,6 @@ const pageDescription = !available
         {' '}<a class="bel-backlink" href={asset(`${readingHubPath}#class-${grade}`)}>Тэмы {grade} класа</a>.
       </p>
     )}
-    {available && !hasTexts && (
-      <p class="bel-class-note">У крыніцы для гэтага класа няма файлаў тэкстаў — даступны спіс твораў.</p>
-    )}
-    {available && partial && (
-      <p class="bel-class-note">Тэксты — у {themePage.textCount} з {themePage.entryCount} твораў; для астатніх у крыніцы няма файлаў.</p>
-    )}
-    {available && publicDomainSources.length > 0 && (
-      <p class="bel-class-note">Творы класікаў — у грамадскім набытку. Крыніцы: {publicDomainSources.join(', ')}.</p>
-    )}
-
     {available && <section class="bel-class" data-grade={grade}>
       <div class="bel-theme-block">
         <ul class="bel-list bel-theme-works">
@@ -111,7 +102,7 @@ const pageDescription = !available
             const workId = `${theme.slug}-${grade}-${entryIndex}`;
             if (entry.body && entry.body.length > 0) {
               return (
-                <li class="bel-work" data-work={workId}>
+                <li class="bel-work" id={workId} data-work={workId}>
                   <details class="bel-work-details">
                     <summary class="bel-work-sum">
                       <span class="bel-work-text">{entry.text}</span>
@@ -149,9 +140,13 @@ const pageDescription = !available
               );
             }
             return (
-              <li class="bel-work bel-work-empty">
-                <span class="bel-work-text">{entry.text}</span>
-                <span class="bel-no-text">тэкст не размешчаны</span>
+              <li class="bel-work bel-work-empty" id={workId} data-work={workId}>
+                <div class="bel-work-sum bel-work-sum-static">
+                  <span class="bel-work-text">{entry.text}</span>
+                  <span class="bel-work-actions">
+                    <span class="bel-no-text">тэкст не размешчаны</span>
+                  </span>
+                </div>
               </li>
             );
           })}
@@ -160,13 +155,7 @@ const pageDescription = !available
     </section>}
 
     {available && (
-      <>
-        <p class="bel-source">
-          Спіс складзены па старонцы «Читающая школа» · Бібліявеснік.
-          Тэксты блога публікуюцца з дазволу праваўладальніка. Класічныя творы — у грамадскім набытку.
-        </p>
-        <RightsNotice />
-      </>
+      <RightsNotice />
     )}
   </div>
 </BaseLayout>

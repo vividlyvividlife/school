@@ -69,4 +69,19 @@
     });
   });
 
+  function openFromHash() {
+    var id = '';
+    try { id = decodeURIComponent(window.location.hash.replace(/^#/, '')); } catch (e) { return; }
+    if (!id) return;
+    var work = document.getElementById(id);
+    if (!work || !work.hasAttribute('data-work')) return;
+    var details = work.querySelector('details');
+    if (details) details.open = true;
+    work.scrollIntoView({ block: 'start' });
+  }
+
+  window.addEventListener('hashchange', openFromHash);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', openFromHash);
+  else openFromHash();
+
 })(window, document);
