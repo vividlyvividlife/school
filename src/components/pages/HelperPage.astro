@@ -620,6 +620,7 @@ const copyPayload = {
         if (key === 'custom') {
           customEl.value = '';
           subjectEl.value = 'math';
+          subjectEl.dispatchEvent(new CustomEvent('vivid:select-sync'));
           customWrap.hidden = true;
         }
 
@@ -950,7 +951,6 @@ const copyPayload = {
     text-transform: uppercase;
     color: var(--site-muted);
   }
-  .h-field select,
   .h-field input {
     font: inherit;
     font-size: 0.92rem;
@@ -959,10 +959,17 @@ const copyPayload = {
     text-transform: none;
     color: var(--site-ink);
     background: var(--site-surface);
-    border: 1px solid var(--site-line);
-    border-radius: 0.6rem;
+    border: 2px solid var(--site-line);
+    border-radius: 0.65rem;
     padding: 0.5rem 0.6rem;
     min-width: 0;
+  }
+  .h-field select {
+    width: 100%;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: normal;
+    text-transform: none;
   }
   .h-field select:focus-visible,
   .h-field input:focus-visible {

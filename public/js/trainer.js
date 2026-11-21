@@ -579,6 +579,10 @@ function start(){
     if(p.length){ drawers[o] = makeDrawer(p); useOps.push(o); }
   });
   if(!useOps.length) return;
+  if(window.VividBreak){
+    window.VividBreak.release('trainer-timed');
+    if(S.mode === 'timed') window.VividBreak.hold('trainer-timed');
+  }
 
   run = {
     hardMode: false, trackHard: false, listKind: 'review',
@@ -632,6 +636,10 @@ function startHardList(h, track, kind){
       !missAmbiguous(x.a, x.b, x.r, SIGN_OP[x.op], S.miss);
   });
   if(!items.length){ hardInfo(); return; }
+  if(window.VividBreak){
+    window.VividBreak.release('trainer-timed');
+    if(S.mode === 'timed') window.VividBreak.hold('trainer-timed');
+  }
   run = {
     hardMode: true, trackHard: !!track, listKind: kind,
     next: null, ops: [], drawers: null, hardRemaining: items.slice(),
@@ -1450,6 +1458,7 @@ function markUnsolved(){
 
 function finish(reason){
   if(!run || run.done) return;
+  if(window.VividBreak) window.VividBreak.release('trainer-timed');
   run.done = true;
   run.locked = true;
   run.tok++;

@@ -1002,6 +1002,10 @@ const copyPayload = {
         secEl.value = settings.sec;
         save();
       }
+      if (window.VividBreak) {
+        window.VividBreak.release('clock-timed');
+        if (settings.mode === 'timed') window.VividBreak.hold('clock-timed');
+      }
       game = {
         mode: settings.mode,
         startedAt: Date.now(),
@@ -1076,6 +1080,7 @@ const copyPayload = {
 
     function finish() {
       if (!game) return;
+      if (window.VividBreak) window.VividBreak.release('clock-timed');
       stopDict();
       window.clearInterval(timerId);
       timerId = 0;

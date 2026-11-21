@@ -335,6 +335,10 @@
         if (secEl) secEl.value = settings.sec;
         save();
       }
+      if (window.VividBreak) {
+        window.VividBreak.release('timequiz-timed');
+        if (settings.mode === 'timed') window.VividBreak.hold('timequiz-timed');
+      }
       game = {
         mode: settings.mode,
         startedAt: Date.now(),
@@ -405,6 +409,7 @@
 
     function finish() {
       if (!game) return;
+      if (window.VividBreak) window.VividBreak.release('timequiz-timed');
       window.clearInterval(timerId);
       timerId = 0;
       window.clearTimeout(game.advanceId);

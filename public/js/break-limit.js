@@ -3,10 +3,11 @@
   if (['trainer', 'clock', 'calendar', 'durations', 'language', 'speedread'].indexOf(page) < 0) return;
 
   var TEST = /[?&]breaktest=1(?:&|$)/.test(location.search);
-  var SESSION_LIMIT = TEST ? 10 : 10 * 60;
+  var DEFAULT_BREAK_MINUTES = 10;
   var DAILY_LIMIT = TEST ? 20 : 80 * 60;
   var BREAK_PAUSE = TEST ? 5 : 5 * 60;
   var STORAGE_KEY = TEST ? 'vivid.break.test.v1' : 'vivid.break.v1';
+  var SETTING_KEY = 'vivid.breakEvery';
 
   var overlay = null;
   var titleEl = null;
@@ -20,6 +21,65 @@
   var lastTick = Date.now();
   var saveAt = 0;
   var daily = loadDaily();
+  var holds = {};
+  var pendingKind = null;
+  var lastMinutes = TEST ? -1 : configuredMinutes();
+
+  function configuredMinutes() {
+    var raw = null;
+    try { raw = localStorage.getItem(SETTING_KEY); } catch (e) {}
+    if (raw === null || raw === '') return DEFAULT_BREAK_MINUTES;
+    var n = Number(raw);
+    if (!isFinite(n) || n < 0) return DEFAULT_BREAK_MINUTES;
+    var minutes = Math.round(n);
+    return [0, 10, 15, 20, 30, 45].indexOf(minutes) >= 0 ? minutes : DEFAULT_BREAK_MINUTES;
+  }
+
+  function sessionLimitSeconds() {
+    if (TEST) return 10;
+    var minutes = configuredMinutes();
+    return minutes > 0 ? minutes * 60 : Infinity;
+  }
+
+  function hasHolds() {
+    for (var key in holds) {
+      if (Object.prototype.hasOwnProperty.call(holds, key) && holds[key]) return true;
+    }
+    return false;
+  }
+
+  function hold(id) {
+    holds[id || 'default'] = true;
+  }
+
+  function release(id) {
+    delete holds[id || 'default'];
+    if (!hasHolds()) flushPending();
+  }
+
+  function flushPending() {
+    if (!pendingKind) return;
+    if (overlayOpen) { pendingKind = null; return; }
+    if (document.hidden) return;
+    var kind = pendingKind;
+    pendingKind = null;
+    if (kind === 'daily') {
+      daily.warned80 = true;
+      saveDaily();
+      show('daily');
+    } else {
+      show('break');
+    }
+  }
+
+  function checkSettingChange() {
+    if (TEST) return;
+    var minutes = configuredMinutes();
+    if (minutes === lastMinutes) return;
+    lastMinutes = minutes;
+    continuous = 0;
+    if (pendingKind === 'break') pendingKind = null;
+  }
 
   function today() {
     var now = new Date();
@@ -110,18 +170,20 @@
   function show(kind) {
     build();
     overlayOpen = true;
+    pendingKind = null;
     continuous = 0;
     lastTick = Date.now();
     if (kind === 'daily') {
       titleEl.textContent = 'На сегодня 80 минут';
       textEl.textContent = 'Это верхняя граница для 2 класса. Лучше закончить и вернуться завтра.';
       breakBtn.textContent = 'Закончить';
-      noteEl.textContent = 'Сайт считает только время в тренажёре, а не весь день. Если сегодня уже были уроки и другие экраны, сделай перерыв.';
+      noteEl.textContent = 'Сайт считает только время в тренажёре, а не весь день. Если сегодня уже были уроки и другие экраны, сделай перерыв. Тренировку на время не прерываем — напоминание появляется после неё.';
     } else {
-      titleEl.textContent = '10 минут — пора отдохнуть';
+      var minutes = TEST ? 10 : configuredMinutes();
+      titleEl.textContent = minutes > 0 ? minutes + ' минут — пора отдохнуть' : 'Пора отдохнуть';
       textEl.textContent = 'Встань, попей воды, посмотри в окно. Вернёшься — продолжим.';
       breakBtn.textContent = 'Сделать перерыв';
-      noteEl.textContent = 'Сайт считает только время в тренажёре. 80 минут в день — с учётом уроков и других экранов.';
+      noteEl.textContent = 'Сайт считает только время в тренажёре. 80 минут в день — с учётом уроков и других экранов. Тренировку на время не прерываем — напоминание появляется после неё.';
     }
     overlay.hidden = false;
     continueBtn.focus();
@@ -138,6 +200,7 @@
   }
 
   function tick() {
+    checkSettingChange();
     if (!isActive()) {
       lastTick = Date.now();
       return;
@@ -151,15 +214,24 @@
     lastTick = now;
     continuous += dt;
     daily.seconds += dt;
-    if (!daily.warned80 && daily.seconds >= DAILY_LIMIT) {
-      daily.warned80 = true;
-      saveDaily();
-      show('daily');
-      return;
-    }
-    if (!daily.warned80 && continuous >= SESSION_LIMIT) {
-      show('break');
-      return;
+    var dailyHit = !daily.warned80 && daily.seconds >= DAILY_LIMIT;
+    var breakHit = !daily.warned80 && continuous >= sessionLimitSeconds();
+    if (dailyHit) {
+      if (hasHolds()) {
+        pendingKind = 'daily';
+      } else {
+        daily.warned80 = true;
+        saveDaily();
+        show('daily');
+        return;
+      }
+    } else if (breakHit) {
+      if (hasHolds()) {
+        if (pendingKind !== 'daily') pendingKind = 'break';
+      } else {
+        show('break');
+        return;
+      }
     }
     if (now >= saveAt) {
       saveAt = now + 5000;
@@ -170,7 +242,14 @@
   document.addEventListener('visibilitychange', function () {
     lastTick = Date.now();
     if (document.hidden) saveDaily();
+    else flushPending();
   });
+  window.addEventListener('vivid:break-setting', checkSettingChange);
   window.addEventListener('beforeunload', saveDaily);
+  window.VividBreak = {
+    hold: hold,
+    release: release,
+    isHeld: hasHolds
+  };
   window.setInterval(tick, 1000);
 })();

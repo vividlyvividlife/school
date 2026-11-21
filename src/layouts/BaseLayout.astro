@@ -263,6 +263,20 @@ if (pageKind !== 'home') {
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4.2-4.2" /></svg>
         </button>
 
+        <button
+          class="site-fullscreen"
+          id="fullscreenToggle"
+          type="button"
+          aria-label={c.fullscreenEnter}
+          title={c.fullscreenEnter}
+          aria-pressed="false"
+          data-label-enter={c.fullscreenEnter}
+          data-label-exit={c.fullscreenExit}
+        >
+          <svg class="fs-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" /></svg>
+          <svg class="fs-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5" /></svg>
+        </button>
+
         <SiteDisplaySettings />
 
         <a
@@ -389,6 +403,78 @@ if (pageKind !== 'home') {
       apply(root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
     })();
   </script>
+  <script>
+    (function () {
+      var btn = document.getElementById('fullscreenToggle');
+      if (!btn) return;
+      var doc = document;
+      var el = doc.documentElement;
+      var enterLabel = btn.getAttribute('data-label-enter') || '';
+      var exitLabel = btn.getAttribute('data-label-exit') || '';
+      var supported = !!(el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen);
+
+      if (!supported) {
+        btn.hidden = true;
+        return;
+      }
+
+      function current() {
+        return doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement || null;
+      }
+
+      function update() {
+        var active = !!current();
+        el.setAttribute('data-fs', active ? 'on' : 'off');
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        btn.setAttribute('aria-label', active ? exitLabel : enterLabel);
+        btn.setAttribute('title', active ? exitLabel : enterLabel);
+      }
+
+      function request() {
+        var result;
+        try {
+          if (el.requestFullscreen) result = el.requestFullscreen({ navigationUI: 'hide' });
+          else if (el.webkitRequestFullscreen) result = el.webkitRequestFullscreen();
+          else result = el.msRequestFullscreen();
+        } catch (e) {
+          result = null;
+        }
+        if (result && result.catch) {
+          result.catch(function () {
+            var retry;
+            try {
+              if (el.requestFullscreen) retry = el.requestFullscreen();
+              else if (el.webkitRequestFullscreen) retry = el.webkitRequestFullscreen();
+              else if (el.msRequestFullscreen) retry = el.msRequestFullscreen();
+            } catch (e) {}
+            if (retry && retry.catch) retry.catch(function () {});
+          });
+        }
+      }
+
+      function exit() {
+        var result;
+        try {
+          if (doc.exitFullscreen) result = doc.exitFullscreen();
+          else if (doc.webkitExitFullscreen) result = doc.webkitExitFullscreen();
+          else result = doc.msExitFullscreen();
+        } catch (e) {}
+        if (result && result.catch) result.catch(function () {});
+      }
+
+      btn.addEventListener('click', function () {
+        if (current()) exit();
+        else request();
+      });
+
+      ['fullscreenchange', 'webkitfullscreenchange', 'MSFullscreenChange'].forEach(function (name) {
+        doc.addEventListener(name, update);
+      });
+
+      update();
+    })();
+  </script>
+  <script is:inline src={url('js/custom-select.js')}></script>
   <script is:inline src={url('js/site-search.js')}></script>
   <YandexMetrika />
   {['trainer', 'clock', 'calendar', 'durations', 'language', 'speedread'].includes(pageKind) && (

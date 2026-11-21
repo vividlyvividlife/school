@@ -1652,6 +1652,10 @@ function tick(){
 function startRun(list, kind){
   normalize();
   saveSettings();
+  if(window.VividBreak){
+    window.VividBreak.release('skills-timed');
+    if(S.mode === 'timed') window.VividBreak.hold('skills-timed');
+  }
   var limitMs = S.mode === 'timed' ? Math.max(10, S.min * 60 + S.sec) * 1000 : 0;
   run = {
     ok: 0, bad: 0, tN: 0, tSum: 0, minMs: 0, maxMs: 0,
@@ -1888,6 +1892,7 @@ function collectSlow(){
 }
 function finish(reason){
   if(!run || run.done) return;
+  if(window.VividBreak) window.VividBreak.release('skills-timed');
   run.done = true;
   clearInterval(run.timer);
   clearTimeout(run.advanceTimer);

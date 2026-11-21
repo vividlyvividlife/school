@@ -42,6 +42,7 @@
   var marking = false;
   var markedIndex = -1;
   var flashTimer = 0;
+  var shareToastTimer = 0;
   var audioCtx = null;
 
   function $(id) { return document.getElementById(id); }
@@ -136,10 +137,220 @@
       else if (/[,;:]$/.test(word)) part *= 1.35;
       delay += part;
     });
-    return Math.max(120, delay);
+    return Math.max(12, delay);
+  }
+  function clampSpeed(value) {
+    var n = Number(value);
+    if (!isFinite(n)) return state.speed;
+    return clamp(Math.round(n), 30, 5000);
+  }
+  function stepForSpeed(value) {
+    if (value >= 300) return 50;
+    if (value >= 100) return 10;
+    return 5;
+  }
+  function syncSpeedUI() {
+    var input = $('srSpeedVal');
+    if (input) {
+      input.value = state.speed;
+      input.step = String(stepForSpeed(state.speed));
+    }
+    var live = $('srLiveSpeed');
+    if (live) live.textContent = state.speed;
+    var rsvp = $('srRsvpSpeed');
+    if (rsvp) rsvp.textContent = state.speed;
+    var quick = document.querySelectorAll('#srQuick button');
+    Array.prototype.forEach.call(quick, function (btn) {
+      btn.classList.toggle('is-on', Number(btn.getAttribute('data-speed')) === state.speed);
+    });
+  }
+  function setSpeed(value) {
+    state.speed = clampSpeed(value);
+    syncSpeedUI();
+    save();
+  }
+  function bumpSpeed(dir) {
+    state.speed = clampSpeed(state.speed + dir * stepForSpeed(state.speed));
+    syncSpeedUI();
+    save();
   }
   function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function findText(id) {
+    for (var i = 0; i < TEXTS.length; i++) if (TEXTS[i].id === id) return TEXTS[i];
+    return null;
+  }
+  function hashTextId() {
+    var match = /^#text=([^&]+)/.exec(window.location.hash || '');
+    if (!match) return '';
+    try { return decodeURIComponent(match[1]); } catch (e) { return ''; }
+  }
+  function applyDeepLink() {
+    var id = hashTextId();
+    if (!id || id === 'random') return false;
+    var text = findText(id);
+    if (!text) return false;
+    state.textId = text.id;
+    state.kind = text.kind;
+    save();
+    return true;
+  }
+  function syncHash(id) {
+    try {
+      if (!id || id === 'random') {
+        if (/^#text=/.test(window.location.hash || '')) {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+        return;
+      }
+      var hash = '#text=' + encodeURIComponent(id);
+      if (window.location.hash !== hash) history.replaceState(null, '', hash);
+    } catch (e) {}
+  }
+  function shareUrlFor(id) {
+    var url = null;
+    try { url = new URL(window.location.href); } catch (e) {}
+    if (url) {
+      url.hash = 'text=' + encodeURIComponent(id);
+      return url.href;
+    }
+    return window.location.href.split('#')[0] + '#text=' + encodeURIComponent(id);
+  }
+  function scrollToSelectedCard() {
+    window.setTimeout(function () {
+      var card = document.querySelector('.sr-textcard[data-id="' + state.textId + '"]');
+      if (!card) return;
+      try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      catch (e) { card.scrollIntoView(); }
+    }, 80);
+  }
+  function preparePrint(text) {
+    var target = text || (current && current.text) || findText(state.textId) || TEXTS[0];
+    if (!target) return;
+    var author = $('srPrintAuthor');
+    var title = $('srPrintTitle');
+    var body = $('srPrintText');
+    if (!author || !title || !body) return;
+    author.textContent = target.author || '';
+    title.textContent = target.title || '';
+    body.classList.toggle('is-poem', !!target.poem);
+    body.innerHTML = '';
+    (target.blocks || []).forEach(function (block) {
+      var p = document.createElement('p');
+      p.textContent = block;
+      body.appendChild(p);
+    });
+  }
+  function printCurrent() {
+    setShareMenu(false, false);
+    preparePrint((current && current.text) || findText(state.textId) || TEXTS[0]);
+    try { window.print(); } catch (e) {}
+  }
+  function showShareToast(message) {
+    var el = $('srShareToast');
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+    clearTimeout(shareToastTimer);
+    shareToastTimer = window.setTimeout(function () { el.hidden = true; }, 2400);
+  }
+  function legacyCopy(value, done) {
+    var area = document.createElement('textarea');
+    area.value = value;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.top = '-1000px';
+    area.style.left = '-1000px';
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(area);
+    done(ok);
+  }
+  function copyValue(value, message) {
+    setShareMenu(false, false);
+    var finish = function (ok) {
+      showShareToast(ok ? message : 'Не удалось скопировать');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+      navigator.clipboard.writeText(value).then(function () {
+        finish(true);
+      }).catch(function () {
+        legacyCopy(value, finish);
+      });
+    } else {
+      legacyCopy(value, finish);
+    }
+  }
+  function positionShareMenu() {
+    var btn = $('srShare');
+    var menu = $('srShareMenu');
+    if (!btn || !menu || menu.hidden) return;
+    var buttonRect = btn.getBoundingClientRect();
+    var width = Math.min(272, Math.max(160, window.innerWidth - 16));
+    var left = Math.max(8, Math.min(buttonRect.right - width, window.innerWidth - width - 8));
+    var top = buttonRect.bottom + 7;
+    if (top + menu.offsetHeight > window.innerHeight - 8) {
+      top = Math.max(8, buttonRect.top - menu.offsetHeight - 7);
+    }
+    menu.style.position = 'fixed';
+    menu.style.left = Math.round(left) + 'px';
+    menu.style.right = 'auto';
+    menu.style.top = Math.round(top) + 'px';
+    menu.style.width = Math.round(width) + 'px';
+  }
+  function setShareMenu(open, focusButton) {
+    var btn = $('srShare');
+    var menu = $('srShareMenu');
+    if (!btn || !menu) return;
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      positionShareMenu();
+      var first = menu.querySelector('button[data-share]:not([hidden])');
+      if (first) window.setTimeout(function () { first.focus(); }, 0);
+    } else if (focusButton) {
+      btn.focus();
+    }
+  }
+  function shareCurrent() {
+    var text = (current && current.text) || findText(state.textId);
+    if (!text) return;
+    var url = shareUrlFor(text.id);
+    if (navigator.share) {
+      setShareMenu(false, false);
+      try {
+        var result = navigator.share({
+          title: '«' + text.title + '» — VIVID·ШКОЛА',
+          text: text.title + ' — ' + text.author,
+          url: url
+        });
+        if (result && result.catch) {
+          result.catch(function (err) {
+            if (err && err.name === 'AbortError') return;
+            copyValue(url, 'Ссылка на текст скопирована');
+          });
+        }
+        return;
+      } catch (e) {}
+    }
+    copyValue(url, 'Ссылка на текст скопирована');
+  }
+  function copyShareLink() {
+    var text = (current && current.text) || findText(state.textId);
+    if (!text) return;
+    copyValue(shareUrlFor(text.id), 'Ссылка на текст скопирована');
+  }
+  function copyStoryText() {
+    var text = current && current.text;
+    if (!text) return;
+    var value = '«' + text.title + '»\n' + text.author + '\n\n' +
+      (text.blocks || []).join('\n\n') +
+      '\n\n' + shareUrlFor(text.id);
+    copyValue(value, 'Текст скопирован');
   }
   function load() {
     try {
@@ -149,7 +360,7 @@
       if (!data) return;
       if (data.mode === 'training' || data.mode === 'timed') state.mode = data.mode;
       if (data.view === 'full' || data.view === 'word') state.view = data.view;
-      if (typeof data.speed === 'number' && isFinite(data.speed)) state.speed = clamp(Math.round(data.speed), 30, 180);
+      if (typeof data.speed === 'number' && isFinite(data.speed)) state.speed = clamp(Math.round(data.speed), 30, 5000);
       if (data.time === 1 || data.time === 2 || data.time === 3) state.time = data.time;
       if (data.textId === 'random' || (typeof data.textId === 'string' && textById(data.textId).id === data.textId)) {
         state.textId = data.textId;
@@ -232,6 +443,12 @@
     el.classList.remove('is-on');
     el.hidden = true;
   }
+  function breakHold() {
+    if (window.VividBreak) window.VividBreak.hold('speedread-timed');
+  }
+  function breakRelease() {
+    if (window.VividBreak) window.VividBreak.release('speedread-timed');
+  }
   function show(screen) {
     ['srSetup', 'srRead', 'srQuiz', 'srDone'].forEach(function (id) {
       var el = $(id);
@@ -287,6 +504,7 @@
     if (state.textId !== 'random' && !selectedVisible && firstVisible) {
       state.textId = firstVisible.getAttribute('data-id');
       save();
+      syncHash(state.textId);
     }
     setCardActive(cards);
     var randomMeta = $('srRandomMeta');
@@ -365,16 +583,12 @@
         viewNote.textContent = 'Читай спокойно. Скорость посчитаем по времени.';
       }
     }
-    var speedVal = $('srSpeedVal');
-    if (speedVal) speedVal.textContent = state.speed;
-    var quick = document.querySelectorAll('#srQuick button');
-    Array.prototype.forEach.call(quick, function (btn) {
-      btn.classList.toggle('is-on', Number(btn.getAttribute('data-speed')) === state.speed);
-    });
+    syncSpeedUI();
     syncSegs();
     syncKindFilter();
     syncTextCards();
     updateStartBar();
+    preparePrint();
   }
 
   function setReadMeta(text) {
@@ -383,6 +597,7 @@
     $('srPageAuthor').textContent = text.author;
     $('srPageTitle').textContent = text.title;
     $('srQuizMeta').textContent = text.title;
+    preparePrint(text);
   }
 
   function renderPage(text) {
@@ -411,6 +626,8 @@
   function startReading() {
     unlockAudio();
     clearTimeUpFlash();
+    breakRelease();
+    if (state.mode === 'timed') breakHold();
     var pool = state.kind === 'all' ? TEXTS : TEXTS.filter(function (item) { return item.kind === state.kind; });
     if (!pool.length) pool = TEXTS;
     var text = state.textId === 'random'
@@ -811,9 +1028,10 @@
       };
     }
     if (paced) {
+      var bump = wpm >= 300 ? '50' : wpm >= 100 ? '10' : '5–10';
       return {
         title: 'Тренировка в темпе ' + wpm,
-        text: 'Слова шли со скоростью ' + wpm + ' слов в минуту. Если было легко, попробуй темп на 5–10 слов быстрее.'
+        text: 'Слова шли со скоростью ' + wpm + ' слов в минуту. Если было легко, попробуй темп на ' + bump + ' слов быстрее.'
       };
     }
     if (wpm < 25) {
@@ -854,6 +1072,7 @@
 
   function showResults() {
     if (!current) return;
+    breakRelease();
     clearTimers();
     $('srMarkBar').hidden = true;
     var ms = current.elapsedMs || 0;
@@ -984,6 +1203,7 @@
   function resetToSetup(focusText) {
     clearTimers();
     clearTimeUpFlash();
+    breakRelease();
     current = null;
     quiz = null;
     marking = false;
@@ -1019,19 +1239,34 @@
     });
   });
 
+  var speedInput = $('srSpeedVal');
+  if (speedInput) {
+    var commitSpeed = function () {
+      var next = Number(speedInput.value);
+      if (!isFinite(next) || next <= 0) next = state.speed;
+      setSpeed(next);
+    };
+    speedInput.addEventListener('change', commitSpeed);
+    speedInput.addEventListener('blur', commitSpeed);
+    speedInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        commitSpeed();
+        speedInput.blur();
+      }
+    });
+  }
+
   document.querySelectorAll('#srQuick button').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      state.speed = Number(btn.getAttribute('data-speed'));
-      save();
+      setSpeed(Number(btn.getAttribute('data-speed')));
       syncSetup();
     });
   });
 
   document.querySelectorAll('[data-step]').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      var step = Number(btn.getAttribute('data-step'));
-      state.speed = clamp(state.speed + step, 30, 180);
-      save();
+      bumpSpeed(Number(btn.getAttribute('data-step')) < 0 ? -1 : 1);
       syncSetup();
     });
   });
@@ -1043,6 +1278,7 @@
       if (!card) return;
       state.textId = card.getAttribute('data-id');
       save();
+      syncHash(state.textId);
       syncSetup();
     });
   }
@@ -1084,18 +1320,8 @@
     markWord(Number(tok.getAttribute('data-i')));
   });
 
-  on($('srSlow'), 'click', function () {
-    state.speed = clamp(state.speed - 5, 30, 180);
-    $('srLiveSpeed').textContent = state.speed;
-    $('srRsvpSpeed').textContent = state.speed;
-    save();
-  });
-  on($('srFast'), 'click', function () {
-    state.speed = clamp(state.speed + 5, 30, 180);
-    $('srLiveSpeed').textContent = state.speed;
-    $('srRsvpSpeed').textContent = state.speed;
-    save();
-  });
+  on($('srSlow'), 'click', function () { bumpSpeed(-1); });
+  on($('srFast'), 'click', function () { bumpSpeed(1); });
 
   on($('srQSkip'), 'click', skipQuestion);
   on($('srQNext'), 'click', nextQuestion);
@@ -1105,12 +1331,57 @@
     if (state.textId === 'random' && current) {
       state.textId = current.text.id;
       save();
+      syncHash(state.textId);
     }
     startReading();
   });
   on($('srAnother'), 'click', function () { resetToSetup(true); });
   on($('srSettings'), 'click', function () { resetToSetup(false); });
+  on($('srPrint'), 'click', printCurrent);
+  on($('srPrintResults'), 'click', printCurrent);
+  on($('srShareResults'), 'click', shareCurrent);
+
+  on($('srShare'), 'click', function () {
+    var menu = $('srShareMenu');
+    if (!menu) return;
+    setShareMenu(menu.hidden, false);
+  });
+  on($('srShareMenu'), 'click', function (e) {
+    var btn = e.target.closest ? e.target.closest('button[data-share]') : null;
+    if (!btn) return;
+    var action = btn.getAttribute('data-share');
+    if (action === 'link') copyShareLink();
+    else if (action === 'text') copyStoryText();
+    else if (action === 'system') shareCurrent();
+  });
+  document.addEventListener('click', function (e) {
+    var wrap = $('srShareWrap');
+    var menu = $('srShareMenu');
+    if (!wrap || !menu || menu.hidden) return;
+    if (!wrap.contains(e.target)) setShareMenu(false, false);
+  });
+  document.addEventListener('keydown', function (e) {
+    var menu = $('srShareMenu');
+    if (e.key === 'Escape' && menu && !menu.hidden) setShareMenu(false, true);
+  });
+  var systemShare = document.querySelector('#srShareMenu [data-share="system"]');
+  if (systemShare) systemShare.hidden = !navigator.share;
+  window.addEventListener('resize', function () {
+    var menu = $('srShareMenu');
+    if (menu && !menu.hidden) setShareMenu(false, false);
+  });
+
+  window.addEventListener('hashchange', function () {
+    var setup = $('srSetup');
+    if (!setup || setup.hidden) return;
+    if (applyDeepLink()) {
+      syncSetup();
+      scrollToSelectedCard();
+    }
+  });
 
   load();
+  var deepLinked = applyDeepLink();
   syncSetup();
+  if (deepLinked) scrollToSelectedCard();
 })(window, document);

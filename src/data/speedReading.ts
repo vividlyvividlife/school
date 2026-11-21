@@ -4,6 +4,8 @@ import { speedReadingStories } from './speedReadingStories';
 import { speedReadingPoems } from './speedReadingPoems';
 import { speedReadingFolk } from './speedReadingFolk';
 import { speedReadingTales } from './speedReadingTales';
+import { speedReadingTalesMore } from './speedReadingTalesMore';
+import { speedReadingLonger } from './speedReadingLonger';
 import { speedReadingProseGrade2 } from './speedReadingProseGrade2';
 import { speedReadingProseGrade3 } from './speedReadingProseGrade3';
 
@@ -246,6 +248,7 @@ const coreTexts: SpeedReadingText[] = [
     author: 'Д. Н. Мамин-Сибиряк',
     title: 'Серая Шейка',
     note: 'отрывок',
+    grade: 3,
     source: 'https://ru.wikisource.org/wiki/Серая_шейка_(Мамин-Сибиряк)',
     sourceLabel: '«Серая Шейка» · Д. Н. Мамин-Сибиряк',
     blocks: [
@@ -290,6 +293,7 @@ const coreTexts: SpeedReadingText[] = [
     author: 'Д. Н. Мамин-Сибиряк',
     title: 'Сказка про храброго Зайца',
     note: 'отрывок',
+    grade: 2,
     source: 'https://ru.wikisource.org/wiki/Сказка_про_храброго_Зайца_—_длинные_уши,_косые_глаза,_короткий_хвост_(Мамин-Сибиряк)',
     sourceLabel: '«Сказка про храброго Зайца…» · Д. Н. Мамин-Сибиряк',
     blocks: [
@@ -338,6 +342,7 @@ const coreTexts: SpeedReadingText[] = [
     author: 'Г. Х. Андерсен',
     title: 'Дюймовочка',
     note: 'отрывок · пер. А. Ганзен',
+    grade: 3,
     source: 'https://ru.wikisource.org/wiki/Дюймовочка_(Андерсен;_Ганзен)',
     sourceLabel: '«Дюймовочка» · Г. Х. Андерсен, пер. А. Ганзен',
     blocks: [
@@ -382,6 +387,7 @@ const coreTexts: SpeedReadingText[] = [
     author: 'Ш. Перро',
     title: 'Красная Шапочка',
     note: 'отрывок · пер. И. Тургенева',
+    grade: 2,
     source: 'https://ru.wikisource.org/wiki/Красная_Шапочка_(Перро;_Тургенев)/1867_(ВТ:Ё)',
     sourceLabel: '«Красная Шапочка» · Ш. Перро, пер. И. Тургенева',
     blocks: [
@@ -430,6 +436,7 @@ const coreTexts: SpeedReadingText[] = [
     author: 'Братья Гримм',
     title: 'Бременские уличные музыканты',
     note: 'отрывок · пер. под ред. П. Полевого',
+    grade: 3,
     source: 'https://ru.wikisource.org/wiki/Бременские_уличные_музыканты_(Гримм;_Полевой)',
     sourceLabel: '«Бременские уличные музыканты» · братья Гримм',
     blocks: [
@@ -467,13 +474,15 @@ const coreTexts: SpeedReadingText[] = [
 
 export const speedReadingTexts: SpeedReadingText[] = [
   ...coreTexts,
+  ...speedReadingLonger,
   ...speedReadingFables,
   ...speedReadingProseGrade2,
   ...speedReadingProseGrade3,
   ...speedReadingStories,
   ...speedReadingPoems,
   ...speedReadingFolk,
-  ...speedReadingTales
+  ...speedReadingTales,
+  ...speedReadingTalesMore
 ];
 
 const splitWords = (blocks: string[]): string[] => {
@@ -489,7 +498,14 @@ const splitWords = (blocks: string[]): string[] => {
 
 const countWords = (text: SpeedReadingText): number => splitWords(text.blocks).length;
 
-export const speedReadingPassages: SpeedReadingPassage[] = speedReadingTexts.map((text) => ({
-  ...text,
-  wordCount: countWords(text)
-}));
+export const speedReadingPassages: SpeedReadingPassage[] = speedReadingTexts.map((text) => {
+  const wordCount = countWords(text);
+  return {
+    ...text,
+    wordCount,
+    questions: text.questions.map((question) => ({
+      ...question,
+      after: Math.min(Math.max(1, question.after), wordCount)
+    }))
+  };
+});

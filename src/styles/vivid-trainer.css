@@ -698,3 +698,167 @@ h2{letter-spacing:-.025em;font-weight:900}
   .v-score-row .v-pill{padding:5px 7px;font-size:12px;gap:3px}
   .v-score-row .v-pill span{font-size:14px}
 }
+
+/* dark theme: the vivid layer uses hardcoded light surfaces, restore the site palette */
+html[data-theme="dark"] .v-section{
+  background:var(--surface);
+  border-color:var(--line);
+  box-shadow:0 1px 2px rgba(0,0,0,.28),0 18px 40px -34px #000;
+}
+html[data-theme="dark"] .v-head h2{color:var(--ink)}
+html[data-theme="dark"] .v-head p{color:var(--muted)}
+html[data-theme="dark"] .v-subhead{color:var(--muted)}
+html[data-theme="dark"] .v-num{background:var(--site-teal);color:#fff}
+html[data-theme="dark"] .v-class button,
+html[data-theme="dark"] .v-grid-3 button,
+html[data-theme="dark"] .v-seg button{
+  background:var(--surface-2);border-color:var(--line);color:var(--muted);
+}
+html[data-theme="dark"] .v-class button.on,
+html[data-theme="dark"] .v-grid-3 button.on,
+html[data-theme="dark"] .v-seg button.on{
+  background:var(--site-teal-soft);border-color:var(--site-teal);color:var(--site-teal-d);
+}
+html[data-theme="dark"] .v-ops button{
+  background:var(--surface-2);border-color:var(--line);color:var(--muted);
+}
+html[data-theme="dark"] .v-ops button.on{
+  background:var(--site-teal-soft);border-color:var(--site-teal);
+}
+html[data-theme="dark"] .v-op-label{color:var(--muted)}
+html[data-theme="dark"] .v-ops button.on .v-op-label{color:var(--site-teal-d)}
+html[data-theme="dark"] .v-field-label{color:var(--muted)}
+html[data-theme="dark"] .v-stepper{background:var(--surface-2)}
+html[data-theme="dark"] .v-stepper .v-step{
+  background:var(--surface);color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.35);
+}
+html[data-theme="dark"] .v-num-input{color:var(--ink)}
+html[data-theme="dark"] #limitChips button,
+html[data-theme="dark"] #toChips button,
+html[data-theme="dark"] .v-tasks-grid button,
+html[data-theme="dark"] .v-tiles-4 button{
+  background:var(--surface-2);border-color:var(--line);color:var(--muted);
+}
+html[data-theme="dark"] #limitChips button.on,
+html[data-theme="dark"] #toChips button.on,
+html[data-theme="dark"] .v-tasks-grid button.on,
+html[data-theme="dark"] .v-tiles-4 button.on{
+  background:var(--site-teal-soft);border-color:var(--site-teal);color:var(--site-teal-d);
+}
+html[data-theme="dark"] .v-answer-grid button{
+  background:var(--surface-2);border-color:var(--line);color:var(--muted);
+}
+html[data-theme="dark"] .v-answer-grid button.on{
+  background:var(--site-teal-soft);border-color:var(--site-teal);
+}
+html[data-theme="dark"] .v-ans-preview i{background:var(--surface);color:var(--muted)}
+html[data-theme="dark"] .v-answer-grid button.on .v-ans-preview i{background:var(--surface);color:var(--site-teal-d)}
+html[data-theme="dark"] .v-ans-title{color:var(--ink)}
+html[data-theme="dark"] .v-answer-grid button.on .v-ans-title{color:var(--site-teal-d)}
+html[data-theme="dark"] .v-time{background:var(--surface-2)}
+html[data-theme="dark"] .v-time .v-num-input{background:var(--surface)}
+html[data-theme="dark"] .v-time .dim{color:var(--muted)}
+html[data-theme="dark"] .v-more-summary p{color:var(--muted)}
+html[data-theme="dark"] .v-chev{color:var(--muted)}
+html[data-theme="dark"] .v-more-body{border-top-color:var(--line)}
+html[data-theme="dark"] .v-startbar{
+  background:rgba(11,18,32,.9);border-top-color:var(--line);
+}
+html[data-theme="dark"] .v-start-kicker{color:var(--muted)}
+html[data-theme="dark"] #poolInfo{color:var(--ink)}
+html[data-theme="dark"] .v-offline{color:var(--site-teal)}
+html[data-theme="dark"] .v-star-row{background:var(--warn-bg)}
+html[data-theme="dark"] .v-star-toggle{
+  background:var(--surface);border-color:var(--warn-line);color:var(--warn-ink);
+}
+html[data-theme="dark"] .v-star-toggle[aria-pressed="true"]{
+  background:var(--amber);border-color:var(--amber);color:#3a2a12;
+}
+html[data-theme="dark"] .v-sign-row span{background:var(--surface-2);color:var(--muted)}
+html[data-theme="dark"] .v-sign-row b{color:var(--site-teal)}
+html[data-theme="dark"] .v-sign-row i{color:var(--muted)}
+html[data-theme="dark"] .v-dict-note{background:var(--site-teal-soft);color:var(--site-teal-d)}
+
+html[data-theme="dark"] .v-round-btn{
+  background:var(--surface);border-color:var(--line);color:var(--ink);
+}
+html[data-theme="dark"] .v-stop-btn{
+  background:var(--red-bg);border-color:var(--red);color:var(--red-ink);
+}
+html[data-theme="dark"] .v-stop-btn:hover{background:#4a1b21;border-color:var(--red)}
+html[data-theme="dark"] .v-game .tbar{background:var(--line)}
+html[data-theme="dark"] .v-game .tclock{
+  background:var(--surface);border-color:var(--line);color:var(--ink);
+}
+html[data-theme="dark"] .v-pill.ok{background:var(--green-bg);color:var(--green-ink)}
+html[data-theme="dark"] .v-pill.bad{background:var(--red-bg);color:var(--red-ink)}
+html[data-theme="dark"] .v-game .gmeta{color:var(--muted)}
+html[data-theme="dark"] .v-qcard .eq{color:var(--ink)}
+html[data-theme="dark"] .v-qcard .eq .op{color:var(--muted)}
+html[data-theme="dark"] .v-qcard .slot{
+  background:var(--surface-2);border-color:var(--line-strong);color:var(--site-teal-d);
+}
+html[data-theme="dark"] .v-qcard .slot.empty::after{background:var(--muted)}
+html[data-theme="dark"] .v-qcard .v-skip-btn{color:var(--muted)}
+html[data-theme="dark"] .v-qcard .v-skip-btn:hover{background:var(--surface-2);color:var(--ink)}
+html[data-theme="dark"] .v-qcard .pairinfo{color:var(--muted)}
+
+html[data-theme="dark"] .v-tgame .qprompt{color:var(--muted)}
+html[data-theme="dark"] .v-tgame .qday{
+  background:var(--site-teal-soft);border-color:var(--site-teal-line);color:var(--site-teal-d);
+}
+html[data-theme="dark"] .v-tgame .qsub{color:var(--muted)}
+html[data-theme="dark"] .v-tgame .cap{color:var(--ink)}
+html[data-theme="dark"] .v-tgame .freehint{color:var(--muted)}
+html[data-theme="dark"] .v-tgame .freeunit{color:var(--ink)}
+
+html[data-theme="dark"] #results{background:var(--site-bg)}
+html[data-theme="dark"] #results h2{color:var(--site-ink)}
+html[data-theme="dark"] #results h2::after{background:linear-gradient(90deg,var(--site-line),transparent)}
+html[data-theme="dark"] #results .stat{
+  background:var(--site-surface);border-color:var(--site-line);
+}
+html[data-theme="dark"] #results .stat b{color:var(--site-ink)}
+html[data-theme="dark"] #results .stat span{color:var(--site-muted)}
+html[data-theme="dark"] #results .stat.good{
+  background:linear-gradient(160deg,var(--green-bg),var(--site-surface) 70%);border-color:var(--green);
+}
+html[data-theme="dark"] #results .stat.good b{color:var(--green-ink)}
+html[data-theme="dark"] #results .stat.bad{
+  background:linear-gradient(160deg,var(--red-bg),var(--site-surface) 70%);border-color:var(--red);
+}
+html[data-theme="dark"] #results .stat.bad b{color:var(--red-ink)}
+html[data-theme="dark"] #results .stat.skip{
+  background:linear-gradient(160deg,var(--site-surface-2),var(--site-surface) 70%);border-color:var(--site-line);
+}
+html[data-theme="dark"] #results .stat.skip b{color:var(--site-muted)}
+html[data-theme="dark"] #results .stat:nth-child(4){
+  background:linear-gradient(160deg,var(--site-teal-soft),var(--site-surface) 70%);border-color:var(--site-teal-line);
+}
+html[data-theme="dark"] #results .stat:nth-child(4) b{color:var(--site-teal-d)}
+html[data-theme="dark"] #results .card{
+  background:var(--site-surface);border-color:var(--site-line);
+}
+html[data-theme="dark"] #results .card .lbl{
+  color:var(--site-ink);border-bottom-color:var(--site-line);
+}
+html[data-theme="dark"] #results .card .hint{color:var(--site-muted)}
+html[data-theme="dark"] #results .mrow{border-bottom-color:var(--site-line)}
+html[data-theme="dark"] #results .none{color:var(--green-ink)}
+html[data-theme="dark"] .verdict.g5,
+html[data-theme="dark"] .verdict.g4{background:var(--green-bg);color:var(--green-ink)}
+html[data-theme="dark"] .verdict.g3{background:var(--site-teal-soft);color:var(--site-teal-d)}
+html[data-theme="dark"] .verdict.g2,
+html[data-theme="dark"] .verdict.g1{background:var(--warn-bg);color:var(--warn-ink)}
+html[data-theme="dark"] .verdict.g0{background:var(--red-bg);color:var(--red-ink)}
+
+html[data-theme="dark"] .beads-panel{background:rgba(11,18,32,.92)}
+html[data-theme="dark"] .beads-card{
+  background:var(--site-surface);border-color:var(--site-line);box-shadow:0 24px 60px -30px #000;
+}
+html[data-theme="dark"] .beads-eq{color:var(--site-ink)}
+html[data-theme="dark"] .beads-close{
+  background:var(--site-surface);border-color:var(--site-line);color:var(--site-muted);
+}
+html[data-theme="dark"] .v-beads-btn{background:var(--site-teal-soft);color:var(--site-teal-d)}
+html[data-theme="dark"] .v-beads-btn:hover{background:var(--site-teal-line)}

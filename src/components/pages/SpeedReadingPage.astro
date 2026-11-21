@@ -10,6 +10,7 @@ const jsVersion = Date.now().toString(36);
 const texts = speedReadingPassages;
 const dataJson = JSON.stringify({ texts }).replace(/</g, '\\u003c');
 const totalWords = texts.reduce((n, t) => n + t.wordCount, 0);
+const taleCount = texts.filter((t) => t.kind === 'tale').length;
 const plural = (n: number) => {
   const mod10 = n % 10;
   const mod100 = n % 100;
@@ -24,6 +25,13 @@ const pluralText = (n: number) => {
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'текста';
   return 'текстов';
 };
+const pluralTale = (n: number) => {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'сказка';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'сказки';
+  return 'сказок';
+};
 const sourceLinks = Array.from(
   new Map(
     texts
@@ -35,8 +43,8 @@ const sourceLinks = Array.from(
 
 <BaseLayout
   title="Чтение на скорость — тренажёр чтения и понимания текста — VIVID·ШКОЛА"
-  description="Тренажёр скорости чтения для 1–4 класса: чтение полным текстом или по одному слову с заданной скоростью, режим тренировки и на время, вопросы по тексту. 90+ текстов: сказки, рассказы, стихи, басни и народные сказки. Большая подборка современной прозы для 2–3 класса: о природе, животных и школе."
-  keywords="чтение на скорость, скорость чтения, техника чтения, слова в минуту, понимание текста, тренажёр чтения, 1 класс, 2 класс, 3 класс, 4 класс, проза для 2 класса, проза для 3 класса, рассказы о природе, рассказы о животных, Пушкин, Толстой, Крылов, Мамин-Сибиряк, Андерсен, Перро, братья Гримм, басни, стихи, народные сказки"
+  description={`Тренажёр скорости чтения для 1–4 класса: чтение полным текстом или по одному слову с заданной скоростью, режим тренировки и на время, вопросы по тексту. ${texts.length} ${pluralText(texts.length)}: ${taleCount} ${pluralTale(taleCount)}, рассказы, стихи, басни и народные сказки, в том числе тексты на 100, 200 и 300 слов. Большая подборка современной прозы для 2–3 класса: о природе, животных и школе.`}
+  keywords="чтение на скорость, скорость чтения, техника чтения, слова в минуту, понимание текста, тренажёр чтения, 1 класс, 2 класс, 3 класс, 4 класс, сказки для 2 класса, сказки для 3 класса, проза для 2 класса, проза для 3 класса, рассказы о природе, рассказы о животных, тексты 100 слов, тексты 200 слов, тексты 300 слов, длинные тексты для чтения, Пушкин, Толстой, Крылов, Мамин-Сибиряк, Андерсен, Перро, братья Гримм, басни, стихи, народные сказки"
   page="speedread"
   crumbs={['Чтение', 'Чтение на скорость']}
   schemaSubject="Чтение"
@@ -47,7 +55,7 @@ const sourceLinks = Array.from(
       <header class="sr-hero">
         <div class="sr-kicker">VIVID·ШКОЛА · чтение</div>
         <h1>Чтение на скорость</h1>
-        <p>Сказки, рассказы, стихи и басни. Для 2–3 класса — большая подборка прозы о природе, животных и школе. Читай текст целиком или по одному слову в заданном темпе. В конце — скорость, понимание и разбор. Вопросы можно выключить.</p>
+        <p>{texts.length} {pluralText(texts.length)}: {taleCount} {pluralTale(taleCount)}, рассказы, стихи и басни. Есть короткие тексты и длинные — на 100, 200 и 300 слов. Для 2–3 класса — большая подборка прозы о природе, животных и школе. Читай текст целиком или по одному слову в заданном темпе. В конце — скорость, понимание и разбор. Вопросы можно выключить.</p>
       </header>
 
       <div class="sr-tiles">
@@ -82,17 +90,22 @@ const sourceLinks = Array.from(
         <section class="sr-tile" id="srSpeedTile" hidden>
           <div class="sr-tilehead"><h2>Скорость</h2><span>для показа по слову</span></div>
           <div class="sr-speeder">
-            <button class="sr-stepper" type="button" data-step="-5" aria-label="Медленнее">−</button>
-            <div class="sr-speednum"><b id="srSpeedVal">60</b><span>слов в минуту</span></div>
-            <button class="sr-stepper" type="button" data-step="5" aria-label="Быстрее">+</button>
+            <button class="sr-stepper" type="button" data-step="-1" aria-label="Медленнее">−</button>
+            <div class="sr-speednum"><input id="srSpeedVal" type="number" min="30" max="5000" step="5" value="60" inputmode="numeric" aria-label="Скорость чтения, слов в минуту"><span>слов в минуту</span></div>
+            <button class="sr-stepper" type="button" data-step="1" aria-label="Быстрее">+</button>
           </div>
           <div class="sr-quick" id="srQuick">
             <button type="button" data-speed="60" class="is-on">60</button>
             <button type="button" data-speed="90">90</button>
             <button type="button" data-speed="120">120</button>
             <button type="button" data-speed="150">150</button>
+            <button type="button" data-speed="300">300</button>
+            <button type="button" data-speed="500">500</button>
+            <button type="button" data-speed="1000">1000</button>
+            <button type="button" data-speed="2000">2000</button>
+            <button type="button" data-speed="5000">5000</button>
           </div>
-          <p class="sr-note">Запятая — короткая пауза, точка — чуть длиннее. Скорость можно менять на ходу.</p>
+          <p class="sr-note">Запятая — короткая пауза, точка — чуть длиннее. Шаг: 5 до 100, 10 до 300, 50 дальше. Скорость можно ввести вручную.</p>
         </section>
 
         <section class="sr-tile" id="srTimeTile" hidden>
@@ -174,6 +187,16 @@ const sourceLinks = Array.from(
             <button class="sr-iconbtn" id="srStop" type="button" title="Вернуться к настройкам" aria-label="Вернуться к настройкам">×</button>
             <div class="sr-gamemeta"><b id="srReadTitle">Косточка</b><span id="srReadSub">Л. Н. Толстой · 146 слов</span></div>
             <button class="sr-ghost" id="srPause" type="button">Пауза</button>
+            <div class="sr-sharewrap" id="srShareWrap">
+              <button class="sr-iconbtn sr-sharebtn" id="srShare" type="button" aria-label="Поделиться текстом" title="Поделиться текстом" aria-haspopup="menu" aria-controls="srShareMenu" aria-expanded="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.5 6.8-3.9M8.6 13.5l6.8 3.9" /></svg>
+              </button>
+              <div class="sr-sharemenu" id="srShareMenu" role="menu" hidden>
+                <button type="button" role="menuitem" data-share="link"><span>Скопировать ссылку</span><small>на этот текст</small></button>
+                <button type="button" role="menuitem" data-share="text"><span>Скопировать текст</span></button>
+                <button type="button" role="menuitem" data-share="system" hidden><span>Поделиться…</span><small>через приложения</small></button>
+              </div>
+            </div>
           </div>
           <div class="sr-timerrow">
             <div class="sr-clock" id="srClock">0:00</div>
@@ -205,7 +228,10 @@ const sourceLinks = Array.from(
 
         <div class="sr-readfoot">
           <div class="sr-footinfo" id="srFootInfo">Читай спокойно. Кнопка — когда закончишь.</div>
-          <button class="sr-primary" id="srFinish" type="button">Я дочитал(а)</button>
+          <div class="sr-footactions">
+            <button class="sr-ghost" id="srPrint" type="button">Печать</button>
+            <button class="sr-primary" id="srFinish" type="button">Я дочитал(а)</button>
+          </div>
         </div>
 
         <div class="sr-speedbar" id="srSpeedBar" hidden>
@@ -304,6 +330,8 @@ const sourceLinks = Array.from(
           <button class="sr-primary" id="srAgain" type="button">Ещё раз</button>
           <button class="sr-ghost" id="srAnother" type="button">Другой текст</button>
           <button class="sr-ghost" id="srSettings" type="button">Настройки</button>
+          <button class="sr-ghost" id="srShareResults" type="button">Поделиться ссылкой</button>
+          <button class="sr-ghost" id="srPrintResults" type="button">Печать текста</button>
         </div>
       </div>
     </section>
@@ -313,7 +341,14 @@ const sourceLinks = Array.from(
     </noscript>
   </div>
 
+  <section class="sr-printsheet" id="srPrintSheet">
+    <div class="sr-printauthor" id="srPrintAuthor"></div>
+    <h1 id="srPrintTitle"></h1>
+    <div class="sr-printtext" id="srPrintText"></div>
+  </section>
+
   <div class="sr-timesup-flash" id="srTimesUpFlash" hidden aria-hidden="true"><span>Время вышло</span></div>
+  <div class="sr-sharetoast" id="srShareToast" hidden aria-live="polite"></div>
 
   <script is:inline type="application/json" id="srData" set:html={dataJson}></script>
   <script is:inline src={asset('js/speedread.js') + '?v=' + jsVersion}></script>

@@ -8,6 +8,7 @@ export const speedReadingTales: SpeedReadingText[] = [
     author: 'Г. Х. Андерсен',
     title: 'Принцесса на горошине',
     note: 'пер. А. Ганзен',
+    grade: 2,
     source: 'https://ru.wikisource.org/wiki/Принцесса_на_горошине_(Андерсен;_Ганзен)',
     sourceLabel: '«Принцесса на горошине» · Г. Х. Андерсен, пер. А. Ганзен',
     blocks: [
@@ -54,6 +55,7 @@ export const speedReadingTales: SpeedReadingText[] = [
     author: 'Д. Н. Мамин-Сибиряк',
     title: 'Присказка',
     note: 'из «Алёнушкиных сказок»',
+    grade: 2,
     source: 'https://ru.wikisource.org/wiki/Алёнушкины_сказки_(Мамин-Сибиряк)',
     sourceLabel: '«Алёнушкины сказки» · Д. Н. Мамин-Сибиряк',
     blocks: [

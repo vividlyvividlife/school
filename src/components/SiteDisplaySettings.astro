@@ -26,6 +26,14 @@ const sizes = [
   { value: '120', label: '120%' },
   { value: '130', label: '130% — крупнее' },
 ];
+const breakOptions = [
+  { value: '0', label: 'Только дневной лимит' },
+  { value: '10', label: 'Каждые 10 минут' },
+  { value: '15', label: 'Каждые 15 минут' },
+  { value: '20', label: 'Каждые 20 минут' },
+  { value: '30', label: 'Каждые 30 минут' },
+  { value: '45', label: 'Каждые 45 минут' },
+];
 ---
 
 <div class="site-settings">
@@ -35,8 +43,8 @@ const sizes = [
     type="button"
     aria-expanded="false"
     aria-controls="displayPanel"
-    aria-label="Настройки отображения"
-    title="Настройки отображения"
+    aria-label="Настройки"
+    title="Настройки"
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -45,7 +53,7 @@ const sizes = [
   </button>
 
   <section class="display-settings site-display-pop" id="displayPanel" hidden aria-labelledby="displaySettingsTitle">
-    <h2 id="displaySettingsTitle">Внешний вид</h2>
+    <h2 id="displaySettingsTitle">Настройки</h2>
     <label class="display-row">
       <span>Шрифт</span>
       <select data-site-font-select>
@@ -67,7 +75,13 @@ const sizes = [
         {sizes.map((size) => <option value={size.value}>{size.label}</option>)}
       </select>
     </label>
-    <p class="display-hint">Системный шрифт берётся с устройства; если его нет — похожий. Настройки сохраняются на этом устройстве.</p>
+    <label class="display-row">
+      <span>Напоминание о перерыве</span>
+      <select data-break-every-select>
+        {breakOptions.map((option) => <option value={option.value}>{option.label}</option>)}
+      </select>
+    </label>
+    <p class="display-hint">Шрифт и размер применяются ко всему сайту. Напоминание не прерывает тренировку на время — оно появится после неё. Настройки сохраняются на этом устройстве.</p>
   </section>
 </div>
 
@@ -93,7 +107,10 @@ const sizes = [
         return value && has(selects[0], value) ? value : fallback;
       }
       function sync(value) {
-        for (var i = 0; i < selects.length; i++) selects[i].value = value;
+        for (var i = 0; i < selects.length; i++) {
+          selects[i].value = value;
+          selects[i].dispatchEvent(new CustomEvent('vivid:select-sync'));
+        }
       }
       for (var i = 0; i < selects.length; i++) {
         (function (select) {
@@ -117,6 +134,31 @@ const sizes = [
 
     bind(document.querySelectorAll('[data-site-font-select]'), 'data-site-font', 'vivid.siteFont', 'nunito');
     bind(document.querySelectorAll('[data-site-size-select]'), 'data-site-size', 'vivid.siteSize', '100');
+
+    var breakSelect = document.querySelector('[data-break-every-select]');
+    if (breakSelect) {
+      var breakValues = ['0', '10', '15', '20', '30', '45'];
+      var breakSaved = '10';
+      try {
+        var storedBreak = localStorage.getItem('vivid.breakEvery');
+        if (storedBreak !== null && breakValues.indexOf(storedBreak) >= 0) breakSaved = storedBreak;
+      } catch (e) {}
+      breakSelect.value = breakSaved;
+      breakSelect.addEventListener('change', function () {
+        try { localStorage.setItem('vivid.breakEvery', breakSelect.value); } catch (e) {}
+        try {
+          window.dispatchEvent(new CustomEvent('vivid:break-setting', { detail: breakSelect.value }));
+        } catch (e) {}
+      });
+      window.addEventListener('storage', function (event) {
+        if (event.key !== 'vivid.breakEvery') return;
+        var value = event.newValue || '10';
+        if (breakValues.indexOf(value) >= 0) {
+          breakSelect.value = value;
+          breakSelect.dispatchEvent(new CustomEvent('vivid:select-sync'));
+        }
+      });
+    }
 
     function setOpen(open, focus) {
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
