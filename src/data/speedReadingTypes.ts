@@ -16,9 +16,10 @@ export interface SpeedReadingText {
   kind: SpeedReadingKind;
   kindLabel: string;
   note: string;
+  grade?: 2 | 3;
   poem?: boolean;
-  source: string;
-  sourceLabel: string;
+  source?: string;
+  sourceLabel?: string;
   blocks: string[];
   questions: SpeedReadingQuestion[];
 }

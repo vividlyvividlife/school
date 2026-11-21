@@ -25,14 +25,18 @@ const pluralText = (n: number) => {
   return 'текстов';
 };
 const sourceLinks = Array.from(
-  new Map(texts.map((t) => [t.source, t.sourceLabel])).entries()
+  new Map(
+    texts
+      .filter((t) => t.source && t.sourceLabel)
+      .map((t) => [t.source as string, t.sourceLabel as string])
+  ).entries()
 ).map(([href, label]) => ({ href, label }));
 ---
 
 <BaseLayout
   title="Чтение на скорость — тренажёр чтения и понимания текста — VIVID·ШКОЛА"
-  description="Тренажёр скорости чтения для 1–4 класса: чтение полным текстом или по одному слову с заданной скоростью, режим тренировки и на время, вопросы по тексту. 50+ текстов: сказки, рассказы, стихи, басни и народные сказки Пушкина, Крылова, Толстого, Мамина-Сибиряка, Андерсена, Перро и братьев Гримм."
-  keywords="чтение на скорость, скорость чтения, техника чтения, слова в минуту, понимание текста, тренажёр чтения, 1 класс, 2 класс, 3 класс, 4 класс, Пушкин, Толстой, Крылов, Мамин-Сибиряк, Андерсен, Перро, братья Гримм, басни, стихи, народные сказки"
+  description="Тренажёр скорости чтения для 1–4 класса: чтение полным текстом или по одному слову с заданной скоростью, режим тренировки и на время, вопросы по тексту. 90+ текстов: сказки, рассказы, стихи, басни и народные сказки. Большая подборка современной прозы для 2–3 класса: о природе, животных и школе."
+  keywords="чтение на скорость, скорость чтения, техника чтения, слова в минуту, понимание текста, тренажёр чтения, 1 класс, 2 класс, 3 класс, 4 класс, проза для 2 класса, проза для 3 класса, рассказы о природе, рассказы о животных, Пушкин, Толстой, Крылов, Мамин-Сибиряк, Андерсен, Перро, братья Гримм, басни, стихи, народные сказки"
   page="speedread"
   crumbs={['Чтение', 'Чтение на скорость']}
   schemaSubject="Чтение"
@@ -43,7 +47,7 @@ const sourceLinks = Array.from(
       <header class="sr-hero">
         <div class="sr-kicker">VIVID·ШКОЛА · чтение</div>
         <h1>Чтение на скорость</h1>
-        <p>Сказки, рассказы, стихи и басни. Читай текст целиком или по одному слову в заданном темпе. В конце — скорость, понимание и разбор. Вопросы можно выключить.</p>
+        <p>Сказки, рассказы, стихи и басни. Для 2–3 класса — большая подборка прозы о природе, животных и школе. Читай текст целиком или по одному слову в заданном темпе. В конце — скорость, понимание и разбор. Вопросы можно выключить.</p>
       </header>
 
       <div class="sr-tiles">
@@ -122,7 +126,7 @@ const sourceLinks = Array.from(
             <button class="sr-textcard" type="button" data-id={t.id} data-kind={t.kind} data-words={t.wordCount} aria-pressed="false">
               <span class="sr-tc-top"><span class="sr-tc-author">{t.author}</span><span class="sr-tc-check" aria-hidden="true">✓</span></span>
               <span class="sr-tc-title">{t.title}</span>
-              <span class="sr-tc-meta">{t.kindLabel} · {t.wordCount} {plural(t.wordCount)}</span>
+              <span class="sr-tc-meta">{t.grade ? `${t.grade} класс · ` : ''}{t.kindLabel} · {t.wordCount} {plural(t.wordCount)}</span>
             </button>
           ))}
           <button class="sr-textcard is-random" type="button" data-id="random" data-kind="random" aria-pressed="false">
@@ -308,6 +312,8 @@ const sourceLinks = Array.from(
       <p class="sr-noscript">Для тренажёра нужен JavaScript. Включите его в браузере и обновите страницу.</p>
     </noscript>
   </div>
+
+  <div class="sr-timesup-flash" id="srTimesUpFlash" hidden aria-hidden="true"><span>Время вышло</span></div>
 
   <script is:inline type="application/json" id="srData" set:html={dataJson}></script>
   <script is:inline src={asset('js/speedread.js') + '?v=' + jsVersion}></script>

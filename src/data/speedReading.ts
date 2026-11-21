@@ -4,6 +4,8 @@ import { speedReadingStories } from './speedReadingStories';
 import { speedReadingPoems } from './speedReadingPoems';
 import { speedReadingFolk } from './speedReadingFolk';
 import { speedReadingTales } from './speedReadingTales';
+import { speedReadingProseGrade2 } from './speedReadingProseGrade2';
+import { speedReadingProseGrade3 } from './speedReadingProseGrade3';
 
 const coreTexts: SpeedReadingText[] = [
   {
@@ -466,6 +468,8 @@ const coreTexts: SpeedReadingText[] = [
 export const speedReadingTexts: SpeedReadingText[] = [
   ...coreTexts,
   ...speedReadingFables,
+  ...speedReadingProseGrade2,
+  ...speedReadingProseGrade3,
   ...speedReadingStories,
   ...speedReadingPoems,
   ...speedReadingFolk,

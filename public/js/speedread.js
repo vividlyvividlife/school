@@ -41,6 +41,8 @@
   var rsvpShown = 0;
   var marking = false;
   var markedIndex = -1;
+  var flashTimer = 0;
+  var audioCtx = null;
 
   function $(id) { return document.getElementById(id); }
   function on(el, type, fn) { if (el) el.addEventListener(type, fn); }
@@ -164,6 +166,71 @@
   function clearTimers() {
     if (timerId) { clearInterval(timerId); timerId = 0; }
     if (rsvpTimer) { clearTimeout(rsvpTimer); rsvpTimer = 0; }
+  }
+  function getAudioContext() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!audioCtx) audioCtx = new Ctx();
+      return audioCtx;
+    } catch (e) {
+      return null;
+    }
+  }
+  function unlockAudio() {
+    var ctx = getAudioContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      try { ctx.resume(); } catch (e) {}
+    }
+  }
+  function beep(ctx, freq, at, duration, volume) {
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, at);
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(volume, at + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(at);
+    osc.stop(at + duration + 0.03);
+  }
+  function scheduleTimeUpBeeps(ctx) {
+    var at = ctx.currentTime + 0.02;
+    beep(ctx, 988, at, 0.11, 0.12);
+    beep(ctx, 988, at + 0.19, 0.11, 0.12);
+  }
+  function playTimeUpSound() {
+    var ctx = getAudioContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(function () { scheduleTimeUpBeeps(ctx); }).catch(function () {});
+    } else {
+      scheduleTimeUpBeeps(ctx);
+    }
+  }
+  function flashTimeUp() {
+    var el = $('srTimesUpFlash');
+    if (!el) return;
+    if (flashTimer) { clearTimeout(flashTimer); flashTimer = 0; }
+    el.hidden = false;
+    el.classList.remove('is-on');
+    void el.offsetWidth;
+    el.classList.add('is-on');
+    flashTimer = window.setTimeout(function () {
+      el.classList.remove('is-on');
+      el.hidden = true;
+      flashTimer = 0;
+    }, 1350);
+  }
+  function clearTimeUpFlash() {
+    var el = $('srTimesUpFlash');
+    if (flashTimer) { clearTimeout(flashTimer); flashTimer = 0; }
+    if (!el) return;
+    el.classList.remove('is-on');
+    el.hidden = true;
   }
   function show(screen) {
     ['srSetup', 'srRead', 'srQuiz', 'srDone'].forEach(function (id) {
@@ -342,6 +409,8 @@
   }
 
   function startReading() {
+    unlockAudio();
+    clearTimeUpFlash();
     var pool = state.kind === 'all' ? TEXTS : TEXTS.filter(function (item) { return item.kind === state.kind; });
     if (!pool.length) pool = TEXTS;
     var text = state.textId === 'random'
@@ -487,6 +556,8 @@
     if (!current || current.stopped) return;
     current.stopped = true;
     clearTimers();
+    flashTimeUp();
+    playTimeUpSound();
     $('srClock').textContent = '0:00';
     $('srClockFill').style.width = '0%';
     $('srClock').classList.add('is-low');
@@ -912,6 +983,7 @@
 
   function resetToSetup(focusText) {
     clearTimers();
+    clearTimeUpFlash();
     current = null;
     quiz = null;
     marking = false;
